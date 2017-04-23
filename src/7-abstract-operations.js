@@ -37,17 +37,17 @@
 
 // 7.1.1
 function ToPrimitive(input, PreferredType) {
-    if (Type(input) === TYPE_Object) {
+    if (Type(input) === 'Object') {
         if (PreferredType === undefined) var hint = "default";
-        else if (PreferredType === hint_String) var hint = "string";
+        else if (PreferredType === 'hint String') var hint = "string";
         else {
-            Assert(PreferredType === hint_Number);
+            Assert(PreferredType === 'hint Number');
             var hint = "number";
         }
         var exoticToPrim = GetMethod(input, wellKnownSymbols['@@toPrimitive']);
         if (exoticToPrim !== undefined) {
             var result = Call(exoticToPrim, input, [hint]);
-            if (Type(result) !== TYPE_Object) return result;
+            if (Type(result) !== 'Object') return result;
             throw $TypeError();
         }
         if (hint === "default") var hint = "number";
@@ -56,11 +56,8 @@ function ToPrimitive(input, PreferredType) {
     return input;
 }
 
-const hint_String = { hint: 'String' };
-const hint_Number = { hint: 'Number' };
-
 function OrdinaryToPrimitive(O, hint) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(hint === "string" || hint === "number");
     if (hint === "string") {
         var methodNames = ["toString", "valueOf"];
@@ -71,7 +68,7 @@ function OrdinaryToPrimitive(O, hint) {
         var method = Get(O, name);
         if (IsCallable(method) === true) {
             var result = Call(method, O);
-            if (Type(result) !== TYPE_Object) return result;
+            if (Type(result) !== 'Object') return result;
         }
     }
     throw $TypeError();
@@ -80,21 +77,21 @@ function OrdinaryToPrimitive(O, hint) {
 // 7.1.2
 function ToBoolean(argument) {
     switch (Type(argument)) {
-        case TYPE_Undefined:
+        case 'Undefined':
             return false;
-        case TYPE_Null:
+        case 'Null':
             return false;
-        case TYPE_Boolean:
+        case 'Boolean':
             return argument;
-        case TYPE_Number:
+        case 'Number':
             if (argument === 0 || isNaN(argument)) return false;
             return true;
-        case TYPE_String:
+        case 'String':
             if (argument === "") return false;
             return true;
-        case TYPE_Symbol:
+        case 'Symbol':
             return true;
-        case TYPE_Object:
+        case 'Object':
             return true;
     }
 }
@@ -102,21 +99,21 @@ function ToBoolean(argument) {
 // 7.1.3
 function ToNumber(argument) {
     switch (Type(argument)) {
-        case TYPE_Undefined:
+        case 'Undefined':
             return NaN;
-        case TYPE_Null:
+        case 'Null':
             return +0;
-        case TYPE_Boolean:
+        case 'Boolean':
             if (argument === true) return 1;
             return +0;
-        case TYPE_Number:
+        case 'Number':
             return argument;
-        case TYPE_String:
+        case 'String':
             return ToNumber_Applied_to_the_String_Type(argument);
-        case TYPE_Symbol:
+        case 'Symbol':
             throw $TypeError();
-        case TYPE_Object:
-            var primValue = ToPrimitive(argument, hint_Number);
+        case 'Object':
+            var primValue = ToPrimitive(argument, 'hint Number');
             return ToNumber(primValue);
     }
 }
@@ -200,21 +197,21 @@ function ToUint8Clamp(argument) {
 // 7.1.12
 function ToString(argument) {
     switch (Type(argument)) {
-        case TYPE_Undefined:
+        case 'Undefined':
             return "undefined";
-        case TYPE_Null:
+        case 'Null':
             return "null";
-        case TYPE_Boolean:
+        case 'Boolean':
             if (argument === true) return "true";
             return "false";
-        case TYPE_Number:
+        case 'Number':
             return ToString_Applied_to_the_Number_Type(argument);
-        case TYPE_String:
+        case 'String':
             return argument;
-        case TYPE_Symbol:
+        case 'Symbol':
             throw $TypeError();
-        case TYPE_Object:
-            var primValue = ToPrimitive(argument, hint_String);
+        case 'Object':
+            var primValue = ToPrimitive(argument, 'hint String');
             return ToString(primValue);
     }
 }
@@ -228,27 +225,27 @@ function ToString_Applied_to_the_Number_Type(argument) {
 // 7.1.13
 function ToObject(argument) {
     switch (Type(argument)) {
-        case TYPE_Undefined:
+        case 'Undefined':
             throw $TypeError();
-        case TYPE_Null:
+        case 'Null':
             throw $TypeError();
-        case TYPE_Boolean:
+        case 'Boolean':
             return new $Boolean(argument);
-        case TYPE_Number:
+        case 'Number':
             return new $Number(argument);
-        case TYPE_String:
+        case 'String':
             return new $String(argument);
-        case TYPE_Symbol:
+        case 'Symbol':
             return new $Symbol(argument);
-        case TYPE_Object:
+        case 'Object':
             return argument;
     }
 }
 
 // 7.1.14
 function ToPropertyKey(argument) {
-    var key = ToPrimitive(argument, hint_String);
-    if (Type(key) === TYPE_Symbol) return key;
+    var key = ToPrimitive(argument, 'hint String');
+    if (Type(key) === 'Symbol') return key;
     return ToString(key);
 }
 
@@ -262,7 +259,7 @@ function ToLength(argument) {
 
 // 7.1.16
 function CanonicalNumericIndexString(argument) {
-    Assert(Type(argument) === TYPE_String);
+    Assert(Type(argument) === 'String');
     if (argument === "-0") return -0;
     var n = ToNumber(argument);
     if (SameValue(ToString(n), argument) === false) return undefined;
@@ -274,26 +271,26 @@ function CanonicalNumericIndexString(argument) {
 // 7.2.1
 function RequireObjectCoercible(argument) {
     switch (Type(argument)) {
-        case TYPE_Undefined:
+        case 'Undefined':
             throw $TypeError();
-        case TYPE_Null:
+        case 'Null':
             throw $TypeError();
-        case TYPE_Boolean:
+        case 'Boolean':
             return argument;
-        case TYPE_Number:
+        case 'Number':
             return argument;
-        case TYPE_String:
+        case 'String':
             return argument;
-        case TYPE_Symbol:
+        case 'Symbol':
             return argument;
-        case TYPE_Object:
+        case 'Object':
             return argument;
     }
 }
 
 // 7.2.2
 function IsArray(argument) {
-    if (Type(argument) !== TYPE_Object) return false;
+    if (Type(argument) !== 'Object') return false;
     if (argument instanceof ArrayExoticObject) return true;
     if (argument instanceof ProxyExoticObject) {
         if (argument.ProxyHandler === null) throw $TypeError();
@@ -305,27 +302,27 @@ function IsArray(argument) {
 
 // 7.2.3
 function IsCallable(argument) {
-    if (Type(argument) !== TYPE_Object) return false;
+    if (Type(argument) !== 'Object') return false;
     if (argument.Call) return true;
     return false;
 }
 
 // 7.2.4
 function IsConstructor(argument) {
-    if (Type(argument) !== TYPE_Object) return false;
+    if (Type(argument) !== 'Object') return false;
     if (argument.Construct) return true;
     return false;
 }
 
 // 7.2.5
 function IsExtensible(O) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     return O.IsExtensible();
 }
 
 // 7.2.6
 function IsInteger(argument) {
-    if (Type(argument) !== TYPE_Number) return false;
+    if (Type(argument) !== 'Number') return false;
     if (isNaN(argument) || argument === +Infinity || argument === -Infinity) return false;
     if (Math.floor(Math.abs(argument)) !== Math.abs(argument)) return false;
     return true;
@@ -333,14 +330,14 @@ function IsInteger(argument) {
 
 // 7.2.7
 function IsPropertyKey(argument) {
-    if (Type(argument) === TYPE_String) return true;
-    if (Type(argument) === TYPE_Symbol) return true;
+    if (Type(argument) === 'String') return true;
+    if (Type(argument) === 'Symbol') return true;
     return false;
 }
 
 // 7.2.8
 function IsRegExp(argument) {
-    if (Type(argument) !== TYPE_Object) return false;
+    if (Type(argument) !== 'Object') return false;
     var isRegExp = Get(argument, wellKnownSymbols['@@match']);
     if (isRegExp !== undefined) return ToBoolean(isRegExp);
     if (argument.RegExpMatcher) return true;
@@ -350,7 +347,7 @@ function IsRegExp(argument) {
 // 7.2.9
 function SameValue(x, y) {
     if (Type(x) !== Type(y)) return false;
-    if (Type(x) === TYPE_Number) {
+    if (Type(x) === 'Number') {
         if (isNaN(x) && isNaN(y)) return true;
         if (x === 0 && y === 0 && 1 / (x * y) === -Infinity) return false;
         if (x === y) return true;
@@ -362,7 +359,7 @@ function SameValue(x, y) {
 // 7.2.10
 function SameValueZero(x, y) {
     if (Type(x) !== Type(y)) return false;
-    if (Type(x) === TYPE_Number) {
+    if (Type(x) === 'Number') {
         if (isNaN(x) && isNaN(y)) return true;
         if (x === y) return true;
         return false;
@@ -384,7 +381,7 @@ function SameValueNonNumber(x, y) {
 
 // 7.3.1
 function Get(O, P) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     return O.Get(P, O);
 }
@@ -398,9 +395,9 @@ function GetV(V, P) {
 
 // 7.3.3
 function _Set(O, P, V, Throw) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
-    Assert(Type(Throw) === TYPE_Boolean);
+    Assert(Type(Throw) === 'Boolean');
     var success = O.Set(P, V, O);
     if (success === false && Throw === true) throw $TypeError();
     return success;
@@ -408,7 +405,7 @@ function _Set(O, P, V, Throw) {
 
 // 7.3.4
 function CreateDataProperty(O, P, V) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var newDesc = PropertyDescriptor({ Value: V, Writable: true, Enumerable: true, Configurable: true });
     return O.DefineOwnProperty(P, newDesc);
@@ -416,7 +413,7 @@ function CreateDataProperty(O, P, V) {
 
 // 7.3.5
 function CreateMethodProperty(O, P, V) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var newDesc = PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true });
     return O.DefineOwnProperty(P, newDesc);
@@ -424,7 +421,7 @@ function CreateMethodProperty(O, P, V) {
 
 // 7.3.6
 function CreateDataPropertyOrThrow(O, P, V) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var success = CreateDataProperty(O, P, V);
     if (success === false) throw $TypeError();
@@ -433,7 +430,7 @@ function CreateDataPropertyOrThrow(O, P, V) {
 
 // 7.3.7
 function DefinePropertyOrThrow(O, P, desc) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var success = O.DefineOwnProperty(P, desc);
     if (success === false) throw $TypeError();
@@ -442,7 +439,7 @@ function DefinePropertyOrThrow(O, P, desc) {
 
 // 7.3.8
 function DeletePropertyOrThrow(O, P) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var success = O.Delete(P);
     if (success === false) throw $TypeError();
@@ -460,14 +457,14 @@ function GetMethod(V, P) {
 
 // 7.3.10
 function HasProperty(O, P) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     return O.HasProperty(P);
 }
 
 // 7.3.11
 function HasOwnProperty(O, P) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(IsPropertyKey(P) === true);
     var desc = O.GetOwnProperty(P);
     if (desc === undefined) return false;
@@ -492,7 +489,7 @@ function Construct(F, argumentsList, newTarget) {
 
 // 7.3.14
 function SetIntegrityLevel(O, level) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(level === "sealed" || level === "frozen");
     var status = O.PreventExtensions();
     if (status === false) return false;
@@ -519,7 +516,7 @@ function SetIntegrityLevel(O, level) {
 
 // 7.3.15
 function TestIntegrityLevel(O, level) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     Assert(level === "sealed" || level === "frozen");
     var status = IsExtensible(O);
     if (status === true) return false;
@@ -550,8 +547,8 @@ function CreateArrayFromList(elements) {
 
 // 7.3.17
 function CreateListFromArrayLike(obj, elementTypes) {
-    if (elementTypes === undefined) var elementTypes = [TYPE_Undefined, TYPE_Null, TYPE_Boolean, TYPE_String, TYPE_Symbol, TYPE_Number, TYPE_Object];
-    if (Type(obj) !== TYPE_Object) throw $TypeError();
+    if (elementTypes === undefined) var elementTypes = ['Undefined', 'Null', 'Boolean', 'String', 'Symbol', 'Number', 'Object'];
+    if (Type(obj) !== 'Object') throw $TypeError();
     var len = ToLength(Get(obj, "length"));
     var list = [];
     var index = 0;
@@ -580,24 +577,22 @@ function OrdinaryHasInstance(C, O) {
         var BC = C.BoundTargetFunction;
         return InstanceofOperator(O, BC);
     }
-    if (Type(O) !== TYPE_Object) return false;
+    if (Type(O) !== 'Object') return false;
     var P = Get(C, "prototype");
-    if (Type(P) !== TYPE_Object) throw $TypeError();
+    if (Type(P) !== 'Object') throw $TypeError();
     while (true) {
         var O = O.GetPrototypeOf();
         if (O === null) return false;
-        if (SameValue(P, O) === true,
-            return true;
-        }
+        if (SameValue(P, O) === true) return true;
     }
 }
 
 // 7.3.20
 function SpeciesConstructor(O, defaultConstructor) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     var C = Get(O, "constructor");
     if (C === undefined) return defaultConstructor;
-    if (Type(C) !== TYPE_Object) throw $TypeError();
+    if (Type(C) !== 'Object') throw $TypeError();
     var S = Get(C, wellKnownSymbols['@@species']);
     if (S === undefined || S === null) return defaultConstructor;
     if (IsConstructor(S) === true) return S;
@@ -606,11 +601,11 @@ function SpeciesConstructor(O, defaultConstructor) {
 
 // 7.3.21
 function EnumerableOwnNames(O) {
-    Assert(Type(O) === TYPE_Object);
+    Assert(Type(O) === 'Object');
     var ownKeys = O.OwnPropertyKeys();
     var names = [];
     for (var key of ownKeys) {
-        if (Type(key) === TYPE_String) {
+        if (Type(key) === 'String') {
             var desc = O.GetOwnProperty(key);
             if (desc !== undefined) {
                 if (desc.Enumerable === true) names.push(key);
@@ -641,15 +636,13 @@ function GetFunctionRealm(obj) {
 
 // 7.4 Operations on Iterator Objects
 
-See Common Iteration Interfaces(25.1);
-
 // 7.4.1
 function GetIterator(obj, method) {
     if (method === undefined) {
         var method = GetMethod(obj, wellKnownSymbols['@@iterator']);
     }
     var iterator = Call(method, obj);
-    if (Type(iterator) !== TYPE_Object) throw $TypeError();
+    if (Type(iterator) !== 'Object') throw $TypeError();
     return iterator;
 }
 
@@ -660,19 +653,19 @@ function IteratorNext(iterator, value) {
     } else {
         var result = Invoke(iterator, "next", [value]);
     }
-    if (Type(result) !== TYPE_Object) throw $TypeError();
+    if (Type(result) !== 'Object') throw $TypeError();
     return result;
 }
 
 // 7.4.3
 function IteratorComplete(iterResult) {
-    Assert(Type(iterResult) === TYPE_Object);
+    Assert(Type(iterResult) === 'Object');
     return ToBoolean(Get(iterResult, "done"));
 }
 
 // 7.4.4
 function IteratorValue(iterResult) {
-    Assert(Type(iterResult) === TYPE_Object);
+    Assert(Type(iterResult) === 'Object');
     return Get(iterResult, "value");
 }
 
@@ -686,8 +679,8 @@ function IteratorStep(iterator) {
 
 // 7.4.6
 function IteratorClose(iterator, completion) {
-    Assert(Type(iterator) === TYPE_Object);
-    Assert(Type(completion) === TYPE_CompletionRecord);
+    Assert(Type(iterator) === 'Object');
+    Assert(Type(completion) === 'Completion Record');
     var _return = GetMethod(iterator, "return");
     if (_return === undefined) return Completion(completion);
     try {
@@ -699,14 +692,14 @@ function IteratorClose(iterator, completion) {
     }
     if (completion.Type === 'throw') return Completion(completion);
     if (innerResult.Type === 'throw') return Completion(innerResult);
-    if (Type(innerResult.Value) !== TYPE_Object) return Completion({ Type: 'throw', Value: $TypeError(), Target: empty });
+    if (Type(innerResult.Value) !== 'Object') return Completion({ Type: 'throw', Value: $TypeError(), Target: empty });
     return Completion(completion);
 }
 
 // 7.4.7
 function CreateIterResultObject(value, done) {
-    Assert(Type(done) === TYPE_Boolean);
-    var obj = ObjectCreate(currentRealm.Intrinsics["%ObjectPrototype%"]);
+    Assert(Type(done) === 'Boolean');
+    var obj = ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%']);
     CreateDataProperty(obj, "value", value);
     CreateDataProperty(obj, "done", done);
     return obj;
@@ -714,7 +707,7 @@ function CreateIterResultObject(value, done) {
 
 // 7.4.8
 function CreateListIterator(list) {
-    var iterator = ObjectCreate(currentRealm.Intrinsics["%IteratorPrototype%"], ['IteratorNext', 'IteratedList', 'ListIteratorNextIndex']);
+    var iterator = ObjectCreate(currentRealm.Intrinsics['%IteratorPrototype%'], ['IteratorNext', 'IteratedList', 'ListIteratorNextIndex']);
     iterator.IteratedList = list;
     iterator.ListIteratorNextIndex = 0;
     var next = BuiltinFunction(ListIterator_next); //TODO

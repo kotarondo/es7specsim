@@ -39,32 +39,24 @@ const absent = { absent: true };
 function Type(x) {
     switch (typeof x) {
         case 'undefined':
-            return TYPE_Undefined;
+            return 'Undefined';
         case 'boolean':
-            return TYPE_Boolean;
+            return 'Boolean';
         case 'number':
-            return TYPE_Number;
+            return 'Number';
         case 'string':
-            return TYPE_String;
+            return 'String';
         case 'symbol':
-            return TYPE_Symbol;
+            return 'Symbol';
     }
-    if (x === null) return TYPE_Null;
+    if (x === null) return 'Null';
     if (x.$type !== undefined) return x.$type;
-    if (Array.isArray(x) === true) return TYPE_List;
-    if (x.length !== undefined) return TYPE_DataBlock;
-    return TYPE_Record;
+    if (Array.isArray(x) === true) return 'List';
+    if (x.length !== undefined) return 'Data Block';
+    return 'Record';
 }
 
 // 6.1 ECMAScript Language Types
-
-const TYPE_Undefined = 'Undefined';
-const TYPE_Null = 'Null';
-const TYPE_Boolean = 'Boolean';
-const TYPE_Number = 'Number';
-const TYPE_String = 'String';
-const TYPE_Symbol = 'Symbol';
-const TYPE_Object = 'Object';
 
 // 6.1.1 The Undefined Type
 // 6.1.2 The Null Type
@@ -148,113 +140,7 @@ The semantics of the essential internal methods for ordinary objects and standar
 // 6.1.7.3 Invariants of the Essential Internal Methods
 // 6.1.7.4 Well-Known Intrinsic Objects
 
-
-/* TODO
-Table 7: Well-known Intrinsic Objects
-Intrinsic Name	Global Name	ECMAScript Language Association
-%Array%	Array	The Array constructor (22.1.1)
-%ArrayBuffer%	ArrayBuffer	The ArrayBuffer constructor (24.1.2)
-%ArrayBufferPrototype%	ArrayBuffer.prototype	The initial value of the prototype data property of %ArrayBuffer%.
-%ArrayIteratorPrototype%		The prototype of Array iterator objects (22.1.5)
-%ArrayPrototype%	Array.prototype	The initial value of the prototype data property of %Array% (22.1.3)
-%ArrayProto_values%	Array.prototype.values	The initial value of the values data property of %ArrayPrototype% (22.1.3.30)
-%Boolean%	Boolean	The Boolean constructor (19.3.1)
-%BooleanPrototype%	Boolean.prototype	The initial value of the prototype data property of %Boolean% (19.3.3)
-%DataView%	DataView	The DataView constructor (24.2.2)
-%DataViewPrototype%	DataView.prototype	The initial value of the prototype data property of %DataView%
-%Date%	Date	The Date constructor (20.3.2)
-%DatePrototype%	Date.prototype	The initial value of the prototype data property of %Date%.
-%decodeURI%	decodeURI	The decodeURI function (18.2.6.2)
-%decodeURIComponent%	decodeURIComponent	The decodeURIComponent function (18.2.6.3)
-%encodeURI%	encodeURI	The encodeURI function (18.2.6.4)
-%encodeURIComponent%	encodeURIComponent	The encodeURIComponent function (18.2.6.5)
-%Error%	Error	The Error constructor (19.5.1)
-%ErrorPrototype%	Error.prototype	The initial value of the prototype data property of %Error%
-%eval%	eval	The eval function (18.2.1)
-%EvalError%	EvalError	The EvalError constructor (19.5.5.1)
-%EvalErrorPrototype%	EvalError.prototype	The initial value of the prototype property of %EvalError%
-%Float32Array%	Float32Array	The Float32Array constructor (22.2)
-%Float32ArrayPrototype%	Float32Array.prototype	The initial value of the prototype data property of %Float32Array%.
-%Float64Array%	Float64Array	The Float64Array constructor (22.2)
-%Float64ArrayPrototype%	Float64Array.prototype	The initial value of the prototype data property of %Float64Array%
-%Function%	Function	The Function constructor (19.2.1)
-%FunctionPrototype%	Function.prototype	The initial value of the prototype data property of %Function%
-%Generator%		The initial value of the prototype property of %GeneratorFunction%
-%GeneratorFunction%		The constructor of generator objects (25.2.1)
-%GeneratorPrototype%		The initial value of the prototype property of %Generator%
-%Int8Array%	Int8Array	The Int8Array constructor (22.2)
-%Int8ArrayPrototype%	Int8Array.prototype	The initial value of the prototype data property of %Int8Array%
-%Int16Array%	Int16Array	The Int16Array constructor (22.2)
-%Int16ArrayPrototype%	Int16Array.prototype	The initial value of the prototype data property of %Int16Array%
-%Int32Array%	Int32Array	The Int32Array constructor (22.2)
-%Int32ArrayPrototype%	Int32Array.prototype	The initial value of the prototype data property of %Int32Array%
-%isFinite%	isFinite	The isFinite function (18.2.2)
-%isNaN%	isNaN	The isNaN function (18.2.3)
-%IteratorPrototype%		An object that all standard built-in iterator objects indirectly inherit from
-%JSON%	JSON	The JSON object (24.3)
-%Map%	Map	The Map constructor (23.1.1)
-%MapIteratorPrototype%		The prototype of Map iterator objects (23.1.5)
-%MapPrototype%	Map.prototype	The initial value of the prototype data property of %Map%
-%Math%	Math	The Math object (20.2)
-%Number%	Number	The Number constructor (20.1.1)
-%NumberPrototype%	Number.prototype	The initial value of the prototype property of %Number%
-%Object%	Object	The Object constructor (19.1.1)
-%ObjectPrototype%	Object.prototype	The initial value of the prototype data property of %Object%. (19.1.3)
-%ObjProto_toString%	Object.prototype.toString	The initial value of the toString data property of %ObjectPrototype% (19.1.3.6)
-%ObjProto_valueOf%	Object.prototype.valueOf	The initial value of the valueOf data property of %ObjectPrototype% (19.1.3.7)
-%parseFloat%	parseFloat	The parseFloat function (18.2.4)
-%parseInt%	parseInt	The parseInt function (18.2.5)
-%Promise%	Promise	The Promise constructor (25.4.3)
-%PromisePrototype%	Promise.prototype	The initial value of the prototype data property of %Promise%
-%Proxy%	Proxy	The Proxy constructor (26.2.1)
-%RangeError%	RangeError	The RangeError constructor (19.5.5.2)
-%RangeErrorPrototype%	RangeError.prototype	The initial value of the prototype property of %RangeError%
-%ReferenceError%	ReferenceError	The ReferenceError constructor (19.5.5.3)
-%ReferenceErrorPrototype%	ReferenceError.prototype	The initial value of the prototype property of %ReferenceError%
-%Reflect%	Reflect	The Reflect object (26.1)
-%RegExp%	RegExp	The RegExp constructor (21.2.3)
-%RegExpPrototype%	RegExp.prototype	The initial value of the prototype data property of %RegExp%
-%Set%	Set	The Set constructor (23.2.1)
-%SetIteratorPrototype%		The prototype of Set iterator objects (23.2.5)
-%SetPrototype%	Set.prototype	The initial value of the prototype data property of %Set%
-%String%	String	The String constructor (21.1.1)
-%StringIteratorPrototype%		The prototype of String iterator objects (21.1.5)
-%StringPrototype%	String.prototype	The initial value of the prototype data property of %String%
-%Symbol%	Symbol	The Symbol constructor (19.4.1)
-%SymbolPrototype%	Symbol.prototype	The initial value of the prototype data property of %Symbol%. (19.4.3)
-%SyntaxError%	SyntaxError	The SyntaxError constructor (19.5.5.4)
-%SyntaxErrorPrototype%	SyntaxError.prototype	The initial value of the prototype property of %SyntaxError%
-%ThrowTypeError%		A function object that unconditionally throws a new instance of %TypeError%
-%TypedArray%		The super class of all typed Array constructors (22.2.1)
-%TypedArrayPrototype%		The initial value of the prototype property of %TypedArray%
-%TypeError%	TypeError	The TypeError constructor (19.5.5.5)
-%TypeErrorPrototype%	TypeError.prototype	The initial value of the prototype property of %TypeError%
-%Uint8Array%	Uint8Array	The Uint8Array constructor (22.2)
-%Uint8ArrayPrototype%	Uint8Array.prototype	The initial value of the prototype data property of %Uint8Array%
-%Uint8ClampedArray%	Uint8ClampedArray	The Uint8ClampedArray constructor (22.2)
-%Uint8ClampedArrayPrototype%	Uint8ClampedArray.prototype	The initial value of the prototype data property of %Uint8ClampedArray%
-%Uint16Array%	Uint16Array	The Uint16Array constructor (22.2)
-%Uint16ArrayPrototype%	Uint16Array.prototype	The initial value of the prototype data property of %Uint16Array%
-%Uint32Array%	Uint32Array	The Uint32Array constructor (22.2)
-%Uint32ArrayPrototype%	Uint32Array.prototype	The initial value of the prototype data property of %Uint32Array%
-%URIError%	URIError	The URIError constructor (19.5.5.6)
-%URIErrorPrototype%	URIError.prototype	The initial value of the prototype property of %URIError%
-%WeakMap%	WeakMap	The WeakMap constructor (23.3.1)
-%WeakMapPrototype%	WeakMap.prototype	The initial value of the prototype data property of %WeakMap%
-%WeakSet%	WeakSet	The WeakSet constructor (23.4.1)
-%WeakSetPrototype%	WeakSet.prototype	The initial value of the prototype data property of %WeakSet%
-*/
-
 // 6.2 ECMAScript Specification Types
-
-const TYPE_List = 'List';
-const TYPE_Record = 'Record';
-const TYPE_CompletionRecord = 'Completion Record';
-const TYPE_Reference = 'Reference';
-const TYPE_PropertyDescriptor = 'Property Descriptor';
-const TYPE_LexicalEnvironment = 'Lexical Environment';
-const TYPE_EnvironmentRecord = 'Environment Record';
-const TYPE_DataBlock = 'Data Block';
 
 // 6.2.1 The List and Record Specification Types
 
@@ -270,7 +156,7 @@ function Completion(like) {
     }
 }
 
-Completion.prototype.$type = TYPE_CompletionRecord;
+Completion.prototype.$type = 'Completion Record';
 Completion.prototype.Type = absent;
 Completion.prototype.Value = absent;
 Completion.prototype.Target = absent;
@@ -301,11 +187,16 @@ function UpdateEmpty(completionRecord, value) {
 
 // 6.2.3 The Reference Specification Type
 
-function Reference() {
-    //TODO
+function Reference(base, referenced_name, strict_reference_flag) {
+    if (!this) {
+        return new Reference(base, referenced_name, strict_reference_flag);
+    }
+    this.base = base;
+    this.referenced_name = referenced_name;
+    this.strict_reference_flag = strict_reference_flag;
 }
 
-Reference.prototype.$type = TYPE_Reference;
+Reference.prototype.$type = 'Reference';
 Reference.prototype.base = absent;
 Reference.prototype.referenced_name = absent;
 Reference.prototype.strict_reference_flag = absent;
@@ -335,7 +226,7 @@ function HasPrimitiveBase(V) {
 }
 
 function IsPropertyReference(V) {
-    if (Type(V.base) === TYPE_Object) return true;
+    if (Type(V.base) === 'Object') return true;
     return HasPrimitiveBase(V);
 }
 
@@ -351,9 +242,9 @@ function IsSuperReference(V) {
 
 // 6.2.3.1
 function GetValue(V) {
-    if (Type(V) !== TYPE_Reference) return V;
+    if (Type(V) !== 'Reference') return V;
     var base = GetBase(V);
-    if (IsUnresolvableReference(V) === true) throw $ReferenceError(V.referenced_name + ' is not defined');
+    if (IsUnresolvableReference(V) === true) throw $ReferenceError();
     if (IsPropertyReference(V) === true) {
         if (HasPrimitiveBase(V) === true) {
             Assert(base !== null && base !== undefined);
@@ -361,18 +252,18 @@ function GetValue(V) {
         }
         return base.Get(GetReferencedName(V), GetThisValue(V));
     } else {
-        Assert(Type(base) === TYPE_EnvironmentRecord);
+        Assert(Type(base) === 'Environment Record');
         return base.GetBindingValue(GetReferencedName(V), IsStrictReference(V));
     }
 }
 
 // 6.2.3.2
 function PutValue(V, W) {
-    if (Type(V) !== TYPE_Reference) throw $ReferenceError();
+    if (Type(V) !== 'Reference') throw $ReferenceError();
     var base = V.base;
     if (IsUnresolvableReference(V) === true) {
         if (IsStrictReference(V) === true) {
-            throw $ReferenceError(V.referenced_name + ' is not defined');
+            throw $ReferenceError();
         }
         var globalObj = GetGlobalObject();
         return _Set(globalObj, GetReferencedName(V), W, false);
@@ -385,7 +276,7 @@ function PutValue(V, W) {
         if (succeeded === false && IsStrictReference(V) === true) throw $TypeError();
         return;
     } else {
-        Assert(Type(base) === TYPE_EnvironmentRecord);
+        Assert(Type(base) === 'Environment Record');
         return base.SetMutableBinding(GetReferencedName(V), W, IsStrictReference(V));
     }
 }
@@ -401,10 +292,10 @@ function GetThisValue(V) {
 
 // 6.2.3.4
 function InitializeReferencedBinding(V, W) {
-    Assert(Type(V) === TYPE_Reference);
+    Assert(Type(V) === 'Reference');
     Assert(IsUnresolvableReference(V) === false);
     var base = GetBase(V);
-    Assert(Type(base) === TYPE_EnvironmentRecord);
+    Assert(Type(base) === 'Environment Record');
     return base.InitializeBinding(GetReferencedName(V), W);
 }
 
@@ -419,7 +310,7 @@ function PropertyDescriptor(like) {
     }
 }
 
-PropertyDescriptor.prototype.$type = TYPE_PropertyDescriptor;
+PropertyDescriptor.prototype.$type = 'Property Descriptor';
 PropertyDescriptor.prototype.Value = absent;
 PropertyDescriptor.prototype.Writable = absent;
 PropertyDescriptor.prototype.Get = absent;
@@ -451,7 +342,7 @@ function IsGenericDescriptor(Desc) {
 // 6.2.4.4
 function FromPropertyDescriptor(Desc) {
     if (Desc === undefined) return undefined;
-    var obj = ObjectCreate(currentRealm.Intrinsics["%ObjectPrototype%"]);
+    var obj = ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%']);
     if (Desc.Value !== absent) {
         CreateDataProperty(obj, "value", Desc.Value);
     }
@@ -517,7 +408,7 @@ function ToPropertyDescriptor(Obj) {
 
 // 6.2.4.6
 function CompletePropertyDescriptor(Desc) {
-    Assert(Type(Desc) === TYPE_PropertyDescriptor);
+    Assert(Type(Desc) === 'Property Descriptor');
     var like = { Value: undefined, Writable: false, Get: undefined, Set: undefined, Enumerable: false, Configurable: false };
     if (IsGenericDescriptor(Desc) === true || IsDataDescriptor(Desc) === true) {
         if (Desc.Value === absent) Desc.Value = like.Value;
@@ -555,6 +446,6 @@ function CopyDataBlockBytes(toBlock, toIndex, fromBlock, fromIndex, count) {
         toIndex++;
         fromIndex++;
         count--;
-        return NormalCompletion(empty);
+        return empty;
     }
 }
