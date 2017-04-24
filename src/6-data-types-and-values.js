@@ -34,7 +34,6 @@
 // 6 ECMAScript Data Types and Values
 
 const empty = { empty: true };
-const absent = { absent: true };
 
 function Type(x) {
     switch (typeof x) {
@@ -157,9 +156,6 @@ function Completion(like) {
 }
 
 Completion.prototype.$type = 'Completion Record';
-Completion.prototype.Type = absent;
-Completion.prototype.Value = absent;
-Completion.prototype.Target = absent;
 
 function ResolveCompletion(completion) {
     Assert(completion instanceof Completion);
@@ -197,10 +193,6 @@ function Reference(base, referenced_name, strict_reference_flag) {
 }
 
 Reference.prototype.$type = 'Reference';
-Reference.prototype.base = absent;
-Reference.prototype.referenced_name = absent;
-Reference.prototype.strict_reference_flag = absent;
-Reference.prototype.thisValue = absent;
 
 function GetBase(V) {
     return V.base;
@@ -236,7 +228,7 @@ function IsUnresolvableReference(V) {
 }
 
 function IsSuperReference(V) {
-    if (V.thisValue !== absent) return true;
+    if ('thisValue' in V) return true;
     return false;
 }
 
@@ -311,24 +303,18 @@ function PropertyDescriptor(like) {
 }
 
 PropertyDescriptor.prototype.$type = 'Property Descriptor';
-PropertyDescriptor.prototype.Value = absent;
-PropertyDescriptor.prototype.Writable = absent;
-PropertyDescriptor.prototype.Get = absent;
-PropertyDescriptor.prototype.Set = absent;
-PropertyDescriptor.prototype.Enumerable = absent;
-PropertyDescriptor.prototype.Configurable = absent;
 
 // 6.2.4.1
 function IsAccessorDescriptor(Desc) {
     if (Desc === undefined) return false;
-    if (Desc.Get === absent && Desc.Set === absent) return false;
+    if (!('Get' in Desc) && !('Set' in Desc)) return false;
     return true;
 }
 
 // 6.2.4.2
 function IsDataDescriptor(Desc) {
     if (Desc === undefined) return false;
-    if (Desc.Value === absent && Desc.Writable === absent) return false;
+    if (!('Value' in Desc) && !('Writable' in Desc)) return false;
     return true;
 }
 
@@ -343,22 +329,22 @@ function IsGenericDescriptor(Desc) {
 function FromPropertyDescriptor(Desc) {
     if (Desc === undefined) return undefined;
     var obj = ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%']);
-    if (Desc.Value !== absent) {
+    if ('Value' in Desc) {
         CreateDataProperty(obj, "value", Desc.Value);
     }
-    if (Desc.Writable !== absent) {
+    if ('Writable' in Desc) {
         CreateDataProperty(obj, "writable", Desc.Writable);
     }
-    if (Desc.Get !== absent) {
+    if ('Get' in Desc) {
         CreateDataProperty(obj, "get", Desc.Get);
     }
-    if (Desc.Set !== absent) {
+    if ('Set' in Desc) {
         CreateDataProperty(obj, "set", Desc.Set);
     }
-    if (Desc.Enumerable !== absent) {
+    if ('Enumerable' in Desc) {
         CreateDataProperty(obj, "enumerable", Desc.Enumerable);
     }
-    if (Desc.Configurable !== absent) {
+    if ('Configurable' in Desc) {
         CreateDataProperty(obj, "configurable", Desc.Configurable);
     }
     return obj;
@@ -400,8 +386,8 @@ function ToPropertyDescriptor(Obj) {
         if (IsCallable(setter) === false && setter !== undefined) throw $TypeError();
         desc.Set = setter;
     }
-    if (desc.Get !== absent || desc.Set !== absent) {
-        if (desc.Value !== absent || desc.Writable !== absent) throw $TypeError();
+    if ('Get' in desc || 'Set' in desc) {
+        if ('Value' in desc || 'Writable' in desc) throw $TypeError();
     }
     return desc;
 }
@@ -411,14 +397,14 @@ function CompletePropertyDescriptor(Desc) {
     Assert(Type(Desc) === 'Property Descriptor');
     var like = { Value: undefined, Writable: false, Get: undefined, Set: undefined, Enumerable: false, Configurable: false };
     if (IsGenericDescriptor(Desc) === true || IsDataDescriptor(Desc) === true) {
-        if (Desc.Value === absent) Desc.Value = like.Value;
-        if (Desc.Writable === absent) Desc.Writable = like.Writable;
+        if (!('Value' in Desc)) Desc.Value = like.Value;
+        if (!('Writable' in Desc)) Desc.Writable = like.Writable;
     } else {
-        if (Desc.Get === absent) Desc.Get = like.Get;
-        if (Desc.Set === absent) Desc.Set = like.Set;
+        if (!('Get' in Desc)) Desc.Get = like.Get;
+        if (!('Set' in Desc)) Desc.Set = like.Set;
     }
-    if (Desc.Enumerable) Desc.Enumerable = like.Enumerable;
-    if (Desc.Configurable) Desc.Configurable = like.Configurable;
+    if (!('Enumerable' in Desc)) Desc.Enumerable = like.Enumerable;
+    if (!('Configurable' in Desc)) Desc.Configurable = like.Configurable;
     return Desc;
 }
 

@@ -1,22 +1,22 @@
 /*
- Copyright (c) 2017, Kotaro Endo;
- All rights reserved;
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
  
- Redistribution  and  and  use in source  and  and  binary forms, with or without
+ Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
  are met:
  
  1. Redistributions of source code must retain the above copyright
-    notice, this list of conditions  and  and  the following disclaimer;
+    notice, this list of conditions and the following disclaimer.
  
  2. Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions  and  and  the following
+    copyright notice, this list of conditions and the following
     disclaimer in the documentation and/or other materials provided
-    with the distribution;
+    with the distribution.
  
  3. Neither the name of the copyright holder nor the names of its
     contributors may be used to endorse or promote products derived
-    from this software without specific prior written permission;
+    from this software without specific prior written permission.
  
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -28,13 +28,13 @@
  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE;
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 // 8 Executable Code and Execution Contexts
 
 // 8.1
-function LexicalEnvironment() {}
+class LexicalEnvironment() {}
 
 LexicalEnvironment.prototype.$type = 'Lexical Environment';
 
@@ -282,12 +282,6 @@ class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
     }
 }
 
-FunctionEnvironmentRecord.prototype.ThisValue = absent;
-FunctionEnvironmentRecord.prototype.ThisBindingStatus = absent;
-FunctionEnvironmentRecord.prototype.FunctionObject = absent;
-FunctionEnvironmentRecord.prototype.HomeObject = absent;
-FunctionEnvironmentRecord.prototype.NewTarget = absent;
-
 // 8.1.1.4
 class GlobalEnvironmentRecord extends EnvironmentRecord {
 
@@ -479,11 +473,6 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
     }
 }
 
-GlobalEnvironmentRecord.prototype.ObjectRecord = absent;
-GlobalEnvironmentRecord.prototype.GlobalThisValue = absent;
-GlobalEnvironmentRecord.prototype.DeclarativeRecord = absent;
-GlobalEnvironmentRecord.prototype.VarNames = absent;
-
 // 8.1.1.5
 class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord {
 
@@ -568,7 +557,7 @@ function NewObjectEnvironment(O, E) {
 
 // 8.1.2.4
 function NewFunctionEnvironment(F, newTarget) {
-    Assert(F instanceof ECMAScriptFunction);
+    Assert(F instanceof ECMAScriptFunctionObject);
     Assert(Type(newTarget) === 'Undefined' || Type(newTarget) === 'Object');
     var env = new LexicalEnvironment();
     var envRec = new FunctionEnvironmentRecord();
@@ -608,13 +597,9 @@ function NewModuleEnvironment(E) {
 }
 
 // 8.2 Realms
-function RealmRecord() {}
+class RealmRecord() {}
 
 RealmRecord.prototype.$type = 'Realm Record';
-RealmRecord.prototype.Intrinsics = absent;
-RealmRecord.prototype.GlobalObject = absent;
-RealmRecord.prototype.GlobalEnv = absent;
-RealmRecord.prototype.TemplateMap = absent;
 
 // 8.2.1
 function CreateRealm() {
@@ -770,7 +755,7 @@ function SetDefaultGlobalBindings(realmRec) {
 }
 
 // 8.3
-function ExecutionContext() {}
+class ExecutionContext() {}
 
 const the_execution_context_stack = [];
 var the_running_execution_context = undefined;
@@ -844,7 +829,7 @@ function ResolveThisBinding() {
 // 8.3.5
 function GetNewTarget() {
     var envRec = GetThisEnvironment();
-    Assert(envRec.NewTarget !== absent);
+    Assert('NewTarget' in envRec);
     return envRec.NewTarget;
 }
 
@@ -897,7 +882,7 @@ function NextJob(result) { // We assume Tail-Call-Optimization properly works in
 }
 
 // 8.5
-function InitializeHostDefinedRealm(entries, create_any_implementation_defined_global_object_properties) {
+function InitializeHostDefinedRealm(entries) {
     var realm = CreateRealm();
     var newContext = new ExecutionContext();
     newContext.Function = null;
@@ -908,7 +893,7 @@ function InitializeHostDefinedRealm(entries, create_any_implementation_defined_g
     var thisValue = undefined; // implementation defined
     SetRealmGlobalObject(realm, global, thisValue);
     var globalObj = SetDefaultGlobalBindings(realm);
-    create_any_implementation_defined_global_object_properties(globalObj);
+    // Create any implementation defined global object properties on globalObj.
     for (var e of entries) {
         var sourceText = e.sourceText;
         var hostDefined = e.hostDefined;
@@ -918,5 +903,5 @@ function InitializeHostDefinedRealm(entries, create_any_implementation_defined_g
             EnqueueJob("ScriptJobs", TopLevelModuleEvaluationJob, [sourceText, hostDefined]);
         }
     }
-    return NextJob(undefined);
+    return NextJob(NormalCompletion(undefined));
 }
