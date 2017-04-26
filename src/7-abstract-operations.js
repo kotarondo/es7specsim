@@ -230,13 +230,19 @@ function ToObject(argument) {
         case 'Null':
             throw $TypeError();
         case 'Boolean':
-            return new $Boolean(argument);
+            var obj = ObjectCreate(currentRealm.Intrinsics['%BooleanPrototype%'], ['BooleanData']);
+            obj.BooleanData = argument;
+            return obj;
         case 'Number':
-            return new $Number(argument);
+            var obj = ObjectCreate(currentRealm.Intrinsics['%NumberPrototype%'], ['NumberData']);
+            obj.NumberData = argument;
+            return obj;
         case 'String':
-            return new $String(argument);
+            return StringCreate(argument, currentRealm.Intrinsics['%StringPrototype%']);
         case 'Symbol':
-            return new $Symbol(argument);
+            var obj = ObjectCreate(currentRealm.Intrinsics['%SymbolPrototype%'], ['SymbolData']);
+            obj.SymbolData = argument;
+            return obj;
         case 'Object':
             return argument;
     }
@@ -253,8 +259,8 @@ function ToPropertyKey(argument) {
 function ToLength(argument) {
     var len = ToInteger(argument);
     if (len <= +0) return +0;
-    if (len === +Infinity) return 9007199254740991;
-    return Math.min(len, 9007199254740991);
+    if (len === +Infinity) return 0x1fffffffffffff;
+    return Math.min(len, 0x1fffffffffffff);
 }
 
 // 7.1.16
@@ -710,7 +716,7 @@ function CreateListIterator(list) {
     var iterator = ObjectCreate(currentRealm.Intrinsics['%IteratorPrototype%'], ['IteratorNext', 'IteratedList', 'ListIteratorNextIndex']);
     iterator.IteratedList = list;
     iterator.ListIteratorNextIndex = 0;
-    var next = BuiltinFunction(ListIterator_next); //TODO
+    var next = CreateBuiltinFunction(currentRealm, ListIterator_next, currentRealm.Intrinsics['%FunctionPrototype%']);
     iterator.IteratorNext = next;
     CreateMethodProperty(iterator, "next", next);
     return iterator;

@@ -34,15 +34,11 @@
 // 8 Executable Code and Execution Contexts
 
 // 8.1
-class LexicalEnvironment() {}
-
-LexicalEnvironment.prototype.$type = 'Lexical Environment';
+class LexicalEnvironment {}
 
 // 8.1.1 Environment Records
 
 class EnvironmentRecord {}
-
-EnvironmentRecord.prototype.$type = 'Environment Record';
 
 const ER_mutable = 1;
 const ER_immutable = 2;
@@ -357,8 +353,7 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
             var status = ObjRec.DeleteBinding(N);
             if (status === true) {
                 var varNames = envRec.VarNames;
-                var i = varNames.indexOf(N);
-                if (i >= 0) varNames.splice(i, 1);
+                if (varNames.includes(N)) remove_an_element_from(N, varNames);
             }
             return status;
         }
@@ -513,7 +508,7 @@ class ModuleEnvironmentRecord extends DeclarativeEnvironmentRecord {
     CreateImportBinding(N, M, N2) {
         var envRec = this;
         Assert(envRec.attributes[N] === undefined);
-        Assert(M instanceof ModuleRecord);
+        Assert(Type(M) === 'Module Record');
         envRec.attributes[N] = ER_immutable | ER_indirect | ER_initialized;
         envRec.values[N] = { M, N2 };
         return empty;
@@ -539,8 +534,8 @@ function GetIdentifierReference(lex, name, strict) {
 
 // 8.1.2.2
 function NewDeclarativeEnvironment(E) {
-    var env = new LexicalEnvironment();
-    var envRec = new DeclarativeEnvironmentRecord();
+    var env = new LexicalEnvironment;
+    var envRec = new DeclarativeEnvironmentRecord;
     env.EnvironmentRecord = envRec;
     env.outer_lexical_environment = E;
     return env;
@@ -548,7 +543,7 @@ function NewDeclarativeEnvironment(E) {
 
 // 8.1.2.3
 function NewObjectEnvironment(O, E) {
-    var env = new LexicalEnvironment();
+    var env = new LexicalEnvironment;
     var envRec = new ObjectEnvironmentRecord(O);
     env.EnvironmentRecord = envRec;
     env.outer_lexical_environment = E;
@@ -559,8 +554,8 @@ function NewObjectEnvironment(O, E) {
 function NewFunctionEnvironment(F, newTarget) {
     Assert(F instanceof ECMAScriptFunctionObject);
     Assert(Type(newTarget) === 'Undefined' || Type(newTarget) === 'Object');
-    var env = new LexicalEnvironment();
-    var envRec = new FunctionEnvironmentRecord();
+    var env = new LexicalEnvironment;
+    var envRec = new FunctionEnvironmentRecord;
     envRec.FunctionObject = F;
     if (F.ThisMode === 'lexical') envRec.ThisBindingStatus = "lexical";
     else envRec.ThisBindingStatus = "uninitialized";
@@ -574,10 +569,10 @@ function NewFunctionEnvironment(F, newTarget) {
 
 // 8.1.2.5
 function NewGlobalEnvironment(G, thisValue) {
-    var env = new LexicalEnvironment();
+    var env = new LexicalEnvironment;
     var objRec = new ObjectEnvironmentRecord(G);
-    var dclRec = new DeclarativeEnvironmentRecord();
-    var globalRec = new GlobalEnvironmentRecord();
+    var dclRec = new DeclarativeEnvironmentRecord;
+    var globalRec = new GlobalEnvironmentRecord;
     globalRec.ObjectRecord = objRec;
     globalRec.GlobalThisValue = thisValue;
     globalRec.DeclarativeRecord = dclRec;
@@ -589,21 +584,19 @@ function NewGlobalEnvironment(G, thisValue) {
 
 // 8.1.2.6
 function NewModuleEnvironment(E) {
-    var env = new LexicalEnvironment();
-    var envRec = new ModuleEnvironmentRecord();
+    var env = new LexicalEnvironment;
+    var envRec = new ModuleEnvironmentRecord;
     env.EnvironmentRecord = envRec;
     env.outer_lexical_environment = E;
     return env;
 }
 
 // 8.2 Realms
-class RealmRecord() {}
-
-RealmRecord.prototype.$type = 'Realm Record';
+class RealmRecord {}
 
 // 8.2.1
 function CreateRealm() {
-    var realmRec = new RealmRecord();
+    var realmRec = new RealmRecord;
     CreateIntrinsics(realmRec);
     realmRec.GlobalObject = undefined;
     realmRec.GlobalEnv = undefined;
@@ -755,7 +748,7 @@ function SetDefaultGlobalBindings(realmRec) {
 }
 
 // 8.3
-class ExecutionContext() {}
+class ExecutionContext {}
 
 const the_execution_context_stack = [];
 var the_running_execution_context = undefined;
@@ -802,8 +795,7 @@ function ResolveBinding(name, env) {
         var env = the_running_execution_context.LexicalEnvironment;
     }
     Assert(Type(env) === 'Lexical Environment');
-    //TODO
-    if (the_code_matching_the_syntactic_production_that_is_being_evaluated_is_contained_in_strict_mode_code) var strict = true;
+    if (the_code_matching_the_syntactic_production_that_is_being_evaluated_is_contained_in_strict_mode_code) var strict = true; //TODO
     else var strict = false;
     return GetIdentifierReference(env, name, strict);
 }
@@ -873,7 +865,7 @@ function NextJob(result) { // We assume Tail-Call-Optimization properly works in
         return empty;
     }
     var nextPending = nextQueue.shift();
-    var newContext = new ExecutionContext();
+    var newContext = new ExecutionContext;
     newContext.Function = null;
     newContext.Realm = nextPending.Realm;
     newContext.ScriptOrModule = nextPending.ScriptOrModule;
@@ -884,7 +876,7 @@ function NextJob(result) { // We assume Tail-Call-Optimization properly works in
 // 8.5
 function InitializeHostDefinedRealm(entries) {
     var realm = CreateRealm();
-    var newContext = new ExecutionContext();
+    var newContext = new ExecutionContext;
     newContext.Function = null;
     newContext.Realm = realm;
     newContext.ScriptOrModule = null;
