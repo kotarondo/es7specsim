@@ -1,3 +1,36 @@
+/*
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 // 9 Ordinary and Exotic Objects Behaviours
 
 // 9.1 Ordinary Object Internal Methods and Internal Slots
@@ -254,7 +287,7 @@ function OrdinarySet(O, P, V, Receiver) {
     }
     if (IsDataDescriptor(ownDesc) === true) {
         if (ownDesc.Writable === false) return false;
-        if (Type(Receiver) !== Object) return false;
+        if (Type(Receiver) !== 'Object') return false;
         var existingDescriptor = Receiver.GetOwnProperty(P);
         if (existingDescriptor !== undefined) {
             if (IsAccessorDescriptor(existingDescriptor) === true) return false;
@@ -916,7 +949,7 @@ StringExoticObject.prototype.OwnPropertyKeys = function() {
 
 // 9.4.3.3
 function StringCreate(value, prototype) {
-    Assert(Type(value) === String);
+    Assert(Type(value) === 'String');
     var S = new StringExoticObject;
     S.StringData = value;
     S.Prototype = prototype;
@@ -1671,12 +1704,12 @@ ProxyExoticObject.prototype.OwnPropertyKeys = function() {
     var uncheckedResultKeys = trapResult.slice();
     for (var key of targetNonconfigurableKeys) {
         if (!uncheckedResultKeys.includes(key)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify remove a key || remove every key?
+        remove_an_element_from(key, uncheckedResultKeys); //TODO whether remove a key || remove every key?
     }
     if (extensibleTarget === true) return trapResult;
     for (var key of targetConfigurableKeys) {
         if (!uncheckedResultKeys.includes(key)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify remove a key || remove every key?
+        remove_an_element_from(key, uncheckedResultKeys); //TODO whether remove a key || remove every key?
     }
     if (uncheckedResultKeys !== empty) throw $TypeError();
     return trapResult;

@@ -687,13 +687,16 @@ function IteratorStep(iterator) {
 function IteratorClose(iterator, completion) {
     Assert(Type(iterator) === 'Object');
     Assert(Type(completion) === 'Completion Record');
-    var _return = GetMethod(iterator, "return");
+    try {
+        var _return = GetMethod(iterator, "return");
+    } catch (e) {
+        return Completion({ Type: 'throw', Value: e, Target: empty });
+    }
     if (_return === undefined) return Completion(completion);
     try {
         var value = Call(_return, iterator, []);
         var innerResult = NormalCompletion(value);
     } catch (e) {
-        //TODO return/break/continue ???
         var innerResult = Completion({ Type: 'throw', Value: e, Target: empty });
     }
     if (completion.Type === 'throw') return Completion(completion);

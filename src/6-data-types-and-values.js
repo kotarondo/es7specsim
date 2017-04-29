@@ -86,14 +86,12 @@ const wellKnownSymbols = {
 
 // 6.1.6 The Number Type
 // 6.1.7 The Object Type
-
 // 6.1.7.1 Property Attributes
 // 6.1.7.2 Object Internal Methods and Internal Slots
 // 6.1.7.3 Invariants of the Essential Internal Methods
 // 6.1.7.4 Well-Known Intrinsic Objects
 
 // 6.2 ECMAScript Specification Types
-
 // 6.2.1 The List and Record Specification Types
 
 // 6.2.2 The Completion Record Specification Type
@@ -105,15 +103,6 @@ function Completion(like) {
     for (var i in like) {
         this[i] = like[i];
     }
-}
-
-//TODO
-function $ResolveCompletion(completion) {
-    Assert(Type(completion) === 'Completion Record');
-    if (completion.type === 'throw') throw completion.Value;
-    //TODO return/break/continue ???
-    Assert(completion.type === 'normal');
-    return completion.Value;
 }
 
 // 6.2.2.1 NormalCompletion
@@ -299,7 +288,7 @@ function FromPropertyDescriptor(Desc) {
 
 // 6.2.4.5
 function ToPropertyDescriptor(Obj) {
-    if (Type(Obj) !== Object) throw $TypeError();
+    if (Type(Obj) !== 'Object') throw $TypeError();
     var desc = PropertyDescriptor({});
     var hasEnumerable = HasProperty(Obj, "enumerable");
     if (hasEnumerable === true) {

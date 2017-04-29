@@ -273,7 +273,7 @@ class FunctionEnvironmentRecord extends DeclarativeEnvironmentRecord {
         var envRec = this;
         var home = envRec.HomeObject;
         if (home === undefined) return undefined;
-        Assert(Type(home) === Object);
+        Assert(Type(home) === 'Object');
         return home.GetPrototypeOf();
     }
 }
