@@ -854,7 +854,7 @@ function EnqueueJob(queueName, job, arguments) {
 
 // 8.4.2
 function NextJob(result) { // We assume Tail-Call-Optimization properly works in underlying virtual machine.
-    if (result.Type !== 'normal') HostReportErrors([result.Value]);
+    if (is_an_abrupt_completion(result)) HostReportErrors([result.Value]);
     remove_from_the_execution_context_stack(the_running_execution_context);
     Assert(the_execution_context_stack.length === 0);
     if (theJobQueue.PromiseJobs.length > 0) {

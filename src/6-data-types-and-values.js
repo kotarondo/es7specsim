@@ -105,6 +105,10 @@ function Completion(like) {
     }
 }
 
+function is_an_abrupt_completion(c) {
+    return (c instanceof Completion && c.Type !== 'normal');
+}
+
 // 6.2.2.1 NormalCompletion
 function NormalCompletion(argument) {
     return Completion({ Type: 'normal', Value: argument, Target: empty });

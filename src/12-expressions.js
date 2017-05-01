@@ -1566,7 +1566,7 @@ Static_Semantics('Early Errors', [
         if (this.UnaryExpression.strict && this.UnaryExpression instanceof Production['PrimaryExpression: IdentifierReference']) throw EarlySyntaxError();
 
         var expr = this.UnaryExpression;
-        while (expr instanceof Production['PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList']) {
+        while (expr instanceof Production['PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList']) { //TODO instanceof ??
             expr = expr.CoverParenthesizedExpressionAndArrowParameterList.Expression;
             if (expr.strict && expr instanceof Production['PrimaryExpression: IdentifierReference']) throw EarlySyntaxError();
         }
@@ -2469,7 +2469,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         if (this.Elision) {
             var status = concreteCompletion(this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-            if (status.Type !== 'normal') {
+            if (is_an_abrupt_completion(status)) {
                 if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
                 return resolveCompletion(status);
             }
@@ -2493,13 +2493,13 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         var status = concreteCompletion(this.AssignmentElementList.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-        if (status.Type !== 'normal') {
+        if (is_an_abrupt_completion(status)) {
             if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
             return resolveCompletion(status);
         }
         if (this.Elision) {
             var status = concreteCompletion(this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-            if (status.Type !== 'normal') {
+            if (is_an_abrupt_completion(status)) {
                 if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
                 return resolveCompletion(status);
             }

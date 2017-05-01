@@ -31,16 +31,20 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-function contains_any_duplicate_entries(array) {
-    return (array.length !== new Set(array).size);
-}
-
 function get_symbol_description(sym) {
     return /^Symbol\((.*)\)$/.exec(sym.toString())[1];
 }
 
 function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
+}
+
+function contains_any_duplicate_entries(array) {
+    return (array.length !== new Set(array).size);
+}
+
+function also_occurs_in(a, array) {
+    return a.some(e => array.contains(e));
 }
 
 function remove_an_element_from(elem, list) {
@@ -54,4 +58,8 @@ function list_equals(a, b) {
         if (a[i] !== b[i]) return false;
     }
     return true;
+}
+
+function list_append(a, b) {
+    Array.prototype.push.apply(a, b);
 }

@@ -1400,7 +1400,7 @@ ModuleNamespaceExoticObject.prototype.OwnPropertyKeys = function() {
     var O = this;
     var exports = O.Exports.slice();
     var symbolKeys = OrdinaryOwnPropertyKeys(O);
-    Array.prototype.push.apply(exports, symbolKeys);
+    list_append(exports, symbolKeys);
     return exports;
 }
 
