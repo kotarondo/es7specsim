@@ -9,7 +9,7 @@ Syntax([
     'Statement[Yield,Return]: BreakableStatement[?Yield,?Return]',
     'Statement[Yield,Return]: ContinueStatement[?Yield]',
     'Statement[Yield,Return]: BreakStatement[?Yield]',
-    'Statement[Yield,Return]: [+Return] ReturnStatement[?Yield]',
+    'Statement[Yield,Return]:[+Return] ReturnStatement[?Yield]',
     'Statement[Yield,Return]: WithStatement[?Yield,?Return]',
     'Statement[Yield,Return]: LabelledStatement[?Yield,?Return]',
     'Statement[Yield,Return]: ThrowStatement[?Yield]',
@@ -253,7 +253,7 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
         return false;
     },
 
-    'StatementList: StatementListStatementListItem',
+    'StatementList: StatementList StatementListItem',
     function(iterationSet, labelSet) {
         var hasUndefinedLabels = this.StatementList.ContainsUndefinedContinueTarget(iterationSet, []);
         if (hasUndefinedLabels === true) return true;
@@ -318,7 +318,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
 // 13.2.7
 Static_Semantics('TopLevelLexicallyDeclaredNames', [
 
-    'StatementList: StatementListStatementListItem',
+    'StatementList: StatementList StatementListItem',
     function() {
         var names = this.StatementList.TopLevelLexicallyDeclaredNames();
         list_append(names, this.StatementListItem.TopLevelLexicallyDeclaredNames());
@@ -543,7 +543,7 @@ Static_Semantics('Early Errors', [
         if (this.BindingList.BoundNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
     },
 
-    'LexicalBinding: BindingIdentifier Initializer',
+    'LexicalBinding: BindingIdentifier Initializer[opt]',
     function() {
         if (!this.Initializer && LexicalDeclaration_containing_this_production.IsConstantDeclaration() === true) throw EarlySyntaxError(); //TODO
     },
@@ -680,12 +680,12 @@ Static_Semantics('VarDeclaredNames', [
 // 13.3.2.3
 Static_Semantics('VarScopedDeclarations', [
 
-    'VariableDeclarationList: VariableDeclaration ',
+    'VariableDeclarationList: VariableDeclaration',
     function() {
         return [this.VariableDeclaration];
     },
 
-    'VariableDeclarationList: VariableDeclarationList, VariableDeclaration ',
+    'VariableDeclarationList: VariableDeclarationList , VariableDeclaration',
     function() {
         var declarations = this.VariableDeclarationList.VarScopedDeclarations();
         list_append(declarations, this.VariableDeclaration);
@@ -696,7 +696,7 @@ Static_Semantics('VarScopedDeclarations', [
 // 13.3.2.4
 Runtime_Semantics('Evaluation', [
 
-    'VariableStatement: var VariableDeclarationList;',
+    'VariableStatement: var VariableDeclarationList ;',
     function() {
         var next = this.VariableDeclarationList.Evaluation();
         return NormalCompletion(empty);
@@ -767,7 +767,7 @@ Static_Semantics('BoundNames', [
         return [];
     },
 
-    'ArrayBindingPattern: [ Elision ]',
+    'ArrayBindingPattern: [ Elision[opt] ]',
     function() {
         return [];
     },
@@ -782,7 +782,7 @@ Static_Semantics('BoundNames', [
         return this.BindingElementList.BoundNames();
     },
 
-    'ArrayBindingPattern: [ BindingElementList , Elision BindingRestElement ]',
+    'ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement ]',
     function() {
         var names = this.BindingElementList.BoundNames();
         list_append(names, this.BindingRestElement.BoundNames());
@@ -832,22 +832,22 @@ Static_Semantics('ContainsExpression', [
         return false;
     },
 
-    'ArrayBindingPattern: [ Elision ]',
+    'ArrayBindingPattern: [ Elision[opt] ]',
     function() {
         return false;
     },
 
-    'ArrayBindingPattern: [ Elision BindingRestElement ]',
+    'ArrayBindingPattern: [ Elision[opt] BindingRestElement ]',
     function() {
         return this.BindingRestElement.ContainsExpression();
     },
 
-    'ArrayBindingPattern: [ BindingElementList , Elision ]',
+    'ArrayBindingPattern: [ BindingElementList , Elision[opt] ]',
     function() {
         return this.BindingElementList.ContainsExpression();
     },
 
-    'ArrayBindingPattern: [ BindingElementList , Elision BindingRestElement ]',
+    'ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement ]',
     function() {
         var has = this.BindingElementList.ContainsExpression();
         if (has === true) return true;
@@ -880,7 +880,7 @@ Static_Semantics('ContainsExpression', [
         return this.BindingElement.ContainsExpression();
     },
 
-    'BindingElement: Binding PatternInitializer',
+    'BindingElement: BindingPattern Initializer',
     function() {
         return true;
     },
@@ -1009,7 +1009,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         return this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord);
     },
 
-    'ArrayBindingPattern: [ Elision BindingRestElement ]',
+    'ArrayBindingPattern: [ Elision[opt] BindingRestElement ]',
     function(iteratorRecord, environment) {
         if (this.Elision) {
             var status = this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord);
@@ -1033,7 +1033,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         return this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord);
     },
 
-    'ArrayBindingPattern: [ BindingElementList , Elision BindingRestElement]',
+    'ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement ]',
     function(iteratorRecord, environment) {
         var status = this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
         if (this.Elision) {
@@ -1058,7 +1058,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         return this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
     },
 
-    'BindingElisionElement: ElisionBindingElement',
+    'BindingElisionElement: Elision BindingElement',
     function(iteratorRecord, environment) {
         var status = this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord);
         return this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
@@ -1069,7 +1069,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         return this.SingleNameBinding.IteratorBindingInitialization(iteratorRecord, environment);
     },
 
-    'SingleNameBinding: BindingIdentifier Initializer',
+    'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(iteratorRecord, environment) {
         var bindingId = this.BindingIdentifier.StringValue();
         var lhs = ResolveBinding(bindingId, environment);
@@ -1103,7 +1103,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         return InitializeReferencedBinding(lhs, v);
     },
 
-    'BindingElement: BindingPattern Initializer',
+    'BindingElement: BindingPattern Initializer[opt]',
     function(iteratorRecord, environment) {
         if (iteratorRecord.Done === false) {
             try {
@@ -1194,7 +1194,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
 // 13.3.3.7
 Runtime_Semantics('KeyedBindingInitialization', [
 
-    'BindingElement: BindingPatternInitializer',
+    'BindingElement: BindingPattern Initializer[opt]',
     function(value, environment, propertyName) {
         var v = GetV(value, propertyName);
         if (this.Initializer && v === undefined) {
@@ -1204,7 +1204,7 @@ Runtime_Semantics('KeyedBindingInitialization', [
         return this.BindingPattern.BindingInitialization(v, environment);
     },
 
-    'SingleNameBinding: BindingIdentifierInitializer',
+    'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(value, environment, propertyName) {
         var bindingId = this.BindingIdentifier.StringValue();
         var lhs = ResolveBinding(bindingId, environment);
@@ -1405,9 +1405,9 @@ Static_Semantics('Early Errors', [
 
     'IterationStatement: do Statement while ( Expression ) ;',
     'IterationStatement: while ( Expression ) Statement',
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     'IterationStatement: for ( LeftHandSideExpression in Expression ) Statement',
     'IterationStatement: for ( var ForBinding in Expression ) Statement',
     'IterationStatement: for ( ForDeclaration in Expression ) Statement',
@@ -1561,18 +1561,18 @@ Runtime_Semantics('LabelledEvaluation', [
 // 13.7.4.1
 Static_Semantics('Early Errors', [
 
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function() {
-        if (also_occurs_in(this.LexicalDeclaration.BoundNames(), this.Statement.VarDeclaredNames())) throw EarlySyntaxError()
+        if (also_occurs_in(this.LexicalDeclaration.BoundNames(), this.Statement.VarDeclaredNames())) throw EarlySyntaxError();
     },
 ]);
 
 // 13.7.4.2
 Static_Semantics('ContainsDuplicateLabels', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
         return this.Statement.ContainsDuplicateLabels(labelSet);
     },
@@ -1581,9 +1581,9 @@ Static_Semantics('ContainsDuplicateLabels', [
 // 13.7.4.3
 Static_Semantics('ContainsUndefinedBreakTarget', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
         return this.Statement.ContainsUndefinedBreakTarget(labelSet);
     },
@@ -1592,9 +1592,9 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
 // 13.7.4.4
 Static_Semantics('ContainsUndefinedContinueTarget', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(iterationSet, labelSet) {
         return this.Statement.ContainsUndefinedContinueTarget(iterationSet, []);
     },
@@ -1603,19 +1603,19 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
 // 13.7.4.5
 Static_Semantics('VarDeclaredNames', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         return this.Statement.VarDeclaredNames();
     },
 
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         var names = this.VariableDeclarationList.BoundNames();
         list_append(names, this.Statement.VarDeclaredNames());
         return names;
     },
 
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function() {
         return this.Statement.VarDeclaredNames();
     },
@@ -1624,19 +1624,19 @@ Static_Semantics('VarDeclaredNames', [
 // 13.7.4.6
 Static_Semantics('VarScopedDeclarations', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         return this.Statement.VarScopedDeclarations();
     },
 
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         var declarations = this.VariableDeclarationList.VarScopedDeclarations();
         list_append(declarations, this.Statement.VarScopedDeclarations());
         return declarations;
     },
 
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function() {
         return this.Statement.VarScopedDeclarations();
     },
@@ -1645,7 +1645,7 @@ Static_Semantics('VarScopedDeclarations', [
 // 13.7.4.7
 Runtime_Semantics('LabelledEvaluation', [
 
-    'IterationStatement: for ( Expression ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
         if (this.Expression1) {
             var exprRef = this.Expression1.Evaluation();
@@ -1654,13 +1654,13 @@ Runtime_Semantics('LabelledEvaluation', [
         return ForBodyEvaluation(this.Expression2, this.Expression3, this.Statement, [], labelSet);
     },
 
-    'IterationStatement: for ( var VariableDeclarationList ; Expression ; Expression ) Statement',
+    'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
         var varDcl = this.VariableDeclarationList.Evaluation();
         return ForBodyEvaluation(this.Expression1, this.Expression2, this.Statement, [], labelSet);
     },
 
-    'IterationStatement: for ( LexicalDeclaration Expression ; Expression ) Statement',
+    'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
         var oldEnv = the_running_execution_context.LexicalEnvironment;
         var loopEnv = NewDeclarativeEnvironment(oldEnv);
@@ -2175,8 +2175,8 @@ Runtime_Semantics('Evaluation', [
 // 13.10 The return Statement
 
 Syntax([
-    'ReturnStatement[Yield]: return;',
-    'ReturnStatement[Yield]: return Expression[In,?Yield];',
+    'ReturnStatement[Yield]: return ;',
+    'ReturnStatement[Yield]: return Expression[In,?Yield] ;',
 ]);
 
 // 13.10.1
@@ -2308,7 +2308,7 @@ Static_Semantics('ContainsDuplicateLabels', [
         return false;
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(labelSet) {
         if (this.CaseClauses1) {
             var hasDuplicates = this.CaseClauses1.ContainsDuplicateLabels(labelSet);
@@ -2316,7 +2316,7 @@ Static_Semantics('ContainsDuplicateLabels', [
         }
         var hasDuplicates = this.DefaultClause.ContainsDuplicateLabels(labelSet);
         if (hasDuplicates === true) return true;
-        if (!this.CaseClauses) return false;
+        if (!this.CaseClauses2) return false;
         return this.CaseClauses2.ContainsDuplicateLabels(labelSet);
     },
 
@@ -2327,13 +2327,13 @@ Static_Semantics('ContainsDuplicateLabels', [
         return this.CaseClause.ContainsDuplicateLabels(labelSet);
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function(labelSet) {
         if (this.StatementList) return this.StatementList.ContainsDuplicateLabels(labelSet);
         else return false;
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function(labelSet) {
         if (this.StatementList) return this.StatementList.ContainsDuplicateLabels(labelSet);
         else return false;
@@ -2353,7 +2353,7 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
         return false;
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(labelSet) {
         if (this.CaseClauses1) {
             var hasUndefinedLabels = this.CaseClauses1.ContainsUndefinedBreakTarget(labelSet);
@@ -2372,13 +2372,13 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
         return this.CaseClause.ContainsUndefinedBreakTarget(labelSet);
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function(labelSet) {
         if (this.StatementList) return this.StatementList.ContainsUndefinedBreakTarget(labelSet);
         else return false;
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function(labelSet) {
         if (this.StatementList) return this.StatementList.ContainsUndefinedBreakTarget(labelSet);
         else return false;
@@ -2398,15 +2398,15 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
         return false;
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(iterationSet, labelSet) {
-        if (this.CaseClauses) {
+        if (this.CaseClauses1) {
             var hasUndefinedLabels = this.CaseClauses1.ContainsUndefinedContinueTarget(iterationSet, []);
             if (hasUndefinedLabels === true) return true;
         }
         var hasUndefinedLabels = this.DefaultClause.ContainsUndefinedContinueTarget(iterationSet, []);
         if (hasUndefinedLabels === true) return true;
-        if (!this.CaseClauses) return false;
+        if (!this.CaseClauses2) return false;
         return this.CaseClauses2.ContainsUndefinedContinueTarget(iterationSet, []);
     },
 
@@ -2417,13 +2417,13 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
         return this.CaseClause.ContainsUndefinedContinueTarget(iterationSet, []);
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function(iterationSet, labelSet) {
         if (this.StatementList) return this.StatementList.ContainsUndefinedContinueTarget(iterationSet, []);
         else return false;
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function(iterationSet, labelSet) {
         if (this.StatementList) return this.StatementList.ContainsUndefinedContinueTarget(iterationSet, []);
         else return false;
@@ -2438,7 +2438,7 @@ Static_Semantics('LexicallyDeclaredNames', [
         return [];
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function() {
         if (this.CaseClauses1) var names = this.CaseClauses1.LexicallyDeclaredNames();
         else var names = [];
@@ -2454,13 +2454,13 @@ Static_Semantics('LexicallyDeclaredNames', [
         return names;
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.LexicallyDeclaredNames();
         else return [];
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.LexicallyDeclaredNames();
         else return [];
@@ -2475,7 +2475,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
         return [];
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function() {
         if (this.CaseClauses1) var declarations = this.CaseClauses1.LexicallyScopedDeclarations();
         else var declarations = [];
@@ -2491,13 +2491,13 @@ Static_Semantics('LexicallyScopedDeclarations', [
         return declarations;
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.LexicallyScopedDeclarations();
         else return [];
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.LexicallyScopedDeclarations();
         else return [];
@@ -2517,7 +2517,7 @@ Static_Semantics('VarDeclaredNames', [
         return [];
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function() {
         if (this.CaseClauses1) var names = this.CaseClauses1.VarDeclaredNames();
         else var names = [];
@@ -2533,13 +2533,13 @@ Static_Semantics('VarDeclaredNames', [
         return names;
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.VarDeclaredNames();
         else return [];
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.VarDeclaredNames();
         else return [];
@@ -2559,7 +2559,7 @@ Static_Semantics('VarScopedDeclarations', [
         return [];
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function() {
         if (this.CaseClauses1) var declarations = this.CaseClauses1.VarScopedDeclarations();
         else var declarations = [];
@@ -2575,13 +2575,13 @@ Static_Semantics('VarScopedDeclarations', [
         return declarations;
     },
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.VarScopedDeclarations();
         else return [];
     },
 
-    'DefaultClause: default : StatementList',
+    'DefaultClause: default : StatementList[opt]',
     function() {
         if (this.StatementList) return this.StatementList.VarScopedDeclarations();
         else return [];
@@ -2616,7 +2616,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
         return NormalCompletion(V);
     },
 
-    'CaseBlock: { CaseClauses DefaultClause CaseClauses }',
+    'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(input) {
         var V = undefined;
         var A = ["the List of CaseClause items in the CaseClauses1, in source text order"]; //TODO
@@ -2688,15 +2688,23 @@ Runtime_Semantics('Evaluation', [
         return R;
     },
 
+    'CaseClause: case Expression :',
+    function() {
+        return NormalCompletion(empty);
+    },
+
     'CaseClause: case Expression : StatementList',
     function() {
-        if (!this.StatementList) return NormalCompletion(empty);
         return this.StatementList.Evaluation();
+    },
+
+    'DefaultClause: default :',
+    function() {
+        return NormalCompletion(empty);
     },
 
     'DefaultClause: default : StatementList',
     function() {
-        if (!this.StatementList) return NormalCompletion(empty);
         return this.StatementList.Evaluation();
     },
 ]);

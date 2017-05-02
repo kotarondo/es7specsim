@@ -364,7 +364,7 @@ Static_Semantics('ElisionWidth', [
 // 12.2.5.2
 Runtime_Semantics('ArrayAccumulation', [
 
-    'ElementList: Elision AssignmentExpression',
+    'ElementList: Elision[opt] AssignmentExpression',
     function(array, nextIndex) {
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
         var initResult = this.AssignmentExpression.Evaluation();
@@ -374,13 +374,13 @@ Runtime_Semantics('ArrayAccumulation', [
         return nextIndex + padding + 1;
     },
 
-    'ElementList: Elision SpreadElement',
+    'ElementList: Elision[opt] SpreadElement',
     function(array, nextIndex) {
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
         return this.SpreadElement.ArrayAccumulation(array, nextIndex + padding);
     },
 
-    'ElementList: ElementList , Elision AssignmentExpression',
+    'ElementList: ElementList , Elision[opt] AssignmentExpression',
     function(array, nextIndex) {
         var postIndex = this.ElementList.ArrayAccumulation(array, nextIndex);
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
@@ -391,7 +391,7 @@ Runtime_Semantics('ArrayAccumulation', [
         return postIndex + padding + 1;
     },
 
-    'ElementList: ElementList , Elision SpreadElement',
+    'ElementList: ElementList , Elision[opt] SpreadElement',
     function(array, nextIndex) {
         var postIndex = this.ElementList.ArrayAccumulation(array, nextIndex);
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
@@ -417,7 +417,7 @@ Runtime_Semantics('ArrayAccumulation', [
 // 12.2.5.3
 Runtime_Semantics('Evaluation', [
 
-    'ArrayLiteral: [ Elision ]',
+    'ArrayLiteral: [ Elision[opt] ]',
     function() {
         var array = ArrayCreate(0);
         var pad = this.Elision ? this.Elision.ElisionWidth() : 0;
@@ -433,7 +433,7 @@ Runtime_Semantics('Evaluation', [
         return array;
     },
 
-    'ArrayLiteral: [ ElementList , Elision ]',
+    'ArrayLiteral: [ ElementList , Elision[opt] ]',
     function() {
         var array = ArrayCreate(0);
         var len = this.ElementList.ArrayAccumulation(array, 0);
@@ -1374,7 +1374,7 @@ Runtime_Semantics('ArgumentListEvaluation', [
 // 12.3.7.1
 Runtime_Semantics('Evaluation', [
 
-    'MemberExpression: MemberExpressionTemplateLiteral',
+    'MemberExpression: MemberExpression TemplateLiteral',
     function() {
         var tagRef = this.MemberExpression.Evaluation();
         var thisCall = this;
@@ -1382,7 +1382,7 @@ Runtime_Semantics('Evaluation', [
         return EvaluateCall(tagRef, TemplateLiteral, tailCall);
     },
 
-    'CallExpression: CallExpressionTemplateLiteral',
+    'CallExpression: CallExpression TemplateLiteral',
     function() {
         var tagRef = this.CallExpression.Evaluation();
         var thisCall = this;
@@ -1406,8 +1406,8 @@ Runtime_Semantics('Evaluation', [
 
 Syntax([
     'UpdateExpression[Yield]: LeftHandSideExpression[?Yield]',
-    'UpdateExpression[Yield]: LeftHandSideExpression[?Yield] [no LineTerminator here] ++',
-    'UpdateExpression[Yield]: LeftHandSideExpression[?Yield] [no LineTerminator here] --',
+    'UpdateExpression[Yield]: LeftHandSideExpression[?Yield] ++',
+    'UpdateExpression[Yield]: LeftHandSideExpression[?Yield] --',
     'UpdateExpression[Yield]: ++ UnaryExpression[?Yield]',
     'UpdateExpression[Yield]: -- UnaryExpression[?Yield]',
 ]);
@@ -2292,7 +2292,7 @@ Static_Semantics('IsValidSimpleAssignmentTarget', [
 // 12.14.3
 Runtime_Semantics('Evaluation', [
 
-    'ConditionalExpression: LogicalORExpression ? AssignmentExpression: AssignmentExpression',
+    'ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression',
     function() {
         var lref = this.LogicalORExpression.Evaluation();
         var lval = ToBoolean(GetValue(lref));
@@ -2420,7 +2420,7 @@ Syntax([
 // 12.15.5.1
 Static_Semantics('Early Errors', [
 
-    'AssignmentProperty: IdentifierReference Initializer',
+    'AssignmentProperty: IdentifierReference Initializer[opt]',
     function() {
         if (this.IdentifierReference.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
     },
@@ -2463,7 +2463,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         return resolveCompletion(result);
     },
 
-    'ArrayAssignmentPattern: [ Elision AssignmentRestElement ]',
+    'ArrayAssignmentPattern: [ Elision[opt] AssignmentRestElement ]',
     function(value) {
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
@@ -2488,7 +2488,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         return resolveCompletion(result);
     },
 
-    'ArrayAssignmentPattern: [ AssignmentElementList , Elision AssignmentRestElement ]',
+    'ArrayAssignmentPattern: [ AssignmentElementList , Elision[opt] AssignmentRestElement[opt] ]',
     function(value) {
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
@@ -2517,7 +2517,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         return this.AssignmentProperty.DestructuringAssignmentEvaluation(value);
     },
 
-    'AssignmentProperty: IdentifierReference Initializer',
+    'AssignmentProperty: IdentifierReference Initializer[opt]',
     function(value) {
         var P = this.IdentifierReference.StringValue();
         var lref = ResolveBinding(P);
@@ -2592,7 +2592,7 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
         return empty;
     },
 
-    'AssignmentElement: DestructuringAssignmentTarget Initializer',
+    'AssignmentElement: DestructuringAssignmentTarget Initializer[opt]',
     function(iteratorRecord) {
         if (!(this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral'))) {
             var lref = this.DestructuringAssignmentTarget.Evaluation();
@@ -2668,7 +2668,7 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
 // 12.15.5.4
 Runtime_Semantics('KeyedDestructuringAssignmentEvaluation', [
 
-    'AssignmentElement: DestructuringAssignmentTarget Initializer',
+    'AssignmentElement: DestructuringAssignmentTarget Initializer[opt]',
     function(value, propertyName) {
         if (!(this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral'))) {
             var lref = this.DestructuringAssignmentTarget.Evaluation();
