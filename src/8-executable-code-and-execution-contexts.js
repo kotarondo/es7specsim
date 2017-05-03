@@ -353,7 +353,7 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
             var status = ObjRec.DeleteBinding(N);
             if (status === true) {
                 var varNames = envRec.VarNames;
-                if (varNames.includes(N)) remove_an_element_from(N, varNames);
+                if (N.is_an_element_of(varNames)) remove_an_element_from(N, varNames);
             }
             return status;
         }
@@ -385,7 +385,7 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
     HasVarDeclaration(N) {
         var envRec = this;
         var varDeclaredNames = envRec.VarNames;
-        if (varDeclaredNames.includes(N)) return true;
+        if (varDeclaredNames.contains(N)) return true;
         return false;
     }
 
@@ -441,7 +441,7 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
             ObjRec.InitializeBinding(N, undefined);
         }
         var varDeclaredNames = envRec.VarNames;
-        if (!varDeclaredNames.includes(N)) {
+        if (!varDeclaredNames.contains(N)) {
             varDeclaredNames.push(N);
         }
         return empty;
@@ -461,7 +461,7 @@ class GlobalEnvironmentRecord extends EnvironmentRecord {
         DefinePropertyOrThrow(globalObject, N, desc);
         _Set(globalObject, N, V, false);
         var varDeclaredNames = envRec.VarNames;
-        if (!varDeclaredNames.includes(N)) {
+        if (!varDeclaredNames.contains(N)) {
             varDeclaredNames.push(N);
         }
         return empty;

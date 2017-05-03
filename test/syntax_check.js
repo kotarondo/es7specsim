@@ -53,7 +53,7 @@ global.Syntax = function(a) {
 };
 
 function createProduction(refs, elems) {
-    var name = strip(elems[0]) + ":";
+    var name = "";
     for (var i = 1; i < elems.length; i++) {
         if (elems[i] === null) continue;
         if (isref(elems[i])) {
@@ -62,6 +62,10 @@ function createProduction(refs, elems) {
             name += " " + elems[i];
         }
     }
+	if(name === ""){
+		name = " [empty]";
+	}
+    var name = strip(elems[0]) + ":" + name;
     if (name in Production) {
         console.log("duplicate production", name);
         return;
@@ -127,6 +131,7 @@ global.Runtime_Semantics = global.Static_Semantics;
 var filenames = [
     "12-expressions.js",
     "13-statements-and-declarations.js",
+	"14-functions-and-classes.js",
 ];
 
 for (var filename of filenames) {
@@ -137,8 +142,10 @@ for (var filename of filenames) {
     });
 }
 
+/*
 console.log("FREE PRODUCTIONS:");
 for (var name of Object.keys(Production)) {
     var methods = Object.keys(Production[name].prototype);
     if (methods.length === 0) console.log(name);
 }
+*/

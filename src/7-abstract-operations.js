@@ -561,7 +561,7 @@ function CreateListFromArrayLike(obj, elementTypes) {
     while (index < len) {
         var indexName = ToString(index);
         var next = Get(obj, indexName);
-        if (elementTypes.includes(Type(next)) === false) throw $TypeError();
+        if (!Type(next).is_an_element_of(elementTypes)) throw $TypeError();
         list.push(next);
         index = index + 1;
     }

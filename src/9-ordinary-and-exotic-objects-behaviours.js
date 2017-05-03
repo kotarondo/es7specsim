@@ -430,7 +430,7 @@ function OrdinaryCallBindThis(F, calleeContext, thisArgument) {
 // 9.2.1.3
 function OrdinaryCallEvaluateBody(F, argumentsList) {
     FunctionDeclarationInstantiation(F, argumentsList);
-    return F.ECMAScriptCode.EvaluateBody(F);
+    return concreteCompletion(F.ECMAScriptCode.EvaluateBody(F));
 }
 
 // 9.2.2
@@ -582,7 +582,7 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
     var strict = func.Strict;
     var formals = func.FormalParameters;
     var parameterNames = formals.BoundNames();
-    if (contains_any_duplicate_entries(parameterNames)) var hasDuplicates = true;
+    if (parameterNames.contains_any_duplicate_entries()) var hasDuplicates = true;
     else var hasDuplicates = false;
     var simpleParameterList = formals.IsSimpleParameterList();
     var hasParameterExpressions = formals.ContainsExpression();
@@ -595,7 +595,7 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
         if (!(d instanceof VariableDeclaration) || !(d instanceof ForBinding)) {
             Assert(d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration);
             var fn = d.BoundNames()[0];
-            if (!functionNames.includes(fn)) {
+            if (!fn.is_an_element_of(functionNames)) {
                 functionNames.unshift(fn);
                 functionsToInitialize.unshift(d);
             }
@@ -604,10 +604,10 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
     var argumentsObjectNeeded = true;
     if (func.ThisMode === 'lexical') {
         var argumentsObjectNeeded = false;
-    } else if (parameterNames.includes("arguments")) {
+    } else if ("arguments".is_an_element_of(parameterNames)) {
         var argumentsObjectNeeded = false;
     } else if (hasParameterExpressions === false) {
-        if (functionNames.includes("arguments") || lexicalNames.includes("arguments")) {
+        if ("arguments".is_an_element_of(functionNames) || "arguments".is_an_element_of(lexicalNames)) {
             var argumentsObjectNeeded = false;
         }
     }
@@ -643,7 +643,7 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
     if (hasParameterExpressions === false) {
         var instantiatedVarNames = parameterNames.slice();
         for (var n of varNames) {
-            if (!instantiatedVarNames.includes(n)) {
+            if (!n.is_an_element_of(instantiatedVarNames)) {
                 instantiatedVarNames.push(n);
                 envRec.CreateMutableBinding(n, false);
                 envRec.InitializeBinding(n, undefined);
@@ -657,10 +657,10 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
         calleeContext.VariableEnvironment = varEnv;
         var instantiatedVarNames = [];
         for (var n of varNames) {
-            if (!instantiatedVarNames.includes(n)) {
+            if (!n.is_an_element_of(instantiatedVarNames)) {
                 instantiatedVarNames.push(n);
                 varEnvRec.CreateMutableBinding(n, false);
-                if (!parameterNames.includes(n) || functionNames.includes(n)) var initialValue = undefined;
+                if (!n.is_an_element_of(parameterNames) || n.is_an_element_of(functionNames)) var initialValue = undefined;
                 else
                     var initialValue = envRec.GetBindingValue(n, false);
                 varEnvRec.InitializeBinding(n, initialValue);
@@ -1101,7 +1101,7 @@ function CreateMappedArgumentsObject(func, formals, argumentsList, env) {
     var index = numberOfParameters - 1;
     while (index >= 0) {
         var name = parameterNames[index];
-        if (!mappedNames.includes(name)) {
+        if (!name.is_an_element_of(mappedNames)) {
             mappedNames.push(name);
             if (index < len) {
                 var g = MakeArgGetter(name, env);
@@ -1258,7 +1258,7 @@ IntegerIndexedExoticObject.prototype.OwnPropertyKeys = function() {
 
 // 9.4.5.7
 function IntegerIndexedObjectCreate(prototype, internalSlotsList) {
-    Assert(internalSlotsList.includes('ViewedArrayBuffer') && internalSlotsList.includes('ArrayLength') && internalSlotsList.includes('ByteOffset') && internalSlotsList.includes('TypedArrayName'));
+    Assert(internalSlotsList.contains('ViewedArrayBuffer') && internalSlotsList.contains('ArrayLength') && internalSlotsList.contains('ByteOffset') && internalSlotsList.contains('TypedArrayName'));
     var A = new IntegerIndexedExoticObject;
     for (var name of internalSlotsList) {
         A[name] = undefined;
@@ -1340,7 +1340,7 @@ ModuleNamespaceExoticObject.prototype.GetOwnProperty = function(P) {
     var O = this;
     if (Type(P) === 'Symbol') return OrdinaryGetOwnProperty(O, P);
     var exports = O.Exports;
-    if (!exports.includes(P)) return undefined;
+    if (!P.is_an_element_of(exports)) return undefined;
     var value = O.Get(P, O);
     return PropertyDescriptor({ Value: value, Writable: true, Enumerable: true, Configurable: false });
 }
@@ -1356,7 +1356,7 @@ ModuleNamespaceExoticObject.prototype.HasProperty = function(P) {
     var O = this;
     if (Type(P) === 'Symbol') return OrdinaryHasProperty(O, P);
     var exports = O.Exports;
-    if (exports.includes(P)) return true;
+    if (P.is_an_element_of(exports)) return true;
     return false;
 }
 
@@ -1368,7 +1368,7 @@ ModuleNamespaceExoticObject.prototype.Get = function(P, Receiver) {
         return OrdinaryGet(O, P, Receiver);
     }
     var exports = O.Exports;
-    if (!exports.includes(P)) return undefined;
+    if (!P.is_an_element_of(exports)) return undefined;
     var m = O.Module;
     var binding = m.ResolveExport(P, [], []);
     Assert(binding !== null && binding !== "ambiguous");
@@ -1391,7 +1391,7 @@ ModuleNamespaceExoticObject.prototype.Delete = function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var exports = O.Exports;
-    if (exports.includes(P)) return false;
+    if (P.is_an_element_of(exports)) return false;
     return true;
 }
 
@@ -1703,13 +1703,13 @@ ProxyExoticObject.prototype.OwnPropertyKeys = function() {
     }
     var uncheckedResultKeys = trapResult.slice();
     for (var key of targetNonconfigurableKeys) {
-        if (!uncheckedResultKeys.includes(key)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO whether remove a key || remove every key?
+        if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
+        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify whether remove a key || remove every key?
     }
     if (extensibleTarget === true) return trapResult;
     for (var key of targetConfigurableKeys) {
-        if (!uncheckedResultKeys.includes(key)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO whether remove a key || remove every key?
+        if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
+        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify whether remove a key || remove every key?
     }
     if (uncheckedResultKeys !== empty) throw $TypeError();
     return trapResult;

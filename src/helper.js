@@ -39,13 +39,27 @@ function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
 }
 
-function contains_any_duplicate_entries(array) {
-    return (array.length !== new Set(array).size);
-}
+Object.defineProperty(Array.prototype, 'contains', {
+    value: Array.prototype.includes
+});
 
-function also_occurs_in(a, array) {
-    return a.some(e => array.contains(e));
-}
+Object.defineProperty(String.prototype, 'is_an_element_of', {
+    value: function(a) {
+        return a.includes(this.valueOf());
+    }
+});
+
+Object.defineProperty(Array.prototype, 'contains_any_duplicate_entries', {
+    value: function() {
+        return (this.length !== new Set(this).size);
+    }
+});
+
+Object.defineProperty(Array.prototype, 'also_occurs_in', {
+    value: function(a) {
+        return this.some(e => a.contains(e));
+    }
+});
 
 function remove_an_element_from(elem, list) {
     var i = list.indexOf(elem);

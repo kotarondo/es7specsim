@@ -539,7 +539,7 @@ Static_Semantics('Early Errors', [
 
     'LexicalDeclaration: LetOrConst BindingList ;',
     function() {
-        if (this.BindingList.BoundNames().includes("let")) throw EarlySyntaxError();
+        if (this.BindingList.BoundNames().contains("let")) throw EarlySyntaxError();
         if (this.BindingList.BoundNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
     },
 
@@ -1424,7 +1424,7 @@ function LoopContinues(completion, labelSet) {
     if (completion.Type === 'normal') return true;
     if (completion.Type !== 'continue') return false;
     if (completion.Target === empty) return true;
-    if (labelSet.includes(completion.Target)) return true;
+    if (completion.Target.is_an_element_of(labelSet)) return true;
     return false;
 }
 
@@ -1563,7 +1563,7 @@ Static_Semantics('Early Errors', [
 
     'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function() {
-        if (also_occurs_in(this.LexicalDeclaration.BoundNames(), this.Statement.VarDeclaredNames())) throw EarlySyntaxError();
+        if (this.LexicalDeclaration.BoundNames().also_occurs_in(this.Statement.VarDeclaredNames())) throw EarlySyntaxError();
     },
 ]);
 
@@ -1747,8 +1747,8 @@ Static_Semantics('Early Errors', [
     'IterationStatement: for ( ForDeclaration in Expression ) Statement',
     'IterationStatement: for ( ForDeclaration of AssignmentExpression ) Statement',
     function() {
-        if (this.ForDeclaration.BoundNames().includes("let")) throw EarlySyntaxError();
-        if (also_occurs_in(this.ForDeclaration.BoundNames(), this.Statement.VarDeclaredNames())) throw EarlySyntaxError();
+        if (this.ForDeclaration.BoundNames().contains("let")) throw EarlySyntaxError();
+        if (this.ForDeclaration.BoundNames().also_occurs_in(this.Statement.VarDeclaredNames())) throw EarlySyntaxError();
         if (this.ForDeclaration.BoundNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
     },
 ]);
@@ -2106,7 +2106,7 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
 
     'ContinueStatement: continue LabelIdentifier ;',
     function(iterationSet, labelSet) {
-        if (!iterationSet.includes(this.LabelIdentifier.StringValue())) return true;
+        if (!this.LabelIdentifier.StringValue().is_an_element_of(iterationSet)) return true;
         return false;
     },
 ]);
@@ -2152,7 +2152,7 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
 
     'BreakStatement: break LabelIdentifier ;',
     function(labelSet) {
-        if (!labelSet.includes(this.LabelIdentifier.StringValue())) return true;
+        if (!this.LabelIdentifier.StringValue().is_an_element_of(labelSet)) return true;
         return false;
     },
 ]);
@@ -2291,7 +2291,7 @@ Static_Semantics('Early Errors', [
     'SwitchStatement: switch ( Expression ) CaseBlock',
     function() {
         if (this.CaseBlock.LexicallyDeclaredNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
-        if (also_occurs_in(this.CaseBlock.LexicallyDeclaredNames(), this.CaseBlock.VarDeclaredNames())) throw EarlySyntaxError();
+        if (this.CaseBlock.LexicallyDeclaredNames().also_occurs_in(this.CaseBlock.VarDeclaredNames())) throw EarlySyntaxError();
     },
 ]);
 
@@ -2732,7 +2732,7 @@ Static_Semantics('ContainsDuplicateLabels', [
     'LabelledStatement: LabelIdentifier : LabelledItem',
     function(labelSet) {
         var label = this.LabelIdentifier.StringValue();
-        if (labelSet.includes(label)) return true;
+        if (label.is_an_element_of(labelSet)) return true;
         var newLabelSet = labelSet.concat(label);
         return this.LabelledItem.ContainsDuplicateLabels(newLabelSet);
     },
@@ -2983,8 +2983,8 @@ Static_Semantics('Early Errors', [
     'Catch: catch ( CatchParameter ) Block',
     function() {
         if (this.CatchParameter.BoundNames().contains_any_duplicate_elements()) throw EarlySyntaxError();
-        if (also_occurs_in(this.CatchParameter.BoundNames(), this.Block.LexicallyDeclaredNames())) throw EarlySyntaxError();
-        if (also_occurs_in(this.CatchParameter.BoundNames(), this.Block.VarDeclaredNames())) throw EarlySyntaxError();
+        if (this.CatchParameter.BoundNames().also_occurs_in(this.Block.LexicallyDeclaredNames())) throw EarlySyntaxError();
+        if (this.CatchParameter.BoundNames().also_occurs_in(this.Block.VarDeclaredNames())) throw EarlySyntaxError();
     },
 ]);
 
