@@ -39,41 +39,39 @@ function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
 }
 
-Object.defineProperty(Array.prototype, 'contains', {
-    value: Array.prototype.includes
-});
-
-Object.defineProperty(String.prototype, 'is_an_element_of', {
-    value: function(a) {
-        return a.includes(this.valueOf());
-    }
-});
-
-Object.defineProperty(Array.prototype, 'contains_any_duplicate_entries', {
-    value: function() {
-        return (this.length !== new Set(this).size);
-    }
-});
-
-Object.defineProperty(Array.prototype, 'also_occurs_in', {
-    value: function(a) {
-        return this.some(e => a.contains(e));
-    }
-});
-
-function remove_an_element_from(elem, list) {
-    var i = list.indexOf(elem);
-    if (i >= 0) list.splice(i, 1);
+function define_method(c, n, v) {
+    Object.defineProperty(c.prototype, n, {
+        value: v
+    });
 }
 
-function list_equals(a, b) {
-    if (a.length !== b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
+define_method(String, 'is_an_element_of', function(a) {
+    return a.includes(this.valueOf());
+});
+
+define_method(Array, 'contains', Array.prototype.includes);
+
+define_method(Array, 'contains_any_duplicate_entries', function() {
+    return (this.length !== new Set(this).size);
+});
+
+define_method(Array, 'also_occurs_in', function(a) {
+    return this.some(e => a.contains(e));
+});
+
+define_method(Array, 'remove', function(e) {
+    var i = this.indexOf(e);
+    if (i >= 0) this.splice(i, 1);
+});
+
+define_method(Array, 'equals', function(a) {
+    if (a.length !== this.length) return false;
+    for (var i = 0; i < this.length; i++) {
+        if (a[i] !== this[i]) return false;
     }
     return true;
-}
+});
 
-function list_append(a, b) {
-    Array.prototype.push.apply(a, b);
-}
+define_method(Array, 'append', function(a) {
+    Array.prototype.push.apply(this, a);
+});

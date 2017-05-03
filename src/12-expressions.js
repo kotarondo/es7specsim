@@ -802,7 +802,7 @@ function GetTemplateObject(templateLiteral) {
     var realm = currentRealm;
     var templateRegistry = realm.TemplateMap;
     for (var e of templateRegistry) {
-        if (list_equals(e.Strings, rawStrings)) {
+        if (e.Strings.equals(rawStrings)) {
             return e.Array;
         }
     }
@@ -2451,7 +2451,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
     'ArrayAssignmentPattern: [ ]',
     function(value) {
         var iterator = GetIterator(value);
-        return resolveCompletion(IteratorClose(iterator, NormalCompletion(empty)));
+        return IteratorClose(iterator, NormalCompletion(empty));
     },
 
     'ArrayAssignmentPattern: [ Elision ]',
@@ -2459,7 +2459,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         var result = concreteCompletion(this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-        if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, result));
+        if (iteratorRecord.Done === false) return IteratorClose(iterator, result);
         return resolveCompletion(result);
     },
 
@@ -2469,13 +2469,13 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         if (this.Elision) {
             var status = concreteCompletion(this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-            if (is_an_abrupt_completion(status)) {
-                if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
+            if (status.is_an_abrupt_completion()) {
+                if (iteratorRecord.Done === false) return IteratorClose(iterator, status);
                 return resolveCompletion(status);
             }
         }
         var result = concreteCompletion(this.AssignmentRestElement.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-        if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, result));
+        if (iteratorRecord.Done === false) return IteratorClose(iterator, result);
         return resolveCompletion(result);
     },
 
@@ -2484,7 +2484,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         var result = concreteCompletion(this.AssignmentElementList.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-        if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, result));
+        if (iteratorRecord.Done === false) return IteratorClose(iterator, result);
         return resolveCompletion(result);
     },
 
@@ -2493,21 +2493,21 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         var status = concreteCompletion(this.AssignmentElementList.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-        if (is_an_abrupt_completion(status)) {
-            if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
+        if (status.is_an_abrupt_completion()) {
+            if (iteratorRecord.Done === false) return IteratorClose(iterator, status);
             return resolveCompletion(status);
         }
         if (this.Elision) {
             var status = concreteCompletion(this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
-            if (is_an_abrupt_completion(status)) {
-                if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
+            if (status.is_an_abrupt_completion()) {
+                if (iteratorRecord.Done === false) return IteratorClose(iterator, status);
                 return resolveCompletion(status);
             }
         }
         if (this.AssignmentRestElement) {
             var status = concreteCompletion(this.AssignmentRestElement.IteratorDestructuringAssignmentEvaluation(iteratorRecord));
         }
-        if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, status));
+        if (iteratorRecord.Done === false) return IteratorClose(iterator, status);
         return resolveCompletion(status);
     },
 
@@ -2568,11 +2568,10 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
     'Elision: ,',
     function(iteratorRecord) {
         if (iteratorRecord.Done === false) {
-            try {
-                var next = IteratorStep(iteratorRecord.Iterator);
-            } catch (e) {
-                iteratorRecord.Done = true;
-            }
+            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
+            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            ReturnIfAbrupt(next);
+            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
         }
         return empty;
@@ -2582,11 +2581,10 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
     function(iteratorRecord) {
         var status = this.Elision.IteratorDestructuringAssignmentEvaluation(iteratorRecord);
         if (iteratorRecord.Done === false) {
-            try {
-                var next = IteratorStep(iteratorRecord.Iterator);
-            } catch (e) {
-                iteratorRecord.Done = true;
-            }
+            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
+            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            ReturnIfAbrupt(next);
+            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
         }
         return empty;
@@ -2598,19 +2596,16 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var lref = this.DestructuringAssignmentTarget.Evaluation();
         }
         if (iteratorRecord.Done === false) {
-            try {
-                var next = IteratorStep(iteratorRecord.Iterator);
-            } catch (e) {
-                iteratorRecord.Done = true;
-                throw e;
-            }
+            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
+            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            ReturnIfAbrupt(next);
+            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
-        } else {
-            try {
-                var value = IteratorValue(next);
-            } catch (e) {
-                iteratorRecord.Done = true;
-                throw e;
+            else {
+                var value = concreteCompletion(IteratorValue(next));
+                if (value.is_an_abrupt_completion()) iteratorRecord.Done = true;
+                ReturnIfAbrupt(value);
+                value = resolveCompletion(value);
             }
         }
         if (iteratorRecord.Done === true) var value = undefined;
@@ -2637,20 +2632,16 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
         var A = ArrayCreate(0);
         var n = 0;
         while (iteratorRecord.Done === false) {
-            try {
-                var next = IteratorStep(iteratorRecord.Iterator);
-            } catch (e) {
-                iteratorRecord.Done = true;
-                throw e;
-            }
+            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
+            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            ReturnIfAbrupt(next);
+            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
             else {
-                try {
-                    var nextValue = IteratorValue(next);
-                } catch (e) {
-                    iteratorRecord.Done = true;
-                    throw e;
-                }
+                var nextValue = concreteCompletion(IteratorValue(next));
+                if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
+                ReturnIfAbrupt(valueValue);
+                nextValue = resolveCompletion(nextValue);
                 var status = CreateDataProperty(A, ToString(n), nextValue);
                 Assert(status === true);
                 n++;

@@ -687,22 +687,13 @@ function IteratorStep(iterator) {
 function IteratorClose(iterator, completion) {
     Assert(Type(iterator) === 'Object');
     Assert(Type(completion) === 'Completion Record');
-    try {
-        var _return = GetMethod(iterator, "return");
-    } catch (e) {
-        return Completion({ Type: 'throw', Value: e, Target: empty });
-    }
-    if (_return === undefined) return Completion(completion);
-    try {
-        var value = Call(_return, iterator, []);
-        var innerResult = NormalCompletion(value);
-    } catch (e) {
-        var innerResult = Completion({ Type: 'throw', Value: e, Target: empty });
-    }
-    if (completion.Type === 'throw') return Completion(completion);
-    if (innerResult.Type === 'throw') return Completion(innerResult);
-    if (Type(innerResult.Value) !== 'Object') return Completion({ Type: 'throw', Value: $TypeError(), Target: empty });
-    return Completion(completion);
+    var _return = GetMethod(iterator, "return");
+    if (_return === undefined) return resolveCompletion(completion);
+    var innerResult = concreteCompletion(Call(_return, iterator, []));
+    if (completion.Type === 'throw') return resolveCompletion(completion);
+    if (innerResult.Type === 'throw') return resolveCompletion(innerResult);
+    if (Type(innerResult.Value) !== 'Object') throw $TypeError();
+    return resolveCompletion(completion);
 }
 
 // 7.4.7

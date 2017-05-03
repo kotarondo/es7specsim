@@ -94,6 +94,15 @@ const wellKnownSymbols = {
 // 6.2 ECMAScript Specification Types
 // 6.2.1 The List and Record Specification Types
 
+function Record(like) {
+    if (!this) {
+        return new Record(like);
+    }
+    for (var i in like) {
+        this[i] = like[i];
+    }
+}
+
 // 6.2.2 The Completion Record Specification Type
 
 function Completion(like) {
@@ -105,18 +114,28 @@ function Completion(like) {
     }
 }
 
-function is_an_abrupt_completion(c) {
-    return (c instanceof Completion && c.Type !== 'normal');
-}
+define_method(Completion, 'is_an_abrupt_completion', function() {
+    return (this.Type !== 'normal');
+});
 
-// 6.2.2.1 NormalCompletion
+// 6.2.2.1
 function NormalCompletion(argument) {
     return Completion({ Type: 'normal', Value: argument, Target: empty });
 }
 
 // 6.2.2.2 Implicit Completion Values
 // 6.2.2.3 Throw an Exception
-// 6.2.2.4 ReturnIfAbrupt
+
+// 6.2.2.4
+function ReturnIfAbrupt(c) {
+    Assert(Type(c) === 'Completion Record');
+    if (c.Type !== 'normal') throw c;
+}
+
+function resolveCompletion(c) {
+    ReturnIfAbrupt(c);
+    return c.Value;
+}
 
 // 6.2.2.5
 function UpdateEmpty(completionRecord, value) {

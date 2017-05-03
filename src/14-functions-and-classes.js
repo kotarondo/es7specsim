@@ -80,14 +80,14 @@ Static_Semantics('BoundNames', [
     'FormalParameterList: FormalsList , FunctionRestParameter',
     function() {
         var names = this.FormalsList.BoundNames();
-        list_append(names, this.FunctionRestParameter.BoundNames());
+        names.append(this.FunctionRestParameter.BoundNames());
         return names;
     },
 
     'FormalsList: FormalsList , FormalParameter',
     function() {
         var names = this.FormalsList.BoundNames();
-        list_append(names, this.FormalParameter.BoundNames());
+        names.append(this.FormalParameter.BoundNames());
         return names;
     },
 ]);
@@ -328,14 +328,12 @@ Runtime_Semantics('IteratorBindingInitialization', [
     'FormalParameterList: FormalsList , FunctionRestParameter',
     function(iteratorRecord, environment) {
         var restIndex = this.FormalsList.IteratorBindingInitialization(iteratorRecord, environment);
-        ReturnIfAbrupt(restIndex);
         return this.FunctionRestParameter.IteratorBindingInitialization(iteratorRecord, environment);
     },
 
     'FormalsList: FormalsList , FormalParameter',
     function(iteratorRecord, environment) {
         var status = this.FormalsList.IteratorBindingInitialization(iteratorRecord, environment);
-        ReturnIfAbrupt(status);
         return this.FormalParameter.IteratorBindingInitialization(iteratorRecord, environment);
     },
 
@@ -408,12 +406,12 @@ Runtime_Semantics('Evaluation', [
 
     'FunctionDeclaration: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
     function() {
-        return NormalCompletion(empty);
+        return empty;
     },
 
     'FunctionDeclaration: function ( FormalParameters ) { FunctionBody }',
     function() {
-        return NormalCompletion(empty);
+        return empty;
     },
 
     'FunctionExpression: function ( FormalParameters ) { FunctionBody }',
@@ -423,7 +421,7 @@ Runtime_Semantics('Evaluation', [
         var scope = the_running_execution_context.LexicalEnvironment;
         var closure = FunctionCreate('Normal', this.FormalParameters, this.FunctionBody, scope, strict);
         MakeConstructor(closure);
-        return NormalCompletion(closure);
+        return closure;
     },
 
     'FunctionExpression: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
@@ -439,12 +437,12 @@ Runtime_Semantics('Evaluation', [
         MakeConstructor(closure);
         SetFunctionName(closure, name);
         envRec.InitializeBinding(name, closure);
-        return NormalCompletion(closure);
+        return closure;
     },
 
     'FunctionStatementList: [empty]',
     function() {
-        return NormalCompletion(undefined);
+        return undefined;
     },
 ]);
 
@@ -622,20 +620,16 @@ Runtime_Semantics('IteratorBindingInitialization', [
     'ArrowParameters: BindingIdentifier',
     function(iteratorRecord, environment) {
         Assert(iteratorRecord.Done === false);
-        try {
-            var next = IteratorStep(iteratorRecord.Iterator);
-        } catch (e) {
-            iteratorRecord.Done = true;
-            throw e;
-        }
+        var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
+        if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+        ReturnIfAbrupt(next);
+        next = resolveCompletion(next);
         if (next === false) iteratorRecord.Done = true;
         else {
-            try {
-                var v = IteratorValue(next);
-            } catch (e) {
-                iteratorRecord.Done = true;
-                throw e;
-            }
+            var v = concreteCompletion(IteratorValue(next));
+            if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            ReturnIfAbrupt(v);
+            v = resolveCompletion(v);
         }
         if (iteratorRecord.Done === true) var v = undefined;
         return this.BindingIdentifier.BindingInitialization(v, environment);
@@ -649,7 +643,7 @@ Runtime_Semantics('EvaluateBody', [
     function(functionObject) {
         var exprRef = this.AssignmentExpression.Evaluation();
         var exprValue = GetValue(exprRef);
-        return Completion({ Type: 'return', Value: exprValue, Target: empty });
+        throw Completion({ Type: 'return', Value: exprValue, Target: empty });
     },
 ]);
 
@@ -972,7 +966,7 @@ Runtime_Semantics('EvaluateBody', [
     function(functionObject) {
         var G = OrdinaryCreateFromConstructor(functionObject, currentRealm.Intrinsics["%GeneratorPrototype%"], ['GeneratorState', 'GeneratorContext']);
         GeneratorStart(G, FunctionBody);
-        return Completion({ Type: 'return', Value: G, Target: empty });
+        throw Completion({ Type: 'return', Value: G, Target: empty });
     },
 ]);
 
@@ -1102,9 +1096,9 @@ Runtime_Semantics('Evaluation', [
                 var done = IteratorComplete(innerReturnResult);
                 if (done === true) {
                     var value = IteratorValue(innerReturnResult);
-                    return Completion({ Type: 'return', Value: value, Target: empty });
+                    throw Completion({ Type: 'return', Value: value, Target: empty });
                 }
-                var received = GeneratorYield(innerReturnResult);
+                var received = concreteCompletion(GeneratorYield(innerReturnResult));
             }
         }
     },

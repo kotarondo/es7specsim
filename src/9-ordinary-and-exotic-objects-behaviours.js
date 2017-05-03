@@ -379,14 +379,11 @@ ECMAScriptFunctionObject.prototype.Call = function(thisArgument, argumentsList) 
     var calleeContext = PrepareForOrdinaryCall(F, undefined);
     Assert(calleeContext === the_running_execution_context);
     OrdinaryCallBindThis(F, calleeContext, thisArgument);
-    var result = OrdinaryCallEvaluateBody(F, argumentsList);
+    var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
     remove_from_the_execution_context_stack(calleeContext);
     Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') return result.Value;
-    if (result.Type !== 'normal') {
-        Assert(result.type === 'throw');
-        throw result.Value;
-    }
+    ReturnIfAbrupt(result);
     return undefined;
 }
 
@@ -430,7 +427,7 @@ function OrdinaryCallBindThis(F, calleeContext, thisArgument) {
 // 9.2.1.3
 function OrdinaryCallEvaluateBody(F, argumentsList) {
     FunctionDeclarationInstantiation(F, argumentsList);
-    return concreteCompletion(F.ECMAScriptCode.EvaluateBody(F));
+    return F.ECMAScriptCode.EvaluateBody(F);
 }
 
 // 9.2.2
@@ -448,18 +445,14 @@ ECMAScriptFunctionObject.prototype.Construct = function(argumentsList, newTarget
     if (kind === "base") OrdinaryCallBindThis(F, calleeContext, thisArgument);
     var constructorEnv = calleeContext.LexicalEnvironment;
     var envRec = constructorEnv.EnvironmentRecord;
-    var result = OrdinaryCallEvaluateBody(F, argumentsList);
+    var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
     remove_from_the_execution_context_stack(calleeContext);
     Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') {
         if (Type(result.Value) === 'Object') return result.Value;
         if (kind === "base") return thisArgument;
         if (result.Value !== undefined) throw $TypeError();
-    } else
-    if (result.Type !== 'normal') {
-        Assert(result.type === 'throw');
-        throw result.Value;
-    }
+    } else ReturnIfAbrupt(result);
     return envRec.GetThisBinding();
 }
 
@@ -1400,7 +1393,7 @@ ModuleNamespaceExoticObject.prototype.OwnPropertyKeys = function() {
     var O = this;
     var exports = O.Exports.slice();
     var symbolKeys = OrdinaryOwnPropertyKeys(O);
-    list_append(exports, symbolKeys);
+    exports.append(symbolKeys);
     return exports;
 }
 
@@ -1704,12 +1697,12 @@ ProxyExoticObject.prototype.OwnPropertyKeys = function() {
     var uncheckedResultKeys = trapResult.slice();
     for (var key of targetNonconfigurableKeys) {
         if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify whether remove a key || remove every key?
+        uncheckedResultKeys.remove(key); //TODO clarify whether remove a key || remove every key?
     }
     if (extensibleTarget === true) return trapResult;
     for (var key of targetConfigurableKeys) {
         if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
-        remove_an_element_from(key, uncheckedResultKeys); //TODO clarify whether remove a key || remove every key?
+        uncheckedResultKeys.remove(key); //TODO clarify whether remove a key || remove every key?
     }
     if (uncheckedResultKeys !== empty) throw $TypeError();
     return trapResult;
