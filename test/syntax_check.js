@@ -62,9 +62,9 @@ function createProduction(refs, elems) {
             name += " " + elems[i];
         }
     }
-	if(name === ""){
-		name = " [empty]";
-	}
+    if (name === "") {
+        name = " [empty]";
+    }
     var name = strip(elems[0]) + ":" + name;
     if (name in Production) {
         console.log("duplicate production", name);
@@ -129,10 +129,15 @@ global.Static_Semantics = function(method, a) {
 global.Runtime_Semantics = global.Static_Semantics;
 
 var filenames = [
+    "helper.js",
+    "6-data-types-and-values.js",
+    "7-abstract-operations.js",
+    "8-executable-code-and-execution-contexts.js",
+    "9-ordinary-and-exotic-objects-behaviours.js",
     "12-expressions.js",
     "13-statements-and-declarations.js",
-	"14-functions-and-classes.js",
-	"15-scripts-and-modules.js",
+    "14-functions-and-classes.js",
+    "15-scripts-and-modules.js",
 ];
 
 for (var filename of filenames) {
