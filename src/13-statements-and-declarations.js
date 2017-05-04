@@ -566,7 +566,7 @@ Static_Semantics('BoundNames', [
         return names;
     },
 
-    'LexicalBinding: BindingIdentifier Initializer',
+    'LexicalBinding: BindingIdentifier Initializer[opt]',
     function() {
         return this.BindingIdentifier.BoundNames();
     },
@@ -659,7 +659,7 @@ Static_Semantics('BoundNames', [
         return names;
     },
 
-    'VariableDeclaration: BindingIdentifier Initializer',
+    'VariableDeclaration: BindingIdentifier Initializer[opt]',
     function() {
         return this.BindingIdentifier.BoundNames();
     },
@@ -774,12 +774,12 @@ Static_Semantics('BoundNames', [
         return [];
     },
 
-    'ArrayBindingPattern: [ Elision BindingRestElement ]',
+    'ArrayBindingPattern: [ Elision[opt] BindingRestElement ]',
     function() {
         return this.BindingRestElement.BoundNames();
     },
 
-    'ArrayBindingPattern: [ BindingElementList , Elision ]',
+    'ArrayBindingPattern: [ BindingElementList , Elision[opt] ]',
     function() {
         return this.BindingElementList.BoundNames();
     },
@@ -805,7 +805,7 @@ Static_Semantics('BoundNames', [
         return names;
     },
 
-    'BindingElisionElement: Elision BindingElement',
+    'BindingElisionElement: Elision[opt] BindingElement',
     function() {
         return this.BindingElement.BoundNames();
     },
@@ -815,12 +815,12 @@ Static_Semantics('BoundNames', [
         return this.BindingElement.BoundNames();
     },
 
-    'SingleNameBinding: BindingIdentifier Initializer',
+    'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function() {
         return this.BindingIdentifier.BoundNames();
     },
 
-    'BindingElement: BindingPattern Initializer',
+    'BindingElement: BindingPattern Initializer[opt]',
     function() {
         return this.BindingPattern.BoundNames();
     },
@@ -870,7 +870,7 @@ Static_Semantics('ContainsExpression', [
         return this.BindingElisionElement.ContainsExpression();
     },
 
-    'BindingElisionElement: Elision BindingElement',
+    'BindingElisionElement: Elision[opt] BindingElement',
     function() {
         return this.BindingElement.ContainsExpression();
     },
@@ -2643,7 +2643,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
 // 13.12.10
 Runtime_Semantics('CaseSelectorEvaluation', [
 
-    'CaseClause: case Expression : StatementList',
+    'CaseClause: case Expression : StatementList[opt]',
     function() {
         var exprRef = this.Expression.Evaluation();
         return GetValue(exprRef);

@@ -27,7 +27,7 @@ Static_Semantics('Early Errors', [
 
     'FunctionDeclaration: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
     'FunctionDeclaration: function ( FormalParameters ) { FunctionBody }',
-    'FunctionExpression: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
+    'FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }',
     function() {
         //TODO if( this. FunctionBody.strict ) the Early Error rules for StrictFormalParameters: FormalParameters are applied;',
         //TODO if( this .FunctionBody.strict ) a Syntax Error if BindingIdentifier === the IdentifierName eval or the IdentifierName arguments;
@@ -97,7 +97,7 @@ Static_Semantics('Contains', [
 
     'FunctionDeclaration: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
     'FunctionDeclaration: function ( FormalParameters ) { FunctionBody }',
-    'FunctionExpression: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
+    'FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }',
     function(symbol) {
         return false;
     },
@@ -216,7 +216,7 @@ Static_Semantics('IsConstantDeclaration', [
 // 14.1.12
 Static_Semantics('IsFunctionDefinition', [
 
-    'FunctionExpression: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
+    'FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }',
     function() {
         return true;
     },
@@ -850,7 +850,7 @@ Static_Semantics('Early Errors', [
 
     'GeneratorDeclaration: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
     'GeneratorDeclaration: function * ( FormalParameters ) { GeneratorBody }',
-    'GeneratorExpression: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
+    'GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }',
     function() {
         // if (this.GeneratorBody.strict) //TODO the Early Error rules for StrictFormalParameters: FormalParameters are applied;
         // if (this.GeneratorBody.strict) //TODO BindingIdentifier === the IdentifierName eval or the IdentifierName arguments;
@@ -892,7 +892,7 @@ Static_Semantics('Contains', [
 
     'GeneratorDeclaration: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
     'GeneratorDeclaration: function * ( FormalParameters ) { GeneratorBody }',
-    'GeneratorExpression: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
+    'GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }',
     function(symbol) {
         return false;
     },
@@ -944,7 +944,7 @@ Static_Semantics('IsConstantDeclaration', [
 // 14.4.9
 Static_Semantics('IsFunctionDefinition', [
 
-    'GeneratorExpression: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
+    'GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }',
     function() {
         return true;
     },
@@ -1189,7 +1189,7 @@ Static_Semantics('ConstructorMethod', [
 // 14.5.4
 Static_Semantics('Contains', [
 
-    'ClassTail: ClassHeritage { ClassBody }',
+    'ClassTail: ClassHeritage[opt] { ClassBody }',
     function(symbol) {
         if (symbol === 'ClassBody') return true;
         if (symbol === 'ClassHeritage') {
@@ -1255,7 +1255,7 @@ Static_Semantics('IsConstantDeclaration', [
 // 14.5.8
 Static_Semantics('IsFunctionDefinition', [
 
-    'ClassExpression: class BindingIdentifier ClassTail',
+    'ClassExpression: class BindingIdentifier[opt] ClassTail',
     function() {
         return true;
     },
@@ -1394,7 +1394,7 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         var constructorInfo = this.constructor.DefineMethod(proto, constructorParent);
         //TODO Assert( constructorInfo !== an abrupt completion);
         var F = constructorInfo.Closure;
-        if (this.ClassHeritage[opt]) F.ConstructorKind = "derived";
+        if (this.ClassHeritage) F.ConstructorKind = "derived";
         MakeConstructor(F, false, proto);
         MakeClassConstructor(F);
         CreateMethodProperty(proto, "constructor", F);
@@ -1442,7 +1442,7 @@ Runtime_Semantics('BindingClassDeclarationEvaluation', [
 // 14.5.16
 Runtime_Semantics('Evaluation', [
 
-    'ClassDeclaration: class BindingIdentifier ClassTail',
+    'ClassDeclaration: class BindingIdentifier[opt] ClassTail',
     function() {
         var status = this.ClassDeclaration.BindingClassDeclarationEvaluation();
         return empty;
