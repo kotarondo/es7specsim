@@ -132,6 +132,7 @@ var filenames = [
     "12-expressions.js",
     "13-statements-and-declarations.js",
 	"14-functions-and-classes.js",
+	"15-scripts-and-modules.js",
 ];
 
 for (var filename of filenames) {

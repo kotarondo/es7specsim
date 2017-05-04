@@ -38,10 +38,10 @@
 class OrdinaryObject {}
 
 // 9.1.1
-OrdinaryObject.prototype.GetPrototypeOf = function() {
+define_method(OrdinaryObject, 'GetPrototypeOf', function() {
     var O = this;
     return OrdinaryGetPrototypeOf(O);
-}
+});
 
 // 9.1.1.1
 function OrdinaryGetPrototypeOf(O) {
@@ -49,10 +49,10 @@ function OrdinaryGetPrototypeOf(O) {
 }
 
 // 9.1.2
-OrdinaryObject.prototype.SetPrototypeOf = function(V) {
+define_method(OrdinaryObject, 'SetPrototypeOf', function(V) {
     var O = this;
     return OrdinarySetPrototypeOf(O, V);
-}
+});
 
 // 9.1.2.1
 function OrdinarySetPrototypeOf(O, V) {
@@ -76,10 +76,10 @@ function OrdinarySetPrototypeOf(O, V) {
 }
 
 // 9.1.3
-OrdinaryObject.prototype.IsExtensible = function() {
+define_method(OrdinaryObject, 'IsExtensible', function() {
     var O = this;
     return OrdinaryIsExtensible(O);
-}
+});
 
 // 9.1.3.1
 function OrdinaryIsExtensible(O) {
@@ -87,10 +87,10 @@ function OrdinaryIsExtensible(O) {
 }
 
 // 9.1.4
-OrdinaryObject.prototype.PreventExtensions = function() {
+define_method(OrdinaryObject, 'PreventExtensions', function() {
     var O = this;
     return OrdinaryPreventExtensions(O);
-}
+});
 
 // 9.1.4.1
 function OrdinaryPreventExtensions(O) {
@@ -99,10 +99,10 @@ function OrdinaryPreventExtensions(O) {
 }
 
 // 9.1.5
-OrdinaryObject.prototype.GetOwnProperty = function(P) {
+define_method(OrdinaryObject, 'GetOwnProperty', function(P) {
     var O = this;
     return OrdinaryGetOwnProperty(O, P);
-}
+});
 
 // 9.1.5.1
 function OrdinaryGetOwnProperty(O, P) {
@@ -123,10 +123,10 @@ function OrdinaryGetOwnProperty(O, P) {
 }
 
 // 9.1.6
-OrdinaryObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(OrdinaryObject, 'DefineOwnProperty', function(P, Desc) {
     var O = this;
     return OrdinaryDefineOwnProperty(O, P, Desc);
-}
+});
 
 // 9.1.6.1
 function OrdinaryDefineOwnProperty(O, P, Desc) {
@@ -228,10 +228,10 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
 }
 
 // 9.1.7
-OrdinaryObject.prototype.HasProperty = function(P) {
+define_method(OrdinaryObject, 'HasProperty', function(P) {
     var O = this;
     return OrdinaryHasProperty(O, P);
-}
+});
 
 // 9.1.7.1
 function OrdinaryHasProperty(O, P) {
@@ -246,10 +246,10 @@ function OrdinaryHasProperty(O, P) {
 }
 
 // 9.1.8
-OrdinaryObject.prototype.Get = function(P, Receiver) {
+define_method(OrdinaryObject, 'Get', function(P, Receiver) {
     var O = this;
     return OrdinaryGet(O, P, Receiver);
-}
+});
 
 // 9.1.8.1
 function OrdinaryGet(O, P, Receiver) {
@@ -268,10 +268,10 @@ function OrdinaryGet(O, P, Receiver) {
 }
 
 // 9.1.9
-OrdinaryObject.prototype.Set = function(P, V, Receiver) {
+define_method(OrdinaryObject, 'Set', function(P, V, Receiver) {
     var O = this;
     return OrdinarySet(O, P, V, Receiver);
-}
+});
 
 // 9.1.9.1
 function OrdinarySet(O, P, V, Receiver) {
@@ -306,10 +306,10 @@ function OrdinarySet(O, P, V, Receiver) {
 }
 
 // 9.1.10
-OrdinaryObject.prototype.Delete = function(P) {
+define_method(OrdinaryObject, 'Delete', function(P) {
     var O = this;
     return OrdinaryDelete(O, P);
-}
+});
 
 // 9.1.10.1
 function OrdinaryDelete(O, P) {
@@ -324,10 +324,10 @@ function OrdinaryDelete(O, P) {
 }
 
 // 9.1.11
-OrdinaryObject.prototype.OwnPropertyKeys = function() {
+define_method(OrdinaryObject, 'OwnPropertyKeys', function() {
     var O = this;
     return OrdinaryOwnPropertyKeys(O);
-}
+});
 
 // 9.1.11.1
 function OrdinaryOwnPropertyKeys(O) {
@@ -371,7 +371,7 @@ function GetPrototypeFromConstructor(constructor, intrinsicDefaultProto) {
 class ECMAScriptFunctionObject extends OrdinaryObject {}
 
 // 9.2.1
-ECMAScriptFunctionObject.prototype.Call = function(thisArgument, argumentsList) {
+define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, argumentsList) {
     var F = this;
     Assert(F instanceof ECMAScriptFunctionObject);
     if (F.FunctionKind === "classConstructor") throw $TypeError();
@@ -385,7 +385,7 @@ ECMAScriptFunctionObject.prototype.Call = function(thisArgument, argumentsList) 
     if (result.Type === 'return') return result.Value;
     ReturnIfAbrupt(result);
     return undefined;
-}
+});
 
 // 9.2.1.1
 function PrepareForOrdinaryCall(F, newTarget) {
@@ -431,7 +431,7 @@ function OrdinaryCallEvaluateBody(F, argumentsList) {
 }
 
 // 9.2.2
-ECMAScriptFunctionObject.prototype.Construct = function(argumentsList, newTarget) {
+define_method(ECMAScriptFunctionObject, 'Construct', function(argumentsList, newTarget) {
     var F = this;
     Assert(F instanceof ECMAScriptFunctionObject);
     Assert(Type(newTarget) === 'Object');
@@ -454,7 +454,7 @@ ECMAScriptFunctionObject.prototype.Construct = function(argumentsList, newTarget
         if (result.Value !== undefined) throw $TypeError();
     } else ReturnIfAbrupt(result);
     return envRec.GetThisBinding();
-}
+});
 
 // 9.2.3
 function FunctionAllocate(functionPrototype, strict, functionKind) {
@@ -691,7 +691,7 @@ class BuiltinFunctionObject extends OrdinaryObject {}
 var NewTarget;
 
 // 9.3.1
-BuiltinFunctionObject.prototype.Call = function(thisArgument, argumentsList) {
+define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsList) {
     var F = this;
     var callerContext = the_running_execution_context;
     var calleeContext = new ExecutionContext;
@@ -709,10 +709,10 @@ BuiltinFunctionObject.prototype.Call = function(thisArgument, argumentsList) {
         Assert(callerContext === the_running_execution_context);
     }
     return result;
-}
+});
 
 // 9.3.2
-BuiltinFunctionObject.prototype.Construct = function(argumentsList, newTarget) {
+define_method(BuiltinFunctionObject, 'Construct', function(argumentsList, newTarget) {
     var F = this;
     var callerContext = the_running_execution_context;
     var calleeContext = new ExecutionContext;
@@ -730,7 +730,7 @@ BuiltinFunctionObject.prototype.Construct = function(argumentsList, newTarget) {
         Assert(callerContext === the_running_execution_context);
     }
     return result;
-}
+});
 
 // 9.3.3
 function CreateBuiltinFunction(realm, steps, prototype, internalSlotsList) {
@@ -756,17 +756,17 @@ function CreateBuiltinFunction(realm, steps, prototype, internalSlotsList) {
 class BoundFunctionExoticObject extends OrdinaryObject {}
 
 // 9.4.1.1
-BoundFunctionExoticObject.prototype.Call = function(thisArgument, argumentsList) {
+define_method(BoundFunctionExoticObject, 'Call', function(thisArgument, argumentsList) {
     var F = this;
     var target = F.BoundTargetFunction;
     var boundThis = F.BoundThis;
     var boundArgs = F.BoundArguments;
     var args = boundArgs.concat(argumentsList);
     return Call(target, boundThis, args);
-}
+});
 
 // 9.4.1.2
-BoundFunctionExoticObject.prototype.Construct = function(argumentsList, newTarget) {
+define_method(BoundFunctionExoticObject, 'Construct', function(argumentsList, newTarget) {
     var F = this;
     var target = F.BoundTargetFunction;
     Assert(target.Construct);
@@ -774,7 +774,7 @@ BoundFunctionExoticObject.prototype.Construct = function(argumentsList, newTarge
     var args = boundArgs.concat(argumentsList);
     if (SameValue(F, newTarget) === true) var newTarget = target;
     return Construct(target, args, newTarget);
-}
+});
 
 // 9.4.1.3
 function BoundFunctionCreate(targetFunction, boundThis, boundArgs) {
@@ -801,7 +801,7 @@ function is_an_array_index(P) {
 }
 
 // 9.4.2.1
-ArrayExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(ArrayExoticObject, 'DefineOwnProperty', function(P, Desc) {
     var A = this;
     Assert(IsPropertyKey(P) === true);
     if (P === "length") {
@@ -822,7 +822,7 @@ ArrayExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
         return true;
     }
     return OrdinaryDefineOwnProperty(A, P, Desc);
-}
+});
 
 // 9.4.2.2
 function ArrayCreate(length, proto) {
@@ -907,7 +907,7 @@ function ArraySetLength(A, Desc) {
 class StringExoticObject extends OrdinaryObject {}
 
 // 9.4.3.1
-StringExoticObject.prototype.GetOwnProperty = function(P) {
+define_method(StringExoticObject, 'GetOwnProperty', function(P) {
     var S = this;
     Assert(IsPropertyKey(P) === true);
     var desc = OrdinaryGetOwnProperty(S, P);
@@ -922,10 +922,10 @@ StringExoticObject.prototype.GetOwnProperty = function(P) {
     if (index < 0 || len <= index) return undefined;
     var resultStr = str[index];
     return PropertyDescriptor({ Value: resultStr, Writable: false, Enumerable: true, Configurable: false });
-}
+});
 
 // 9.4.3.2
-StringExoticObject.prototype.OwnPropertyKeys = function() {
+define_method(StringExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
     var keys = [];
     var str = O.StringData;
@@ -938,7 +938,7 @@ StringExoticObject.prototype.OwnPropertyKeys = function() {
         return !keys.includes(P);
     });
     return keys.concat(otherKeys);
-}
+});
 
 // 9.4.3.3
 function StringCreate(value, prototype) {
@@ -957,7 +957,7 @@ function StringCreate(value, prototype) {
 class ArgumentsExoticObject extends OrdinaryObject {}
 
 // 9.4.4.1
-ArgumentsExoticObject.prototype.GetOwnProperty = function(P) {
+define_method(ArgumentsExoticObject, 'GetOwnProperty', function(P) {
     var args = this;
     var desc = OrdinaryGetOwnProperty(args, P);
     if (desc === undefined) return desc;
@@ -971,10 +971,10 @@ ArgumentsExoticObject.prototype.GetOwnProperty = function(P) {
         desc.Value instanceof ECMAScriptFunctionObject && desc.Value.Strict) throw $TypeError();
     */
     return desc;
-}
+});
 
 // 9.4.4.2
-ArgumentsExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(ArgumentsExoticObject, 'DefineOwnProperty', function(P, Desc) {
     var args = this;
     var map = args.ParameterMap;
     var isMapped = HasOwnProperty(map, P);
@@ -1001,10 +1001,10 @@ ArgumentsExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
         }
     }
     return true;
-}
+});
 
 // 9.4.4.3
-ArgumentsExoticObject.prototype.Get = function(P, Receiver) {
+define_method(ArgumentsExoticObject, 'Get', function(P, Receiver) {
     var args = this;
     var map = args.ParameterMap;
     var isMapped = HasOwnProperty(map, P);
@@ -1013,10 +1013,10 @@ ArgumentsExoticObject.prototype.Get = function(P, Receiver) {
     } else {
         return Get(map, P);
     }
-}
+});
 
 // 9.4.4.4
-ArgumentsExoticObject.prototype.Set = function(P, V, Receiver) {
+define_method(ArgumentsExoticObject, 'Set', function(P, V, Receiver) {
     var args = this;
     if (SameValue(args, Receiver) === false) {
         var isMapped = false;
@@ -1029,10 +1029,10 @@ ArgumentsExoticObject.prototype.Set = function(P, V, Receiver) {
         Assert(setStatus === true);
     }
     return OrdinarySet(args, P, V, Receiver);
-}
+});
 
 // 9.4.4.5
-ArgumentsExoticObject.prototype.HasProperty = function(P) {
+define_method(ArgumentsExoticObject, 'HasProperty', function(P) {
     var args = this;
     /* If an implementation does not provide a built-in caller property for argument exotic objects then step 2 of this algorithm must be skipped.
     if (P === "caller") {
@@ -1041,10 +1041,10 @@ ArgumentsExoticObject.prototype.HasProperty = function(P) {
     }
     */
     return OrdinaryHasProperty(args, P);
-}
+});
 
 // 9.4.4.6
-ArgumentsExoticObject.prototype.Delete = function(P) {
+define_method(ArgumentsExoticObject, 'Delete', function(P) {
     var args = this;
     var map = args.ParameterMap;
     var isMapped = HasOwnProperty(map, P);
@@ -1053,7 +1053,7 @@ ArgumentsExoticObject.prototype.Delete = function(P) {
         map.Delete(P);
     }
     return result;
-}
+});
 
 // 9.4.4.7
 function CreateUnmappedArgumentsObject(argumentsList) {
@@ -1144,7 +1144,7 @@ function MakeArgSetter(name, env) {
 class IntegerIndexedExoticObject extends OrdinaryObject {}
 
 // 9.4.5.1
-IntegerIndexedExoticObject.prototype.GetOwnProperty = function(P) {
+define_method(IntegerIndexedExoticObject, 'GetOwnProperty', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     Assert('ViewedArrayBuffer' in O);
@@ -1157,10 +1157,10 @@ IntegerIndexedExoticObject.prototype.GetOwnProperty = function(P) {
         }
     }
     return OrdinaryGetOwnProperty(O, P);
-}
+});
 
 // 9.4.5.2
-IntegerIndexedExoticObject.prototype.HasProperty = function(P) {
+define_method(IntegerIndexedExoticObject, 'HasProperty', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     Assert('ViewedArrayBuffer' in O);
@@ -1177,10 +1177,10 @@ IntegerIndexedExoticObject.prototype.HasProperty = function(P) {
         }
     }
     return OrdinaryHasProperty(O, P);
-}
+});
 
 // 9.4.5.3
-IntegerIndexedExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(IntegerIndexedExoticObject, 'DefineOwnProperty', function(P, Desc) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     Assert('ViewedArrayBuffer' in O);
@@ -1205,10 +1205,10 @@ IntegerIndexedExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
         }
     }
     return OrdinaryDefineOwnProperty(O, P, Desc);
-}
+});
 
 // 9.4.5.4
-IntegerIndexedExoticObject.prototype.Get = function(P, Receiver) {
+define_method(IntegerIndexedExoticObject, 'Get', function(P, Receiver) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     if (Type(P) === 'String') {
@@ -1218,10 +1218,10 @@ IntegerIndexedExoticObject.prototype.Get = function(P, Receiver) {
         }
     }
     return OrdinaryGet(O, P, Receiver);
-}
+});
 
 // 9.4.5.5
-IntegerIndexedExoticObject.prototype.Set = function(P, V, Receiver) {
+define_method(IntegerIndexedExoticObject, 'Set', function(P, V, Receiver) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     if (Type(P) === 'String') {
@@ -1231,10 +1231,10 @@ IntegerIndexedExoticObject.prototype.Set = function(P, V, Receiver) {
         }
     }
     return OrdinarySet(O, P, V, Receiver);
-}
+});
 
 // 9.4.5.6
-IntegerIndexedExoticObject.prototype.OwnPropertyKeys = function() {
+define_method(IntegerIndexedExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
     var keys = [];
     Assert('ViewedArrayBuffer' in O && 'ArrayLength' in O && 'ByteOffset' in O && 'TypedArrayName' in O);
@@ -1247,7 +1247,7 @@ IntegerIndexedExoticObject.prototype.OwnPropertyKeys = function() {
         return !keys.includes(P);
     });
     return keys;
-}
+});
 
 // 9.4.5.7
 function IntegerIndexedObjectCreate(prototype, internalSlotsList) {
@@ -1304,57 +1304,57 @@ function IntegerIndexedElementSet(O, index, value) {
 class ModuleNamespaceExoticObject {}
 
 // 9.4.6.1
-ModuleNamespaceExoticObject.prototype.GetPrototypeOf = function() {
+define_method(ModuleNamespaceExoticObject, 'GetPrototypeOf', function() {
     var O = this;
     return null;
-}
+});
 
 // 9.4.6.2
-ModuleNamespaceExoticObject.prototype.SetPrototypeOf = function(V) {
+define_method(ModuleNamespaceExoticObject, 'SetPrototypeOf', function(V) {
     var O = this;
     Assert(Type(V) === 'Object' || Type(V) === 'Null');
     return false;
-}
+});
 
 // 9.4.6.3
-ModuleNamespaceExoticObject.prototype.IsExtensible = function() {
+define_method(ModuleNamespaceExoticObject, 'IsExtensible', function() {
     var O = this;
     return false;
-}
+});
 
 // 9.4.6.4
-ModuleNamespaceExoticObject.prototype.PreventExtensions = function() {
+define_method(ModuleNamespaceExoticObject, 'PreventExtensions', function() {
     var O = this;
     return true;
-}
+});
 
 // 9.4.6.5
-ModuleNamespaceExoticObject.prototype.GetOwnProperty = function(P) {
+define_method(ModuleNamespaceExoticObject, 'GetOwnProperty', function(P) {
     var O = this;
     if (Type(P) === 'Symbol') return OrdinaryGetOwnProperty(O, P);
     var exports = O.Exports;
     if (!P.is_an_element_of(exports)) return undefined;
     var value = O.Get(P, O);
     return PropertyDescriptor({ Value: value, Writable: true, Enumerable: true, Configurable: false });
-}
+});
 
 // 9.4.6.6
-ModuleNamespaceExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(ModuleNamespaceExoticObject, 'DefineOwnProperty', function(P, Desc) {
     var O = this;
     return false;
-}
+});
 
 // 9.4.6.7
-ModuleNamespaceExoticObject.prototype.HasProperty = function(P) {
+define_method(ModuleNamespaceExoticObject, 'HasProperty', function(P) {
     var O = this;
     if (Type(P) === 'Symbol') return OrdinaryHasProperty(O, P);
     var exports = O.Exports;
     if (P.is_an_element_of(exports)) return true;
     return false;
-}
+});
 
 // 9.4.6.8
-ModuleNamespaceExoticObject.prototype.Get = function(P, Receiver) {
+define_method(ModuleNamespaceExoticObject, 'Get', function(P, Receiver) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     if (Type(P) === 'Symbol') {
@@ -1371,31 +1371,31 @@ ModuleNamespaceExoticObject.prototype.Get = function(P, Receiver) {
     if (targetEnv === undefined) throw $ReferenceError();
     var targetEnvRec = targetEnv.EnvironmentRecord;
     return targetEnvRec.GetBindingValue(binding.BindingName, true);
-}
+});
 
 // 9.4.6.9
-ModuleNamespaceExoticObject.prototype.Set = function(P, V, Receiver) {
+define_method(ModuleNamespaceExoticObject, 'Set', function(P, V, Receiver) {
     var O = this;
     return false;
-}
+});
 
 // 9.4.6.10
-ModuleNamespaceExoticObject.prototype.Delete = function(P) {
+define_method(ModuleNamespaceExoticObject, 'Delete', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var exports = O.Exports;
     if (P.is_an_element_of(exports)) return false;
     return true;
-}
+});
 
 // 9.4.6.11
-ModuleNamespaceExoticObject.prototype.OwnPropertyKeys = function() {
+define_method(ModuleNamespaceExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
     var exports = O.Exports.slice();
     var symbolKeys = OrdinaryOwnPropertyKeys(O);
     exports.append(symbolKeys);
     return exports;
-}
+});
 
 // 9.4.6.12
 function ModuleNamespaceCreate(module, exports) {
@@ -1415,20 +1415,20 @@ function ModuleNamespaceCreate(module, exports) {
 class ImmutablePrototypeObject extends OrdinaryObject {}
 
 // 9.4.7.1
-ImmutablePrototypeObject.prototype.SetPrototypeOf = function(V) {
+define_method(ImmutablePrototypeObject, 'SetPrototypeOf', function(V) {
     var O = this;
     Assert(Type(V) === 'Object' || Type(V) === 'Null');
     var current = O.Prototype;
     if (SameValue(V, current) === true) return true;
     return false;
-}
+});
 
 // 9.5 Proxy Object Internal Methods and Internal Slots
 
 class ProxyExoticObject {}
 
 // 9.5.1
-ProxyExoticObject.prototype.GetPrototypeOf = function() {
+define_method(ProxyExoticObject, 'GetPrototypeOf', function() {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1445,10 +1445,10 @@ ProxyExoticObject.prototype.GetPrototypeOf = function() {
     var targetProto = target.GetPrototypeOf();
     if (SameValue(handlerProto, targetProto) === false) throw $TypeError();
     return handlerProto;
-}
+});
 
 // 9.5.2
-ProxyExoticObject.prototype.SetPrototypeOf = function(V) {
+define_method(ProxyExoticObject, 'SetPrototypeOf', function(V) {
     var O = this;
     Assert(Type(V) === 'Object' || Type(V) === 'Null');
     var handler = O.ProxyHandler;
@@ -1466,10 +1466,10 @@ ProxyExoticObject.prototype.SetPrototypeOf = function(V) {
     var targetProto = target.GetPrototypeOf();
     if (SameValue(V, targetProto) === false) throw $TypeError();
     return true;
-}
+});
 
 // 9.5.3
-ProxyExoticObject.prototype.IsExtensible = function() {
+define_method(ProxyExoticObject, 'IsExtensible', function() {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1483,10 +1483,10 @@ ProxyExoticObject.prototype.IsExtensible = function() {
     var targetResult = target.IsExtensible();
     if (SameValue(booleanTrapResult, targetResult) === false) throw $TypeError();
     return booleanTrapResult;
-}
+});
 
 // 9.5.4
-ProxyExoticObject.prototype.PreventExtensions = function() {
+define_method(ProxyExoticObject, 'PreventExtensions', function() {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1502,10 +1502,10 @@ ProxyExoticObject.prototype.PreventExtensions = function() {
         if (targetIsExtensible === true) throw $TypeError();
     }
     return booleanTrapResult;
-}
+});
 
 // 9.5.5
-ProxyExoticObject.prototype.GetOwnProperty = function(P) {
+define_method(ProxyExoticObject, 'GetOwnProperty', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1538,10 +1538,10 @@ ProxyExoticObject.prototype.GetOwnProperty = function(P) {
         }
     }
     return resultDesc;
-}
+});
 
 // 9.5.6
-ProxyExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
+define_method(ProxyExoticObject, 'DefineOwnProperty', function(P, Desc) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1568,10 +1568,10 @@ ProxyExoticObject.prototype.DefineOwnProperty = function(P, Desc) {
         if (settingConfigFalse === true && targetDesc.Configurable === true) throw $TypeError();
     }
     return true;
-}
+});
 
 // 9.5.7
-ProxyExoticObject.prototype.HasProperty = function(P) {
+define_method(ProxyExoticObject, 'HasProperty', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1592,10 +1592,10 @@ ProxyExoticObject.prototype.HasProperty = function(P) {
         }
     }
     return booleanTrapResult;
-}
+});
 
 // 9.5.8
-ProxyExoticObject.prototype.Get = function(P, Receiver) {
+define_method(ProxyExoticObject, 'Get', function(P, Receiver) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1617,10 +1617,10 @@ ProxyExoticObject.prototype.Get = function(P, Receiver) {
         }
     }
     return trapResult;
-}
+});
 
 // 9.5.9
-ProxyExoticObject.prototype.Set = function(P, V, Receiver) {
+define_method(ProxyExoticObject, 'Set', function(P, V, Receiver) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1643,10 +1643,10 @@ ProxyExoticObject.prototype.Set = function(P, V, Receiver) {
         }
     }
     return true;
-}
+});
 
 // 9.5.10
-ProxyExoticObject.prototype.Delete = function(P) {
+define_method(ProxyExoticObject, 'Delete', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var handler = O.ProxyHandler;
@@ -1663,10 +1663,10 @@ ProxyExoticObject.prototype.Delete = function(P) {
     if (targetDesc === undefined) return true;
     if (targetDesc.Configurable === false) throw $TypeError();
     return true;
-}
+});
 
 // 9.5.11
-ProxyExoticObject.prototype.OwnPropertyKeys = function() {
+define_method(ProxyExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1706,10 +1706,10 @@ ProxyExoticObject.prototype.OwnPropertyKeys = function() {
     }
     if (uncheckedResultKeys !== empty) throw $TypeError();
     return trapResult;
-}
+});
 
 // 9.5.12
-ProxyExoticObject.prototype.Call = function(thisArgument, argumentsList) {
+define_method(ProxyExoticObject, 'Call', function(thisArgument, argumentsList) {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1721,10 +1721,10 @@ ProxyExoticObject.prototype.Call = function(thisArgument, argumentsList) {
     }
     var argArray = CreateArrayFromList(argumentsList);
     return Call(trap, handler, [target, thisArgument, argArray]);
-}
+});
 
 // 9.5.13
-ProxyExoticObject.prototype.Construct = function(argumentsList, newTarget) {
+define_method(ProxyExoticObject, 'Construct', function(argumentsList, newTarget) {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1739,7 +1739,7 @@ ProxyExoticObject.prototype.Construct = function(argumentsList, newTarget) {
     var newObj = Call(trap, handler, [target, argArray, newTarget]);
     if (Type(newObj) !== 'Object') throw $TypeError();
     return newObj;
-}
+});
 
 // 9.5.14
 function ProxyCreate(target, handler) {
