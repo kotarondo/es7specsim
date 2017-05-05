@@ -288,7 +288,7 @@ Static_Semantics('ExportedBindings', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var names = this.ModuleItemList.ExportedBindings();
-        names.append(this.ModuleItem.ExportedBindings());
+        names.append_elements_of(this.ModuleItem.ExportedBindings());
         return names;
     },
 
@@ -305,7 +305,7 @@ Static_Semantics('ExportedNames', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var names = this.ModuleItemList.ExportedNames();
-        names.append(this.ModuleItem.ExportedNames());
+        names.append_elements_of(this.ModuleItem.ExportedNames());
         return names;
     },
 
@@ -332,7 +332,7 @@ Static_Semantics('ExportEntries', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var entries = this.ModuleItemList.ExportEntries();
-        entries.append(this.ModuleItem.ExportEntries());
+        entries.append_elements_of(this.ModuleItem.ExportEntries());
         return entries;
     },
 
@@ -355,7 +355,7 @@ Static_Semantics('ImportEntries', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var entries = this.ModuleItemList.ImportEntries();
-        entries.append(this.ModuleItem.ImportEntries());
+        entries.append_elements_of(this.ModuleItem.ImportEntries());
         return entries;
     },
 
@@ -392,7 +392,7 @@ Static_Semantics('ModuleRequests', [
     function() {
         var moduleNames = this.ModuleItemList.ModuleRequests();
         var additionalNames = this.ModuleItem.ModuleRequests();
-        moduleNames.append(additionalNames.filter(e => !e.is_an_element_of(moduleNames)));
+        moduleNames.append_elements_of(additionalNames.filter(e => !e.is_an_element_of(moduleNames)));
         return moduleNames;
     },
 
@@ -408,7 +408,7 @@ Static_Semantics('LexicallyDeclaredNames', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var names = this.ModuleItemList.LexicallyDeclaredNames();
-        names.append(this.ModuleItem.LexicallyDeclaredNames());
+        names.append_elements_of(this.ModuleItem.LexicallyDeclaredNames());
         return names;
     },
 
@@ -440,7 +440,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var declarations = this.ModuleItemList.LexicallyScopedDeclarations();
-        declarations.append(this.ModuleItem.LexicallyScopedDeclarations());
+        declarations.append_elements_of(this.ModuleItem.LexicallyScopedDeclarations());
         return declarations;
     },
 
@@ -461,7 +461,7 @@ Static_Semantics('VarDeclaredNames', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var names = this.ModuleItemList.VarDeclaredNames();
-        names.append(this.ModuleItem.VarDeclaredNames());
+        names.append_elements_of(this.ModuleItem.VarDeclaredNames());
         return names;
     },
 
@@ -488,7 +488,7 @@ Static_Semantics('VarScopedDeclarations', [
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
         var declarations = this.ModuleItemList.VarScopedDeclarations();
-        declarations.append(this.ModuleItem.VarScopedDeclarations());
+        declarations.append_elements_of(this.ModuleItem.VarScopedDeclarations());
         return declarations;
     },
 
@@ -831,14 +831,14 @@ Static_Semantics('BoundNames', [
     'ImportClause: ImportedDefaultBinding , NameSpaceImport',
     function() {
         var names = this.ImportedDefaultBinding.BoundNames();
-        names.append(this.NameSpaceImport.BoundNames());
+        names.append_elements_of(this.NameSpaceImport.BoundNames());
         return names;
     },
 
     'ImportClause: ImportedDefaultBinding , NamedImports',
     function() {
         var names = this.ImportedDefaultBinding.BoundNames();
-        names.append(this.NamedImports.BoundNames());
+        names.append_elements_of(this.NamedImports.BoundNames());
         return names;
     },
 
@@ -850,7 +850,7 @@ Static_Semantics('BoundNames', [
     'ImportsList: ImportsList , ImportSpecifier',
     function() {
         var names = this.ImportsList.BoundNames();
-        names.append(this.ImportSpecifier.BoundNames());
+        names.append_elements_of(this.ImportSpecifier.BoundNames());
         return names;
     },
 
@@ -881,14 +881,14 @@ Static_Semantics('ImportEntriesForModule', [
     'ImportClause: ImportedDefaultBinding , NameSpaceImport',
     function(module) {
         var entries = this.ImportedDefaultBinding.ImportEntriesForModule(module);
-        entries.append(this.NameSpaceImport.ImportEntriesForModule(module));
+        entries.append_elements_of(this.NameSpaceImport.ImportEntriesForModule(module));
         return entries;
     },
 
     'ImportClause: ImportedDefaultBinding , NamedImports',
     function(module) {
         var entries = this.ImportedDefaultBinding.ImportEntriesForModule(module);
-        entries.append(this.NamedImports.ImportEntriesForModule(module));
+        entries.append_elements_of(this.NamedImports.ImportEntriesForModule(module));
         return entries;
     },
 
@@ -914,7 +914,7 @@ Static_Semantics('ImportEntriesForModule', [
     'ImportsList: ImportsList , ImportSpecifier',
     function() {
         var specs = this.ImportsList.ImportEntriesForModule(module);
-        specs.append(this.ImportSpecifier.ImportEntriesForModule(module));
+        specs.append_elements_of(this.ImportSpecifier.ImportEntriesForModule(module));
         return specs;
     },
 
@@ -1058,7 +1058,7 @@ Static_Semantics('ExportedBindings', [
     'ExportsList: ExportsList , ExportSpecifier',
     function() {
         var names = this.ExportsList.ExportedBindings();
-        names.append(this.ExportSpecifier.ExportedBindings());
+        names.append_elements_of(this.ExportSpecifier.ExportedBindings());
         return names;
     },
 
@@ -1112,7 +1112,7 @@ Static_Semantics('ExportedNames', [
     'ExportsList: ExportsList , ExportSpecifier',
     function() {
         var names = this.ExportsList.ExportedNames();
-        names.append(this.ExportSpecifier.ExportedNames());
+        names.append_elements_of(this.ExportSpecifier.ExportedNames());
         return names;
     },
 
@@ -1153,7 +1153,7 @@ Static_Semantics('ExportEntries', [
         var entries = [];
         var names = this.VariableStatement.BoundNames();
         for (var name of names) {
-            entries.append(Record({ ModuleRequest: null, ImportName: null, LocalName: name, ExportName: name }));
+            entries.push(Record({ ModuleRequest: null, ImportName: null, LocalName: name, ExportName: name }));
         }
         return entries;
     },
@@ -1163,7 +1163,7 @@ Static_Semantics('ExportEntries', [
         var entries = [];
         var names = this.Declaration.BoundNames();
         for (var name of names) {
-            entries.append(Record({ ModuleRequest: null, ImportName: null, LocalName: name, ExportName: name }));
+            entries.push(Record({ ModuleRequest: null, ImportName: null, LocalName: name, ExportName: name }));
         }
         return entries;
     },
@@ -1200,7 +1200,7 @@ Static_Semantics('ExportEntriesForModule', [
     'ExportsList: ExportsList , ExportSpecifier',
     function(module) {
         var specs = this.ExportsList.ExportEntriesForModule(module);
-        specs.append(this.ExportSpecifier.ExportEntriesForModule(module));
+        specs.append_elements_of(this.ExportSpecifier.ExportEntriesForModule(module));
         return specs;
     },
 
@@ -1307,7 +1307,7 @@ Static_Semantics('ReferencedBindings', [
     'ExportsList: ExportsList , ExportSpecifier',
     function() {
         var names = this.ExportsList.ReferencedBindings();
-        names.append(this.ExportSpecifier.ReferencedBindings());
+        names.append_elements_of(this.ExportSpecifier.ReferencedBindings());
         return names;
     },
 

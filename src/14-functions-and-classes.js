@@ -33,10 +33,10 @@ Static_Semantics('Early Errors', [
         //TODO if( this .FunctionBody.strict ) a Syntax Error if BindingIdentifier === the IdentifierName eval or the IdentifierName arguments;
         if (this.FunctionBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.FormalParameters.BoundNames().also_occurs_in(this.FunctionBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
-        if (this.FormalParameters.Contains('SuperProperty') === true) throw EarlySyntaxError(); //TODO
-        if (this.FunctionBody.Contains('SuperProperty') === true) throw EarlySyntaxError(); //TODO
-        if (this.FormalParameters.Contains('SuperCall') === true) throw EarlySyntaxError(); //TODO
-        if (this.FunctionBody.Contains('SuperCall') === true) throw EarlySyntaxError(); //TODO
+        if (this.FormalParameters.Contains('SuperProperty') === true) throw EarlySyntaxError();
+        if (this.FunctionBody.Contains('SuperProperty') === true) throw EarlySyntaxError();
+        if (this.FormalParameters.Contains('SuperCall') === true) throw EarlySyntaxError();
+        if (this.FunctionBody.Contains('SuperCall') === true) throw EarlySyntaxError();
     },
 
     'StrictFormalParameters: FormalParameters',
@@ -80,14 +80,14 @@ Static_Semantics('BoundNames', [
     'FormalParameterList: FormalsList , FunctionRestParameter',
     function() {
         var names = this.FormalsList.BoundNames();
-        names.append(this.FunctionRestParameter.BoundNames());
+        names.append_elements_of(this.FunctionRestParameter.BoundNames());
         return names;
     },
 
     'FormalsList: FormalsList , FormalParameter',
     function() {
         var names = this.FormalsList.BoundNames();
-        names.append(this.FormalParameter.BoundNames());
+        names.append_elements_of(this.FormalParameter.BoundNames());
         return names;
     },
 ]);
@@ -493,7 +493,7 @@ Static_Semantics('Contains', [
 
     'ArrowFunction: ArrowParameters => ConciseBody',
     function(symbol) {
-        //TODO if( symbol !== one of NewTarget, SuperProperty, SuperCall, super or this) return false; //TODO 
+        if (!symbol.is_an_element_of(['NewTarget', 'SuperProperty', 'SuperCall', 'super', 'this'])) return false;
         if (this.ArrowParameters.Contains(symbol) === true) return true;
         return ConciseBody.Contains(symbol);
     },

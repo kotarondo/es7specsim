@@ -277,13 +277,13 @@ Static_Semantics('LexicallyDeclaredNames', [
     'StatementList: StatementList StatementListItem',
     function() {
         var names = this.StatementList.LexicallyDeclaredNames();
-        names.append(this.StatementListItem.LexicallyDeclaredNames());
+        names.append_elements_of(this.StatementListItem.LexicallyDeclaredNames());
         return names;
     },
 
     'StatementListItem: Statement',
     function() {
-        if (this.Statement instanceof Production['Statement: LabelledStatement']) return this.Statement.LabelledStatement.LexicallyDeclaredNames();
+        if (this.Statement.is('Statement: LabelledStatement')) return this.Statement.LabelledStatement.LexicallyDeclaredNames();
         return [];
     },
 
@@ -299,13 +299,13 @@ Static_Semantics('LexicallyScopedDeclarations', [
     'StatementList: StatementList StatementListItem',
     function() {
         var declarations = this.StatementList.LexicallyScopedDeclarations();
-        declarations.append(this.StatementListItem.LexicallyScopedDeclarations());
+        declarations.append_elements_of(this.StatementListItem.LexicallyScopedDeclarations());
         return declarations;
     },
 
     'StatementListItem: Statement',
     function() {
-        if (this.Statement instanceof Production['Statement: LabelledStatement']) return this.Statement.LabelledStatement.LexicallyScopedDeclarations();
+        if (this.Statement.is('Statement: LabelledStatement')) return this.Statement.LabelledStatement.LexicallyScopedDeclarations();
         return [];
     },
 
@@ -321,7 +321,7 @@ Static_Semantics('TopLevelLexicallyDeclaredNames', [
     'StatementList: StatementList StatementListItem',
     function() {
         var names = this.StatementList.TopLevelLexicallyDeclaredNames();
-        names.append(this.StatementListItem.TopLevelLexicallyDeclaredNames());
+        names.append_elements_of(this.StatementListItem.TopLevelLexicallyDeclaredNames());
         return names;
     },
 
@@ -332,7 +332,7 @@ Static_Semantics('TopLevelLexicallyDeclaredNames', [
 
     'StatementListItem: Declaration',
     function() {
-        if (Declaration instanceof Production['Declaration: HoistableDeclaration']) {
+        if (Declaration.is('Declaration: HoistableDeclaration')) {
             return [];
         }
         return this.Declaration.BoundNames();
@@ -350,7 +350,7 @@ Static_Semantics('TopLevelLexicallyScopedDeclarations', [
     'StatementList: StatementList StatementListItem',
     function() {
         var declarations = StatementList.TopLevelLexicallyScopedDeclarations();
-        declarations.append(this.StatementListItem.TopLevelLexicallyScopedDeclarations());
+        declarations.append_elements_of(this.StatementListItem.TopLevelLexicallyScopedDeclarations());
         return declarations;
     },
 
@@ -361,7 +361,7 @@ Static_Semantics('TopLevelLexicallyScopedDeclarations', [
 
     'StatementListItem: Declaration',
     function() {
-        if (this.Declaration instanceof Production['Declaration: HoistableDeclaration']) {
+        if (this.Declaration.is('Declaration: HoistableDeclaration')) {
             return [];
         }
         return [this.Declaration];
@@ -379,13 +379,13 @@ Static_Semantics('TopLevelVarDeclaredNames', [
     'StatementList: StatementList StatementListItem',
     function() {
         var names = this.StatementList.TopLevelVarDeclaredNames();
-        names.append(this.StatementListItem.TopLevelVarDeclaredNames());
+        names.append_elements_of(this.StatementListItem.TopLevelVarDeclaredNames());
         return names;
     },
 
     'StatementListItem: Declaration',
     function() {
-        if (this.Declaration instanceof Production['Declaration: HoistableDeclaration']) {
+        if (this.Declaration.is('Declaration: HoistableDeclaration')) {
             return this.Declaration.HoistableDeclaration.BoundNames();
         }
         return [];
@@ -393,7 +393,7 @@ Static_Semantics('TopLevelVarDeclaredNames', [
 
     'StatementListItem: Statement',
     function() {
-        if (Statement instanceof Production['Statement: LabelledStatement']) return this.Statement.TopLevelVarDeclaredNames();
+        if (this.Statement.is('Statement: LabelledStatement')) return this.Statement.TopLevelVarDeclaredNames();
         return this.Statement.VarDeclaredNames();
     },
 ]);
@@ -409,19 +409,19 @@ Static_Semantics('TopLevelVarScopedDeclarations', [
     'StatementList: StatementList StatementListItem',
     function() {
         var declarations = this.StatementList.TopLevelVarScopedDeclarations();
-        declarations.append(this.StatementListItem.TopLevelVarScopedDeclarations());
+        declarations.append_elements_of(this.StatementListItem.TopLevelVarScopedDeclarations());
         return declarations;
     },
 
     'StatementListItem: Statement',
     function() {
-        if (this.Statement instanceof Production['Statement: LabelledStatement']) return this.Statement.TopLevelVarScopedDeclarations();
+        if (this.Statement.is('Statement: LabelledStatement')) return this.Statement.TopLevelVarScopedDeclarations();
         return this.Statement.VarScopedDeclarations();
     },
 
     'StatementListItem: Declaration',
     function() {
-        if (this.Declaration instanceof Production['Declaration: HoistableDeclaration']) {
+        if (this.Declaration.is('Declaration: HoistableDeclaration')) {
             var declaration = this.Declaration.HoistableDeclaration.DeclarationPart();
             return [declaration];
         }
@@ -440,7 +440,7 @@ Static_Semantics('VarDeclaredNames', [
     'StatementList: StatementList StatementListItem',
     function() {
         var names = this.StatementList.VarDeclaredNames();
-        names.append(this.StatementListItem.VarDeclaredNames());
+        names.append_elements_of(this.StatementListItem.VarDeclaredNames());
         return names;
     },
 
@@ -461,7 +461,7 @@ Static_Semantics('VarScopedDeclarations', [
     'StatementList: StatementList StatementListItem',
     function() {
         var declarations = this.StatementList.VarScopedDeclarations();
-        declarations.append(this.StatementListItem.VarScopedDeclarations());
+        declarations.append_elements_of(this.StatementListItem.VarScopedDeclarations());
         return declarations;
     },
 
@@ -514,7 +514,7 @@ function BlockDeclarationInstantiation(code, env) {
                 envRec.CreateMutableBinding(dn, false);
             }
         }
-        if (d instanceof GeneratorDeclaration || d instanceof FunctionDeclaration) { //TODO instanceof ??
+        if (d.is('GeneratorDeclaration') || d.is('FunctionDeclaration')) {
             var fn = d.BoundNames();
             var fo = d.InstantiateFunctionObject(env);
             envRec.InitializeBinding(fn, fo);
@@ -562,7 +562,7 @@ Static_Semantics('BoundNames', [
     'BindingList: BindingList , LexicalBinding',
     function() {
         var names = this.BindingList.BoundNames();
-        names.append(this.LexicalBinding.BoundNames());
+        names.append_elements_of(this.LexicalBinding.BoundNames());
         return names;
     },
 
@@ -655,7 +655,7 @@ Static_Semantics('BoundNames', [
     'VariableDeclarationList: VariableDeclarationList , VariableDeclaration',
     function() {
         var names = this.VariableDeclarationList.BoundNames();
-        names.append(this.VariableDeclaration.BoundNames());
+        names.append_elements_of(this.VariableDeclaration.BoundNames());
         return names;
     },
 
@@ -690,7 +690,7 @@ Static_Semantics('VarScopedDeclarations', [
     'VariableDeclarationList: VariableDeclarationList , VariableDeclaration',
     function() {
         var declarations = this.VariableDeclarationList.VarScopedDeclarations();
-        declarations.append(this.VariableDeclaration);
+        declarations.push(this.VariableDeclaration);
         return declarations;
     },
 ]);
@@ -787,21 +787,21 @@ Static_Semantics('BoundNames', [
     'ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement ]',
     function() {
         var names = this.BindingElementList.BoundNames();
-        names.append(this.BindingRestElement.BoundNames());
+        names.append_elements_of(this.BindingRestElement.BoundNames());
         return names;
     },
 
     'BindingPropertyList: BindingPropertyList , BindingProperty',
     function() {
         var names = this.BindingPropertyList.BoundNames();
-        names.append(this.BindingProperty.BoundNames());
+        names.append_elements_of(this.BindingProperty.BoundNames());
         return names;
     },
 
     'BindingElementList: BindingElementList , BindingElisionElement',
     function() {
         var names = this.BindingElementList.BoundNames();
-        names.append(this.BindingElisionElement.BoundNames());
+        names.append_elements_of(this.BindingElisionElement.BoundNames());
         return names;
     },
 
@@ -1311,7 +1311,7 @@ Static_Semantics('VarDeclaredNames', [
     'IfStatement: if ( Expression ) Statement else Statement',
     function() {
         var names = this.Statement1.VarDeclaredNames();
-        names.append(this.Statement2.VarDeclaredNames());
+        names.append_elements_of(this.Statement2.VarDeclaredNames());
         return names;
     },
 
@@ -1327,7 +1327,7 @@ Static_Semantics('VarScopedDeclarations', [
     'IfStatement: if ( Expression ) Statement else Statement',
     function() {
         var declarations = this.Statement1.VarScopedDeclarations();
-        declarations.append(this.Statement2.VarScopedDeclarations());
+        declarations.append_elements_of(this.Statement2.VarScopedDeclarations());
         return declarations;
     },
 
@@ -1597,7 +1597,7 @@ Static_Semantics('VarDeclaredNames', [
     'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         var names = this.VariableDeclarationList.BoundNames();
-        names.append(this.Statement.VarDeclaredNames());
+        names.append_elements_of(this.Statement.VarDeclaredNames());
         return names;
     },
 
@@ -1618,7 +1618,7 @@ Static_Semantics('VarScopedDeclarations', [
     'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function() {
         var declarations = this.VariableDeclarationList.VarScopedDeclarations();
-        declarations.append(this.Statement.VarScopedDeclarations());
+        declarations.append_elements_of(this.Statement.VarScopedDeclarations());
         return declarations;
     },
 
@@ -1820,7 +1820,7 @@ Static_Semantics('VarDeclaredNames', [
     'IterationStatement: for ( var ForBinding in Expression ) Statement',
     function() {
         var names = this.ForBinding.BoundNames();
-        names.append(this.Statement.VarDeclaredNames());
+        names.append_elements_of(this.Statement.VarDeclaredNames());
         return names;
     },
 
@@ -1837,7 +1837,7 @@ Static_Semantics('VarDeclaredNames', [
     'IterationStatement: for ( var ForBinding of AssignmentExpression ) Statement',
     function() {
         var names = this.ForBinding.BoundNames();
-        names.append(this.Statement.VarDeclaredNames());
+        names.append_elements_of(this.Statement.VarDeclaredNames());
         return names;
     },
 
@@ -1858,7 +1858,7 @@ Static_Semantics('VarScopedDeclarations', [
     'IterationStatement: for ( var ForBinding in Expression ) Statement',
     function() {
         var declarations = [this.ForBinding];
-        declarations.append(this.Statement.VarScopedDeclarations());
+        declarations.append_elements_of(this.Statement.VarScopedDeclarations());
         return declarations;
     },
 
@@ -1875,7 +1875,7 @@ Static_Semantics('VarScopedDeclarations', [
     'IterationStatement: for ( var ForBinding of AssignmentExpression ) Statement',
     function() {
         var declarations = [this.ForBinding];
-        declarations.append(this.Statement.VarScopedDeclarations());
+        declarations.append_elements_of(this.Statement.VarScopedDeclarations());
         return declarations;
     },
 
@@ -2420,7 +2420,7 @@ Static_Semantics('LexicallyDeclaredNames', [
     function() {
         if (this.CaseClauses1) var names = this.CaseClauses1.LexicallyDeclaredNames();
         else var names = [];
-        names.append(this.DefaultClause.LexicallyDeclaredNames());
+        names.append_elements_of(this.DefaultClause.LexicallyDeclaredNames());
         if (!this.CaseClauses2) return names;
         else return names.concat(this.CaseClauses2.LexicallyDeclaredNames());
     },
@@ -2428,7 +2428,7 @@ Static_Semantics('LexicallyDeclaredNames', [
     'CaseClauses: CaseClauses CaseClause',
     function() {
         var names = this.CaseClauses1.LexicallyDeclaredNames();
-        names.append(this.CaseClauses2.LexicallyDeclaredNames());
+        names.append_elements_of(this.CaseClauses2.LexicallyDeclaredNames());
         return names;
     },
 
@@ -2457,7 +2457,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
     function() {
         if (this.CaseClauses1) var declarations = this.CaseClauses1.LexicallyScopedDeclarations();
         else var declarations = [];
-        declarations.append(this.DefaultClause.LexicallyScopedDeclarations());
+        declarations.append_elements_of(this.DefaultClause.LexicallyScopedDeclarations());
         if (!this.CaseClauses2) return declarations;
         else return declarations.concat(this.CaseClauses2.LexicallyScopedDeclarations());
     },
@@ -2465,7 +2465,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
     'CaseClauses: CaseClauses CaseClause',
     function() {
         var declarations = this.CaseClauses.LexicallyScopedDeclarations();
-        declarations.append(this.CaseClause.LexicallyScopedDeclarations());
+        declarations.append_elements_of(this.CaseClause.LexicallyScopedDeclarations());
         return declarations;
     },
 
@@ -2499,7 +2499,7 @@ Static_Semantics('VarDeclaredNames', [
     function() {
         if (this.CaseClauses1) var names = this.CaseClauses1.VarDeclaredNames();
         else var names = [];
-        names.append(this.DefaultClause.VarDeclaredNames());
+        names.append_elements_of(this.DefaultClause.VarDeclaredNames());
         if (!this.CaseClauses2) return names;
         else return names.concat(this.CaseClauses2.VarDeclaredNames());
     },
@@ -2507,7 +2507,7 @@ Static_Semantics('VarDeclaredNames', [
     'CaseClauses: CaseClauses CaseClause',
     function() {
         var names = this.CaseClauses.VarDeclaredNames();
-        names.append(this.CaseClause.VarDeclaredNames());
+        names.append_elements_of(this.CaseClause.VarDeclaredNames());
         return names;
     },
 
@@ -2541,7 +2541,7 @@ Static_Semantics('VarScopedDeclarations', [
     function() {
         if (this.CaseClauses1) var declarations = this.CaseClauses1.VarScopedDeclarations();
         else var declarations = [];
-        declarations.append(this.DefaultClause.VarScopedDeclarations());
+        declarations.append_elements_of(this.DefaultClause.VarScopedDeclarations());
         if (!this.CaseClauses2) return declarations;
         else return declarations.concat(this.CaseClauses2.VarScopedDeclarations());
     },
@@ -2549,7 +2549,7 @@ Static_Semantics('VarScopedDeclarations', [
     'CaseClauses: CaseClauses CaseClause',
     function() {
         var declarations = this.CaseClauses.VarScopedDeclarations();
-        declarations.append(this.CaseClause.VarScopedDeclarations());
+        declarations.append_elements_of(this.CaseClause.VarScopedDeclarations());
         return declarations;
     },
 
@@ -2755,9 +2755,9 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
 
 // 13.13.5
 function IsLabelledFunction(stmt) {
-    if (!stmt.is('LabelledStatement')) return false; // TODO
+    if (!stmt.is('LabelledStatement')) return false;
     var item = stmt.LabelledItem;
-    if (item.is('LabelledItem: FunctionDeclaration')) return true; //TODO
+    if (item.is('LabelledItem: FunctionDeclaration')) return true;
     var subStmt = item.Statement;
     return IsLabelledFunction(subStmt);
 }
@@ -3068,22 +3068,22 @@ Static_Semantics('VarDeclaredNames', [
     'TryStatement: try Block Catch',
     function() {
         var names = this.Block.VarDeclaredNames();
-        names.append(this.Catch.VarDeclaredNames());
+        names.append_elements_of(this.Catch.VarDeclaredNames());
         return names;
     },
 
     'TryStatement: try Block Finally',
     function() {
         var names = this.Block.VarDeclaredNames();
-        names.append(this.Finally.VarDeclaredNames());
+        names.append_elements_of(this.Finally.VarDeclaredNames());
         return names;
     },
 
     'TryStatement: try Block Catch Finally',
     function() {
         var names = this.Block.VarDeclaredNames();
-        names.append(this.Catch.VarDeclaredNames());
-        names.append(this.Finally.VarDeclaredNames());
+        names.append_elements_of(this.Catch.VarDeclaredNames());
+        names.append_elements_of(this.Finally.VarDeclaredNames());
         return names;
     },
 
@@ -3099,22 +3099,22 @@ Static_Semantics('VarScopedDeclarations', [
     'TryStatement: try Block Catch',
     function() {
         var declarations = this.Block.VarScopedDeclarations();
-        declarations.append(this.Catch.VarScopedDeclarations());
+        declarations.append_elements_of(this.Catch.VarScopedDeclarations());
         return declarations;
     },
 
     'TryStatement: try Block Finally',
     function() {
         var declarations = this.Block.VarScopedDeclarations();
-        declarations.append(this.Finally.VarScopedDeclarations());
+        declarations.append_elements_of(this.Finally.VarScopedDeclarations());
         return declarations;
     },
 
     'TryStatement: try Block Catch Finally',
     function() {
         var declarations = this.Block.VarScopedDeclarations();
-        declarations.append(this.Catch.VarScopedDeclarations());
-        declarations.append(this.Finally.VarScopedDeclarations());
+        declarations.append_elements_of(this.Catch.VarScopedDeclarations());
+        declarations.append_elements_of(this.Finally.VarScopedDeclarations());
         return declarations;
     },
 

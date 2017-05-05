@@ -12,47 +12,6 @@ Syntax([
     'Identifier: IdentifierName but not ReservedWord',
 ]);
 
-function parseIdentifierReference(params) {
-    if (~params.Yield && peekToken() === 'yield') {
-        consumeToken('yield');
-        var nt = new Production['IdentifierReference: yield'](params);
-        return nt;
-    }
-    var nt = parseIdentifier();
-    var nt = new Production['IdentifierReference: Identifier'](params, [nt]);
-    return nt;
-}
-
-function parseBindingIdentifier(params) {
-    if (~params.Yield && peekToken() === 'yield') {
-        consumeToken('yield');
-        var nt = new Production['BindingIdentifier: yield'](params);
-        return nt;
-    }
-    var nt = parseIdentifier();
-    var nt = new Production['BindingIdentifier: Identifier'](params, [nt]);
-    return nt;
-}
-
-function parseLabelIdentifier(params) {
-    if (~params.Yield && peekToken() === 'yield') {
-        consumeToken('yield');
-        var nt = new Production['LabelIdentifier: yield'](params);
-        return nt;
-    }
-    var nt = parseIdentifier();
-    var nt = new Production['LabelIdentifier: Identifier'](params, [nt]);
-    return nt;
-}
-
-function parseIdentifier(params) {
-    if (isReservedWord(peekToken())) {
-        throw EarlySyntaxError();
-    }
-    var name = parseIdentifierName();
-    var nt = new Production['Identifier: IdentifierName but not ReservedWord'](params, [name]);
-}
-
 // 12.1.1
 Static_Semantics('Early Errors', [
 
@@ -73,7 +32,9 @@ Static_Semantics('Early Errors', [
     'BindingIdentifier: Identifier',
     'LabelIdentifier: Identifier',
     function() {
-        if (this.Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
+        /* moved into the parser.
+        if (Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
+		*/
     },
 
     'Identifier: IdentifierName but not ReservedWord',
@@ -203,7 +164,10 @@ Static_Semantics('CoveredParenthesizedExpression', [
 
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression )',
     function() {
-        return new Production['ParenthesizedExpression: ( Expression )'](this.params, [this.Expression]);
+        if (!this.ParenthesizedExpression) {
+            this.ParenthesizedExpression = new Production['ParenthesizedExpression: ( Expression )'](this.Expression);
+        }
+        return this.ParenthesizedExpression;
     },
 ]);
 
@@ -316,8 +280,8 @@ Runtime_Semantics('Evaluation', [
 
     'Literal: BooleanLiteral',
     function() {
-        if (this.BooleanLiteral === the_token_false) return false; //TODO
-        if (this.BooleanLiteral === the_token_true) return true; //TODO
+        if (this.BooleanLiteral === false) return false;
+        if (this.BooleanLiteral === true) return true;
     },
 
     'Literal: NumericLiteral',
@@ -475,7 +439,7 @@ Static_Semantics('Early Errors', [
 
     'PropertyDefinition: CoverInitializedName',
     function() {
-        throw EarlySyntaxError(); //TODO excepting in case of cover grammer
+        throw EarlySyntaxError();
     },
 ]);
 
@@ -498,16 +462,12 @@ Static_Semantics('Contains', [
 
     'PropertyDefinition: MethodDefinition',
     function(symbol) {
-        //TODO clarify this
-        if (symbol === MethodDefinition) return true;
+        if (symbol === 'MethodDefinition') return true;
         return this.MethodDefinition.ComputedPropertyContains(symbol);
     },
 
     'LiteralPropertyName: IdentifierName',
     function(symbol) {
-        if (isReservedWord(symbol)) return false;
-        //TODO clarify this
-        if (symbol.is('Identifier') && symbol.StringValue() === this.IdentifierName.StringValue()) return true;
         return false;
     },
 ]);
@@ -909,8 +869,7 @@ Static_Semantics('Early Errors', [
 
     'PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
-        //TODO It === a Syntax Error if the lexical token sequence matched by CoverParenthesizedExpressionAndArrowParameterList cannot = parsed with no tokens left over using ParenthesizedExpression as the goal symbol;
-        //TODO All Early Errors rules for ParenthesizedExpression && its derived productions also apply to CoveredParenthesizedExpression of CoverParenthesizedExpressionAndArrowParameterList;
+        if (!this.is('CoverParenthesizedExpressionAndArrowParameterList: ( Expression )')) throw EarlySyntaxError();
     },
 ]);
 
@@ -985,29 +944,21 @@ Syntax([
 // 12.3.1.1
 Static_Semantics('Contains', [
 
-    //TODO  clarify symbol's type
-
     'MemberExpression: MemberExpression . IdentifierName',
     function(symbol) {
         if (this.MemberExpression.Contains(symbol) === true) return true;
-        if (isReservedWord(symbol)) return false;
-        if (symbol.is('Identifier') && symbol.StringValue() === this.IdentifierName.StringValue()) return true;
         return false;
     },
 
     'SuperProperty: super . IdentifierName',
     function(symbol) {
         if (symbol === 'super') return true;
-        if (isReservedWord(symbol)) return false;
-        if (symbol.is('Identifier') && symbol.StringValue() === this.IdentifierName.StringValue()) return true;
         return false;
     },
 
     'CallExpression: CallExpression . IdentifierName',
     function(symbol) {
         if (this.CallExpression.Contains(symbol) === true) return true;
-        if (isReservedWord(symbol)) return false;
-        if (symbol.is('Identifier') && symbol.StringValue() === this.IdentifierName.StringValue()) return true;
         return false;
     },
 ]);
@@ -1252,7 +1203,7 @@ function EvaluateDirectCall(func, thisValue, arguments, tailPosition) {
     if (IsCallable(func) === false) throw $TypeError();
     if (tailPosition === true) PrepareForTailCall();
     var result = Call(func, thisValue, argList);
-    Assert(tailPosition === true); //TODO implement tail call
+    Assert(tailPosition === true);
     Assert(Type(result) === an_ECMAScript_language_type); //TODO
     return result;
 }
@@ -1563,12 +1514,11 @@ Static_Semantics('Early Errors', [
 
     'UnaryExpression: delete UnaryExpression',
     function() {
-        if (this.UnaryExpression.strict && this.UnaryExpression instanceof Production['PrimaryExpression: IdentifierReference']) throw EarlySyntaxError();
-
+        if (this.UnaryExpression.strict && this.UnaryExpression.is('PrimaryExpression: IdentifierReference')) throw EarlySyntaxError();
         var expr = this.UnaryExpression;
-        while (expr instanceof Production['PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList']) { //TODO instanceof ??
+        while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
             expr = expr.CoverParenthesizedExpressionAndArrowParameterList.Expression;
-            if (expr.strict && expr instanceof Production['PrimaryExpression: IdentifierReference']) throw EarlySyntaxError();
+            if (expr.strict && expr.is('PrimaryExpression: IdentifierReference')) throw EarlySyntaxError();
         }
     },
 ]);
@@ -2321,7 +2271,13 @@ Static_Semantics('Early Errors', [
 
     'AssignmentExpression: LeftHandSideExpression = AssignmentExpression',
     function() {
-        if (!(this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) && this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+        if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
+            /* moved into the parser.
+            parseAssignmentPattern();
+			*/
+        } else {
+            if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+        }
     },
 
     'AssignmentExpression: LeftHandSideExpression AssignmentOperator AssignmentExpression',
@@ -2374,7 +2330,7 @@ Runtime_Semantics('Evaluation', [
             PutValue(lref, rval);
             return rval;
         }
-        var assignmentPattern = this.LeftHandSideExpression.AssignmentPattern;
+        var assignmentPattern = this.AssignmentPattern;
         var rref = this.AssignmentExpression.Evaluation();
         var rval = GetValue(rref);
         var status = assignmentPattern.DestructuringAssignmentEvaluation(rval);
@@ -2387,8 +2343,78 @@ Runtime_Semantics('Evaluation', [
         var lval = GetValue(lref);
         var rref = this.AssignmentExpression.Evaluation();
         var rval = GetValue(rref);
-        //TODO var op = the @ where AssignmentOperator === @=;
-        //TODO var r = the result of applying op to lval && rval as if evaluating the expression lval op rval;
+        switch (this.AssignmentOperator) {
+            case '*=':
+                var lnum = ToNumber(lval);
+                var rnum = ToNumber(rval);
+                var r = lnum * rnum;
+                break;
+            case '/=':
+                var lnum = ToNumber(lval);
+                var rnum = ToNumber(rval);
+                var r = lnum / rnum;
+                break;
+            case '%=':
+                var lnum = ToNumber(lval);
+                var rnum = ToNumber(rval);
+                var r = lnum % rnum;
+                break;
+            case '+=':
+                var lprim = ToPrimitive(lval);
+                var rprim = ToPrimitive(rval);
+                if (Type(lprim) === 'String' || Type(rprim) === 'String') {
+                    var lstr = ToString(lprim);
+                    var rstr = ToString(rprim);
+                    var r = lstr + rstr;
+                    break;
+                }
+                var lnum = ToNumber(lprim);
+                var rnum = ToNumber(rprim);
+                var r = lnum + rnum;
+                break;
+            case '-=':
+                var lnum = ToNumber(lval);
+                var rnum = ToNumber(rval);
+                var r = lnum - rnum;
+            case '<<=':
+                var lnum = ToInt32(lval);
+                var rnum = ToUint32(rval);
+                var shiftCount = rnum & 0x1F;
+                var r = lnum << shiftCount;
+                break;
+            case '>>=':
+                var lnum = ToInt32(lval);
+                var rnum = ToUint32(rval);
+                var shiftCount = rnum & 0x1F;
+                var r = lnum >> shiftCount;
+                break;
+            case '>>>=':
+                var lnum = ToUint32(lval);
+                var rnum = ToUint32(rval);
+                var shiftCount = rnum & 0x1F;
+                var r = lnum >>> shiftCount;
+                break;
+            case '&=':
+                var lnum = ToInt32(lval);
+                var rnum = ToInt32(rval);
+                var r = lnum & rnum;
+                break;
+            case '|=':
+                var lnum = ToInt32(lval);
+                var rnum = ToInt32(rval);
+                var r = lnum | rnum;
+                break;
+            case '^=':
+                var lnum = ToInt32(lval);
+                var rnum = ToInt32(rval);
+                var r = lnum ^ rnum;
+                break;
+            case '**=':
+                var base = ToNumber(lval);
+                var exponent = ToNumber(rval);
+                var r = Math.pow(base, exponent);
+                break;
+        }
         PutValue(lref, r);
         return r;
     },
@@ -2427,8 +2453,13 @@ Static_Semantics('Early Errors', [
 
     'DestructuringAssignmentTarget: LeftHandSideExpression',
     function() {
-        // TODO It === a Syntax Error if LeftHandSideExpression === either an ObjectLiteral or an ArrayLiteral && if the lexical token sequence matched by LeftHandSideExpression cannot = parsed with no tokens left over using AssignmentPattern as the goal symbol;
-        if (!(this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) && this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
+        if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
+            /* moved into the parser.
+            parseAssignmentPattern();
+			*/
+        } else {
+            if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
+        }
     },
 ]);
 

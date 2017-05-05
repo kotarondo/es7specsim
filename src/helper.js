@@ -72,6 +72,6 @@ define_method(Array, 'equals', function(a) {
     return true;
 });
 
-define_method(Array, 'append', function(a) {
+define_method(Array, 'append_elements_of', function(a) {
     Array.prototype.push.apply(this, a);
 });

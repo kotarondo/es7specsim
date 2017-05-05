@@ -585,8 +585,8 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
     var functionNames = [];
     var functionsToInitialize = [];
     for (var d of varDeclarations.slice().reverse()) {
-        if (!(d instanceof VariableDeclaration) || !(d instanceof ForBinding)) {
-            Assert(d instanceof FunctionDeclaration || d instanceof GeneratorDeclaration);
+        if (!d.is('VariableDeclaration') || !d.is('ForBinding')) {
+            Assert(d.is('FunctionDeclaration') || d.is('GeneratorDeclaration'));
             var fn = d.BoundNames()[0];
             if (!fn.is_an_element_of(functionNames)) {
                 functionNames.unshift(fn);
@@ -967,8 +967,7 @@ define_method(ArgumentsExoticObject, 'GetOwnProperty', function(P) {
         desc.Value = Get(map, P);
     }
     /* If an implementation does not provide a built-in caller property for argument exotic objects then step 7 of this algorithm must be skipped.
-    if (IsDataDescriptor(desc) === true && P === "caller" &&
-        desc.Value instanceof ECMAScriptFunctionObject && desc.Value.Strict) throw $TypeError();
+    if (IsDataDescriptor(desc) === true && P === "caller" && desc.Value instanceof ECMAScriptFunctionObject && desc.Value.Strict) throw $TypeError();
     */
     return desc;
 });
@@ -1393,7 +1392,7 @@ define_method(ModuleNamespaceExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
     var exports = O.Exports.slice();
     var symbolKeys = OrdinaryOwnPropertyKeys(O);
-    exports.append(symbolKeys);
+    exports.append_elements_of(symbolKeys);
     return exports;
 });
 
