@@ -31,6 +31,12 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+function Assert(cond) {
+    if (cond) return;
+    debugger;
+    throw new Error("Assertion failed");
+}
+
 function get_symbol_description(sym) {
     return /^Symbol\((.*)\)$/.exec(sym.toString())[1];
 }

@@ -37,8 +37,7 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.FunctionBody.strict) {
             Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
-            if (this.BindingIdentifier.StringValue() === 'eval'
-                or the this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
+            if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.FunctionBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.FormalParameters.BoundNames().also_occurs_in(this.FunctionBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
@@ -862,8 +861,7 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.GeneratorBody.strict) {
             Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
-            if (this.BindingIdentifier.StringValue() === 'eval'
-                or the this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
+            if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.GeneratorBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.FormalParameters.BoundNames().also_occurs_in(this.GeneratorBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
