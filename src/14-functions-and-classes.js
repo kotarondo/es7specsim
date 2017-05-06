@@ -22,6 +22,12 @@ Syntax([
 
 // 14.1.1 Directive Prologues and the Use Strict Directive
 
+function containsUseStrictDirective(body) {
+    Assert(body.is('FunctionBody') || body.is('ScriptBody') || body.is('ModuleBody'));
+    //TODO
+    return strict;
+}
+
 // 14.1.2
 Static_Semantics('Early Errors', [
 
@@ -29,8 +35,11 @@ Static_Semantics('Early Errors', [
     'FunctionDeclaration: function ( FormalParameters ) { FunctionBody }',
     'FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }',
     function() {
-        //TODO if( this. FunctionBody.strict ) the Early Error rules for StrictFormalParameters: FormalParameters are applied;',
-        //TODO if( this .FunctionBody.strict ) a Syntax Error if BindingIdentifier === the IdentifierName eval or the IdentifierName arguments;
+        if (this.FunctionBody.strict) {
+            Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
+            if (this.BindingIdentifier.StringValue() === 'eval'
+                or the this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
+        }
         if (this.FunctionBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.FormalParameters.BoundNames().also_occurs_in(this.FunctionBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
         if (this.FormalParameters.Contains('SuperProperty') === true) throw EarlySyntaxError();
@@ -134,7 +143,7 @@ Static_Semantics('ContainsUseStrict', [
 
     'FunctionBody: FunctionStatementList',
     function() {
-        if (the_Directive_Prologue_of_FunctionStatementList_contains_a_Use_Strict_Directive) return true; //TODO
+        if (containsUseStrictDirective(this)) return true;
         else return false;
     },
 ]);
@@ -472,9 +481,9 @@ Static_Semantics('Early Errors', [
 
     'ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
-        //TODO if( the [Yield] grammar parameter === present on ArrowParameters, it === a Syntax Error if the lexical token sequence matched by CoverParenthesizedExpressionAndArrowParameterList[?Yield] cannot = parsed with no tokens left over using ArrowFormalParameters[Yield] as the goal symbol;
-        //TODO if( the [Yield] grammar parameter !== present on ArrowParameters, it === a Syntax Error if the lexical token sequence matched by CoverParenthesizedExpressionAndArrowParameterList[?Yield] cannot = parsed with no tokens left over using ArrowFormalParameters as the goal symbol;
-        //TODO All early errors rules for ArrowFormalParameters and its derived productions also apply to CoveredFormalsList of CoverParenthesizedExpressionAndArrowParameterList[ ? Yield];
+        // moved into the parser.
+        // parseArrowFormalParameters(Yield);
+        this.CoverParenthesizedExpressionAndArrowParameterList.CoveredFormalsList().apply_early_error_rules();
     },
 ]);
 
@@ -571,10 +580,9 @@ Static_Semantics('CoveredFormalsList', [
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression , ... BindingIdentifier )',
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression , ... BindingPattern )',
     function() {
+        // moved into the parser.
+        // parseArrowFormalParameters(Yield);
         return this.ArrowFormalParameters;
-
-        //TODO if( the [Yield] grammar parameter === present for CoverParenthesizedExpressionAndArrowParameterList[Yield]) return the result of parsing the lexical token stream matched by CoverParenthesizedExpressionAndArrowParameterList[Yield] using ArrowFormalParameters[Yield] as the goal symbol;
-        //TODO if( the [Yield] grammar parameter !== present for CoverParenthesizedExpressionAndArrowParameterList[Yield]) return the result of parsing the lexical token stream matched by CoverParenthesizedExpressionAndArrowParameterList using ArrowFormalParameters as the goal symbol;
     },
 ]);
 
@@ -852,8 +860,11 @@ Static_Semantics('Early Errors', [
     'GeneratorDeclaration: function * ( FormalParameters ) { GeneratorBody }',
     'GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }',
     function() {
-        // if (this.GeneratorBody.strict) //TODO the Early Error rules for StrictFormalParameters: FormalParameters are applied;
-        // if (this.GeneratorBody.strict) //TODO BindingIdentifier === the IdentifierName eval or the IdentifierName arguments;
+        if (this.GeneratorBody.strict) {
+            Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
+            if (this.BindingIdentifier.StringValue() === 'eval'
+                or the this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
+        }
         if (this.GeneratorBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.FormalParameters.BoundNames().also_occurs_in(this.GeneratorBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
         if (this.FormalParameters.Contains('YieldExpression') === true) throw EarlySyntaxError();

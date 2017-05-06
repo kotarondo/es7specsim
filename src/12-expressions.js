@@ -869,6 +869,7 @@ Static_Semantics('Early Errors', [
     'PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
         if (!this.is('CoverParenthesizedExpressionAndArrowParameterList: ( Expression )')) throw EarlySyntaxError();
+        this.CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression().apply_early_error_rules();
     },
 ]);
 
