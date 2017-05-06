@@ -48,7 +48,7 @@ function parseIdentifierReference(Yield) {
         return Production['IdentifierReference: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError();
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
     return Production['IdentifierReference: Identifier'](nt);
 }
 
@@ -58,7 +58,7 @@ function parseBindingIdentifier(Yield) {
         return Production['BindingIdentifier: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError();
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
     return Production['BindingIdentifier: Identifier'](nt);
 }
 
@@ -68,12 +68,12 @@ function parseLabelIdentifier(Yield) {
         return Production['LabelIdentifier: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError();
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
     return Production['LabelIdentifier: Identifier'](nt);
 }
 
 function parseIdentifier() {
-    if (isReservedWord(peekToken())) {
+    if (peekTokenIsReservedWord()) {
         throw EarlySyntaxError();
     }
     var nt = parseIdentifierName();
@@ -315,7 +315,7 @@ function parseObjectLiteral(Yield) {
 }
 
 function parsePropertyDefinition(Yield) {
-    if (peekToken() === '[') {
+    if (peekToken() === '[' || peekToken() === '"' || peekToken() === '0') {
         var name = parsePropertyName(Yield);
         if (peekToken() === '(') {
             var nt = parseMethodDefinition_after_PropertyName(name, Yield);
@@ -325,7 +325,7 @@ function parsePropertyDefinition(Yield) {
         var nt = parseAssignmentExpression('In', Yield);
         return Production['PropertyDefinition: PropertyName : AssignmentExpression'](name, nt);
     }
-    if (peekToken() !== '/' && peekToken() !== '/=') {
+    if (peekTokenIsIdentifierName()) {
         if (peekToken(1) === ',' || peekToken(1) === '}') {
             var nt = parseIdentifierReference(Yield);
             return Production['PropertyDefinition: IdentifierReference'](nt);
@@ -384,6 +384,11 @@ function parseInitializer(In, Yield) {
     consumeToken('=');
     var nt = parseAssignmentExpression(In, Yield);
     return Production['Initializer: = AssignmentExpression'](nt);
+}
+
+function parseInitializer_opt(In, Yield) {
+    if (peekToken() !== '=') return null;
+    return parseInitializer(In, Yield);
 }
 
 // 12.2.9 Template Literals
@@ -635,11 +640,11 @@ function parseUpdateExpression(Yield) {
         return Production['UpdateExpression: -- UnaryExpression'](nt);
     }
     var nt = parseLeftHandSideExpression(Yield);
-    if (!peekLineTerminator() && peekToken() === '++') {
+    if (!peekTokenIsLineSeparated() && peekToken() === '++') {
         consumeToken('++');
         return Production['UpdateExpression: LeftHandSideExpression ++'](nt);
     }
-    if (!peekLineTerminator() && peekToken() === '--') {
+    if (!peekTokenIsLineSeparated() && peekToken() === '--') {
         consumeToken('--');
         return Production['UpdateExpression: LeftHandSideExpression --'](nt);
     }
@@ -1018,7 +1023,7 @@ function parseAssignmentExpression(In, Yield) {
         return Production['AssignmentExpression: YieldExpression'](nt);
     }
     var nt = parseConditionalExpression(In, Yield);
-    if (!peekLineTerminator() && peekToken() === '=>') {
+    if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
         if (nt.is('BindingIdentifier')) {
             var nt = nt.resolve('BindingIdentifier')();
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
@@ -1038,7 +1043,8 @@ function parseAssignmentExpression(In, Yield) {
         switch (ope) {
             case '=':
                 if (lhs.is('ObjectLiteral') || lhs.is('ArrayLiteral')) {
-                    //TODO parseAssignmentPattern
+                    // from 12.15.1
+                    //TODO parseAssignmentPattern(Yield)
                 }
                 consumeToken('=');
                 var nt = parseAssignmentExpression(In, Yield);
@@ -1153,16 +1159,10 @@ function parseArrayAssignmentPattern(Yield) {
 }
 
 function parseAssignmentProperty(Yield) {
-    if (peekToken() !== '/' && peekToken() !== '/=') {
-        if (peekToken(1) === ',' || peekToken(1) === '}') {
-            var name = parseIdentifierReference(Yield);
-            return Production['AssignmentProperty: IdentifierReference Initializer[opt]'](name, null);
-        }
-        if (peekToken(1) === '=') {
-            var name = parseIdentifierReference(Yield);
-            var init = parseInitializer('In', Yield);
-            return Production['AssignmentProperty: IdentifierReference Initializer[opt]'](name, init);
-        }
+    if (peekTokenIsIdentifierName() && peekToken(1) !== ':') {
+        var name = parseIdentifierReference(Yield);
+        var ini = parseInitializer_opt('In', Yield);
+        return Production['AssignmentProperty: IdentifierReference Initializer[opt]'](name, ini);
     }
     var name = parsePropertyName(Yield);
     consumeToken(':');
@@ -1172,10 +1172,8 @@ function parseAssignmentProperty(Yield) {
 
 function parseAssignmentElement(Yield) {
     var nt = parseDestructuringAssignmentTarget(Yield);
-    if (peekToken() === '=') {
-        var init = parseInitializer('In', Yield);
-    } else var init = null;
-    return Production['AssignmentElement: DestructuringAssignmentTarget Initializer[opt]'](nt, init);
+    var ini = parseInitializer_opt('In', Yield);
+    return Production['AssignmentElement: DestructuringAssignmentTarget Initializer[opt]'](nt, ini);
 }
 
 function parseAssignmentRestElement(Yield) {
@@ -1187,7 +1185,8 @@ function parseAssignmentRestElement(Yield) {
 function parseDestructuringAssignmentTarget(Yield) {
     var nt = parseLeftHandSideExpression(Yield);
     if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
-        //TODO parseAssignmentPattern
+        // from 12.15.5.1
+        //TODO parseAssignmentPattern(Yield)
     }
     return Production['DestructuringAssignmentTarget: LeftHandSideExpression'](nt);
 }
@@ -1206,4 +1205,10 @@ function parseExpression(In, Yield) {
         var lval = Production['Expression: Expression , AssignmentExpression'](lval, nt);
     }
     return lval;
+}
+
+function parseExpression_opt(In, Yield) {
+    if (peekToken() === ';') return null;
+    if (peekToken() === '}') return null;
+    return parseExpression_opt(In, Yield);
 }

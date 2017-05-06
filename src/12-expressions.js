@@ -32,9 +32,8 @@ Static_Semantics('Early Errors', [
     'BindingIdentifier: Identifier',
     'LabelIdentifier: Identifier',
     function() {
-        /* moved into the parser.
-        if (Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
-		*/
+        // moved into the parser.
+        // if (Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
     },
 
     'Identifier: IdentifierName but not ReservedWord',
@@ -1517,7 +1516,7 @@ Static_Semantics('Early Errors', [
         if (this.UnaryExpression.strict && this.UnaryExpression.is('PrimaryExpression: IdentifierReference')) throw EarlySyntaxError();
         var expr = this.UnaryExpression;
         while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
-            expr = expr.CoverParenthesizedExpressionAndArrowParameterList.Expression;
+            expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
             if (expr.strict && expr.is('PrimaryExpression: IdentifierReference')) throw EarlySyntaxError();
         }
     },
@@ -2272,9 +2271,8 @@ Static_Semantics('Early Errors', [
     'AssignmentExpression: LeftHandSideExpression = AssignmentExpression',
     function() {
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
-            /* moved into the parser.
-            parseAssignmentPattern();
-			*/
+            // moved into the parser.
+            // parseAssignmentPattern(Yield);
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
         }
@@ -2454,9 +2452,8 @@ Static_Semantics('Early Errors', [
     'DestructuringAssignmentTarget: LeftHandSideExpression',
     function() {
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
-            /* moved into the parser.
-            parseAssignmentPattern();
-			*/
+            // moved into the parser.
+            // parseAssignmentPattern(Yield);
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
         }

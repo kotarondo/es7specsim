@@ -547,7 +547,7 @@ Static_Semantics('Early Errors', [
 
     'LexicalBinding: BindingIdentifier Initializer[opt]',
     function() {
-        if (!this.Initializer && LexicalDeclaration_containing_this_production.IsConstantDeclaration() === true) throw EarlySyntaxError(); //TODO
+        if (!this.Initializer && this.resolve_nested('LexicalDeclaration').IsConstantDeclaration() === true) throw EarlySyntaxError();
     },
 ]);
 
@@ -1250,6 +1250,11 @@ Syntax([
 Static_Semantics('Early Errors', [
 
     'IfStatement: if ( Expression ) Statement else Statement',
+    function() {
+        if (IsLabelledFunction(this.Statement1) === true) throw EarlySyntaxError();
+        if (IsLabelledFunction(this.Statement2) === true) throw EarlySyntaxError();
+    },
+
     'IfStatement: if ( Expression ) Statement',
     function() {
         if (IsLabelledFunction(this.Statement) === true) throw EarlySyntaxError();
@@ -1722,12 +1727,17 @@ Static_Semantics('Early Errors', [
     'IterationStatement: for ( LeftHandSideExpression in Expression ) Statement',
     'IterationStatement: for ( LeftHandSideExpression of AssignmentExpression ) Statement',
     function() {
-        //TODO It === a Syntax Error if LeftHandSideExpression === either an ObjectLiteral or an ArrayLiteral and if the lexical token sequence matched by LeftHandSideExpression cannot = parsed with no tokens left over using AssignmentPattern as the goal symbol ;
-
-        if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) return;
-        if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
-
-        //TODO It === a Syntax Error if the LeftHandSideExpression === CoverParenthesizedExpressionAndArrowParameterList: (Expression) and Expression derives a production that would produce a Syntax Error according to these rules if that production === substituted for LeftHandSideExpression. This rule === recursively applied ;
+        if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
+            // moved into the parser.
+            // parseAssignmentPattern(Yield);
+        } else {
+            if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
+            var expr = this.LeftHandSideExpression;
+            while (expr.is('CoverParenthesizedExpressionAndArrowParameterList: ( Expression )')) {
+                expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
+                if (expr.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
+            }
+        }
     },
 
     'IterationStatement: for ( ForDeclaration in Expression ) Statement',
@@ -2070,7 +2080,7 @@ Static_Semantics('Early Errors', [
     'ContinueStatement: continue ;',
     'ContinueStatement: continue LabelIdentifier ;',
     function() {
-        //TODO It === a Syntax Error if this production !== nested, directly or indirectly (but not crossing function boundaries), within an IterationStatement ;
+        if (!this.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within('IterationStatement')) throw EarlySyntaxError();
     },
 ]);
 
@@ -2116,7 +2126,8 @@ Static_Semantics('Early Errors', [
 
     'BreakStatement: break ;',
     function() {
-        //TODO It === a Syntax Error if this production !== nested, directly or indirectly (but not crossing function boundaries), within an IterationStatement or a SwitchStatement ;
+        if (!(this.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within('IterationStatement') ||
+                this.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within('SwitchStatement'))) throw EarlySyntaxError();
     },
 ]);
 
@@ -2577,7 +2588,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses }',
     function(input) {
         var V = undefined;
-        var A = ["the List of CaseClause items in CaseClauses, in source text order"]; //TODO
+        var A = listCaseClauses(this.CaseClauses);
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2597,7 +2608,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(input) {
         var V = undefined;
-        var A = ["the List of CaseClause items in the CaseClauses1, in source text order"]; //TODO
+        var A = listCaseClauses(this.CaseClauses1);
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2612,7 +2623,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             }
         }
         var foundInB = false;
-        var B = ["the List containing the CaseClause items in the CaseClauses2, in source text order"]; //TODO
+        var B = listCaseClauses(this.CaseClauses2);
         if (found === false) {
             for (var C of B) {
                 if (foundInB === false) {
