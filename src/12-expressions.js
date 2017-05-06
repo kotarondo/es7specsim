@@ -1,3 +1,37 @@
+/*
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+'use strict';
+
 // 12 ECMAScript Language: Expressions
 
 // 12.1 Identifiers
@@ -96,24 +130,24 @@ Runtime_Semantics('BindingInitialization', [
     'BindingIdentifier: Identifier',
     function(value, environment) {
         var name = this.Identifier.StringValue;
-        return InitializeBoundName(name, value, environment);
+        return InitializeBoundName(name, value, environment, this.strict);
     },
 
     'BindingIdentifier: yield',
     function(value, environment) {
-        return InitializeBoundName("yield", value, environment);
+        return InitializeBoundName("yield", value, environment, this.strict);
     },
 ]);
 
 // 12.1.5.1
-function InitializeBoundName(name, value, environment) {
+function InitializeBoundName(name, value, environment, strict) { //MODIFIED: strict argument added
     Assert(Type(name) === 'String');
     if (environment !== undefined) {
         var env = environment.EnvironmentRecord;
         env.InitializeBinding(name, value);
         return undefined;
     } else {
-        var lhs = ResolveBinding(name);
+        var lhs = ResolveBinding(name, undefined, strict);
         return PutValue(lhs, value);
     }
 }
@@ -123,12 +157,12 @@ Runtime_Semantics('Evaluation', [
 
     'IdentifierReference: Identifier',
     function() {
-        return ResolveBinding(this.Identifier.StringValue());
+        return ResolveBinding(this.Identifier.StringValue(), undefined, this.strict);
     },
 
     'IdentifierReference: yield',
     function() {
-        return ResolveBinding("yield");
+        return ResolveBinding("yield", undefined, this.strict);
     },
 ]);
 
@@ -1123,14 +1157,14 @@ Runtime_Semantics('Evaluation', [
 ]);
 
 // 12.3.3.1.1
-function EvaluateNew(constructProduction, arguments) {
+function EvaluateNew(constructProduction, _arguments) {
     Assert(constructProduction.is('NewExpression') || constructProduction.is('MemberExpression'));
-    Assert(arguments === empty || arguments.is('Arguments'));
+    Assert(_arguments === empty || _arguments.is('Arguments'));
     var ref = constructProduction.Evaluation();
     var constructor = GetValue(ref);
-    if (arguments === empty) var argList = [];
+    if (_arguments === empty) var argList = [];
     else {
-        var argList = arguments.ArgumentListEvaluation();
+        var argList = _arguments.ArgumentListEvaluation();
     }
     if (IsConstructor(constructor) === false) throw $TypeError();
     return Construct(constructor, argList);
@@ -1181,7 +1215,7 @@ Runtime_Semantics('Evaluation', [
 ]);
 
 // 12.3.4.2
-function EvaluateCall(ref, arguments, tailPosition) {
+function EvaluateCall(ref, _arguments, tailPosition) {
     var func = GetValue(ref);
     if (Type(ref) === 'Reference') {
         if (IsPropertyReference(ref) === true) {
@@ -1193,12 +1227,12 @@ function EvaluateCall(ref, arguments, tailPosition) {
     } else {
         var thisValue = undefined;
     }
-    return EvaluateDirectCall(func, thisValue, arguments, tailPosition);
+    return EvaluateDirectCall(func, thisValue, _arguments, tailPosition);
 }
 
 // 12.3.4.3
-function EvaluateDirectCall(func, thisValue, arguments, tailPosition) {
-    var argList = ArgumentListEvaluation(arguments);
+function EvaluateDirectCall(func, thisValue, _arguments, tailPosition) {
+    var argList = ArgumentListEvaluation(_arguments);
     if (Type(func) !== 'Object') throw $TypeError();
     if (IsCallable(func) === false) throw $TypeError();
     if (tailPosition === true) PrepareForTailCall();
@@ -2549,7 +2583,7 @@ Runtime_Semantics('DestructuringAssignmentEvaluation', [
     'AssignmentProperty: IdentifierReference Initializer[opt]',
     function(value) {
         var P = this.IdentifierReference.StringValue();
-        var lref = ResolveBinding(P);
+        var lref = ResolveBinding(P, undefined, this.strict);
         var v = GetV(value, P);
         if (this.Initializer && v === undefined) {
             var defaultValue = this.Initializer.Evaluation();

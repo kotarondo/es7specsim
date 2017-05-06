@@ -30,12 +30,17 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+'use strict';
 
 // 9 Ordinary and Exotic Objects Behaviours
 
 // 9.1 Ordinary Object Internal Methods and Internal Slots
 
-class OrdinaryObject {}
+class OrdinaryObject {
+    constructor() {
+        this.property = Object.create(null);
+    }
+}
 
 // 9.1.1
 define_method(OrdinaryObject, 'GetPrototypeOf', function() {
@@ -991,7 +996,7 @@ define_method(ArgumentsExoticObject, 'DefineOwnProperty', function(P, Desc) {
             map.Delete(P);
         } else {
             if ('Value' in Desc) {
-                var setStatus = Set(map, P, Desc.Value, false);
+                var setStatus = _Set(map, P, Desc.Value, false);
                 Assert(setStatus === true);
             }
             if ('Writable' in Desc && Desc.Writable === false) {
@@ -1024,7 +1029,7 @@ define_method(ArgumentsExoticObject, 'Set', function(P, V, Receiver) {
         var isMapped = HasOwnProperty(map, P);
     }
     if (isMapped === true) {
-        var setStatus = Set(map, P, V, false);
+        var setStatus = _Set(map, P, V, false);
         Assert(setStatus === true);
     }
     return OrdinarySet(args, P, V, Receiver);

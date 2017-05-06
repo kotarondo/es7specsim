@@ -30,6 +30,7 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+'use strict';
 
 // 8 Executable Code and Execution Contexts
 
@@ -52,6 +53,7 @@ const ER_indirect = 64;
 class DeclarativeEnvironmentRecord extends EnvironmentRecord {
 
     constructor() {
+        super();
         var envRec = this;
         envRec.attributes = Object.create(null);
         envRec.values = Object.create(null);
@@ -145,6 +147,7 @@ class DeclarativeEnvironmentRecord extends EnvironmentRecord {
 class ObjectEnvironmentRecord extends EnvironmentRecord {
 
     constructor(O) {
+        super();
         this.binding_object = O;
     }
 
@@ -192,7 +195,7 @@ class ObjectEnvironmentRecord extends EnvironmentRecord {
     SetMutableBinding(N, V, S) {
         var envRec = this;
         var bindings = envRec.binding_object;
-        return Set(bindings, N, V, S);
+        return _Set(bindings, N, V, S);
     }
 
     // 8.1.1.2.6
@@ -770,6 +773,7 @@ function remove_from_the_execution_context_stack(ctx) {
         the_running_execution_context = undefined;
         activeFunction = undefined;
         currentRealm = undefined;
+        return;
     }
     var ctx = the_execution_context_stack[len - 1];
     the_running_execution_context = ctx;
@@ -790,13 +794,13 @@ function GetActiveScriptOrModule() {
 }
 
 // 8.3.2
-function ResolveBinding(name, env) {
+function ResolveBinding(name, env, strict) { //MODIFIED: strict argument added
     if (env === undefined) {
         var env = the_running_execution_context.LexicalEnvironment;
     }
     Assert(Type(env) === 'Lexical Environment');
-    if (the_code_matching_the_syntactic_production_that_is_being_evaluated_is_contained_in_strict_mode_code) var strict = true; //TODO
-    else var strict = false;
+    // moved to the argument.
+    // if (the_code_matching_the_syntactic_production_that_is_being_evaluated_is_contained_in_strict_mode_code) var strict = true; else var strict = false;
     return GetIdentifierReference(env, name, strict);
 }
 
@@ -840,13 +844,13 @@ const theJobQueue = {
 };
 
 // 8.4.1
-function EnqueueJob(queueName, job, arguments) {
+function EnqueueJob(queueName, job, _arguments) {
     Assert(Type(queueName) === 'String');
     Assert(job instanceof Function);
     var callerContext = the_running_execution_context;
     var callerRealm = callerContext.Realm;
     var callerScriptOrModule = callerContext.ScriptOrModule;
-    var pending = { Job: job, Arguments: arguments, Realm: callerRealm, ScriptOrModule: callerScriptOrModule, HostDefined: undefined };
+    var pending = { Job: job, Arguments: _arguments, Realm: callerRealm, ScriptOrModule: callerScriptOrModule, HostDefined: undefined };
     // Perform any implementation or host environment defined processing of pending.
     theJobQueue[queueName].push(pending);
     return empty;

@@ -30,6 +30,7 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+'use strict';
 
 // 7 Abstract Operations
 
@@ -379,9 +380,41 @@ function SameValueNonNumber(x, y) {
     return (x === y);
 }
 
-// 7.2.12 Abstract Relational Comparison
-// 7.2.13 Abstract Equality Comparison
-// 7.2.14 Strict Equality Comparison
+// 7.2.12
+function AbstractRelationalComparison(x, y, flag) {
+
+    if (flag && flag.LeftFirst === true) {
+        var px = ToPrimitive(x, 'hint Number');
+        var py = ToPrimitive(y, 'hint Number');
+    } else {
+        var py = ToPrimitive(y, 'hint Number');
+        var px = ToPrimitive(x, 'hint Number');
+    }
+    // Here we rely on underlying virtual machine.
+    return (px < py);
+}
+
+// 7.2.13
+function AbstractEqualityComparison(x, y) {
+    if (Type(x) === Type(y)) {
+        return StrictEqualityComparison(x, y);
+    }
+    if (x === null && y === undefined) return true;
+    if (x === undefined && y === null) return true;
+    if (Type(x) === 'Number' && Type(y) === 'String') return AbstractEqualityComparison(x, ToNumber(y));
+    if (Type(x) === 'String' && Type(y) === 'Number') return AbstractEqualityComparison(ToNumber(x), y);
+    if (Type(x) === 'Boolean') return AbstractEqualityComparison(ToNumber(x), y);
+    if (Type(y) === 'Boolean') return AbstractEqualityComparison(x, ToNumber(y));
+    if ((Type(x) === 'String' || Type(x) === 'Number' || Type(x) === 'Symbol') && Type(y) === Object) return AbstractEqualityComparison(x, ToPrimitive(y));
+    if (Type(x) === 'Object' && (Type(y) === 'String' || Type(y) === 'Number' || Type(y) === 'Symbol')) return AbstractEqualityComparison(ToPrimitive(x), y);
+    return false;
+}
+
+// 7.2.14
+function StrictEqualityComparison(x, y) {
+    // Here we rely on underlying virtual machine.
+    return (x === y);
+}
 
 // 7.3 Operations on Objects
 

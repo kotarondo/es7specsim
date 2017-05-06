@@ -30,6 +30,7 @@
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+'use strict';
 
 // 6 ECMAScript Data Types and Values
 
@@ -49,6 +50,7 @@ function Type(x) {
             return 'Symbol';
     }
     if (x === null) return 'Null';
+    if (x instanceof OrdinaryObject) return 'Object';
     if (x instanceof Completion) return 'Completion Record';
     if (x instanceof Reference) return 'Reference';
     if (x instanceof PropertyDescriptor) return 'Property Descriptor';
@@ -56,7 +58,7 @@ function Type(x) {
     if (x instanceof EnvironmentRecord) return 'Environment Record';
     if (x instanceof RealmRecord) return 'Realm Record';
     if (Array.isArray(x) === true) return 'List';
-    if (length in x) return 'Data Block';
+    if ('length' in x) return 'Data Block';
     return 'Record';
 }
 

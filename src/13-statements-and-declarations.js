@@ -1,3 +1,37 @@
+/*
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+'use strict';
+
 // 13 ECMAScript Language: Statements and Declarations
 
 Syntax([
@@ -332,7 +366,7 @@ Static_Semantics('TopLevelLexicallyDeclaredNames', [
 
     'StatementListItem: Declaration',
     function() {
-        if (Declaration.is('Declaration: HoistableDeclaration')) {
+        if (this.Declaration.is('Declaration: HoistableDeclaration')) {
             return [];
         }
         return this.Declaration.BoundNames();
@@ -349,7 +383,7 @@ Static_Semantics('TopLevelLexicallyScopedDeclarations', [
 
     'StatementList: StatementList StatementListItem',
     function() {
-        var declarations = StatementList.TopLevelLexicallyScopedDeclarations();
+        var declarations = this.StatementList.TopLevelLexicallyScopedDeclarations();
         declarations.append_elements_of(this.StatementListItem.TopLevelLexicallyScopedDeclarations());
         return declarations;
     },
@@ -613,14 +647,14 @@ Runtime_Semantics('Evaluation', [
 
     'LexicalBinding: BindingIdentifier',
     function() {
-        var lhs = ResolveBinding(this.BindingIdentifier.StringValue());
+        var lhs = ResolveBinding(this.BindingIdentifier.StringValue(), undefined, this.strict);
         return InitializeReferencedBinding(lhs, undefined);
     },
 
     'LexicalBinding: BindingIdentifier Initializer',
     function() {
         var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId);
+        var lhs = ResolveBinding(bindingId, undefined, this.strict);
         var rhs = this.Initializer.Evaluation();
         var value = GetValue(rhs);
         if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
@@ -718,7 +752,7 @@ Runtime_Semantics('Evaluation', [
     'VariableDeclaration: BindingIdentifier Initializer',
     function() {
         var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId);
+        var lhs = ResolveBinding(bindingId, undefined, this.strict);
         var rhs = this.Initializer.Evaluation();
         var value = GetValue(rhs);
         if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
@@ -1074,7 +1108,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
     'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(iteratorRecord, environment) {
         var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId, environment);
+        var lhs = ResolveBinding(bindingId, environment, this.strict);
         if (iteratorRecord.Done === false) {
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
@@ -1126,7 +1160,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
 
     'BindingRestElement: ... BindingIdentifier',
     function(iteratorRecord, environment) {
-        var lhs = ResolveBinding(this.BindingIdentifier.StringValue(), environment);
+        var lhs = ResolveBinding(this.BindingIdentifier.StringValue(), environment, this.strict);
         var A = ArrayCreate(0);
         var n = 0;
         while (true) {
@@ -1193,7 +1227,7 @@ Runtime_Semantics('KeyedBindingInitialization', [
     'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(value, environment, propertyName) {
         var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId, environment);
+        var lhs = ResolveBinding(bindingId, environment, this.strict);
         var v = GetV(value, propertyName);
         if (this.Initializer && v === undefined) {
             var defaultValue = this.Initializer.Evaluation();
@@ -2017,7 +2051,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
             if (destructuring === false) {
                 Assert(lhs.BoundNames().length === 1);
                 var lhsName = lhs.BoundNames()[0];
-                var lhsRef = NormalCompletion(ResolveBinding(lhsName));
+                var lhsRef = NormalCompletion(ResolveBinding(lhsName, undefined, this.strict));
             }
         }
         if (destructuring === false) {
@@ -2057,7 +2091,7 @@ Runtime_Semantics('Evaluation', [
     'ForBinding: BindingIdentifier',
     function() {
         var bindingId = this.BindingIdentifier.StringValue();
-        return ResolveBinding(bindingId);
+        return ResolveBinding(bindingId, undefined, this.strict);
     },
 ]);
 

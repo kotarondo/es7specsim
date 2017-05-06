@@ -1,3 +1,37 @@
+/*
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+'use strict';
+
 // 15 ECMAScript Language: Scripts and Modules
 
 // 15.1 Scripts
@@ -38,6 +72,11 @@ Static_Semantics('IsStrict', [
 // 15.1.3
 Static_Semantics('LexicallyDeclaredNames', [
 
+    'Script: [empty]',
+    function() {
+        return []; // TODO clarify the specification
+    },
+
     'ScriptBody: StatementList',
     function() {
         return this.StatementList.TopLevelLexicallyDeclaredNames();
@@ -46,6 +85,11 @@ Static_Semantics('LexicallyDeclaredNames', [
 
 // 15.1.4
 Static_Semantics('LexicallyScopedDeclarations', [
+
+    'Script: [empty]',
+    function() {
+        return []; // TODO clarify the specification
+    },
 
     'ScriptBody: StatementList',
     function() {
@@ -56,6 +100,11 @@ Static_Semantics('LexicallyScopedDeclarations', [
 // 15.1.5
 Static_Semantics('VarDeclaredNames', [
 
+    'Script: [empty]',
+    function() {
+        return []; // TODO clarify the specification
+    },
+
     'ScriptBody: StatementList',
     function() {
         return this.StatementList.TopLevelVarDeclaredNames();
@@ -64,6 +113,11 @@ Static_Semantics('VarDeclaredNames', [
 
 // 15.1.6
 Static_Semantics('VarScopedDeclarations', [
+
+    'Script: [empty]',
+    function() {
+        return []; // TODO clarify the specification
+    },
 
     'ScriptBody: StatementList',
     function() {
@@ -94,7 +148,11 @@ function Script_Record(like) {
 // 15.1.9
 function ParseScript(sourceText, realm, hostDefined) {
     Assert(typeof sourceText === 'string');
-    //TODO Parse sourceText using Script as the goal symbol and analyze the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let body be the resulting parse tree. Otherwise, let body be a List of one or more SyntaxError or ReferenceError objects representing the parsing errors and/or early errors. 
+    try {
+        var body = parseScript(sourceText);
+    } catch (e) {
+        var body = [e];
+    }
     if (Type(body) === 'List') return body;
     return Script_Record({ Realm: realm, Environment: undefined, ECMAScriptCode: body, HostDefined: hostDefined });
 }
@@ -102,13 +160,13 @@ function ParseScript(sourceText, realm, hostDefined) {
 // 15.1.10
 function ScriptEvaluation(scriptRecord) {
     var globalEnv = scriptRecord.Realm.GlobalEnv;
-    var scriptCxt = new ExecutionContext;
+    var scriptCtx = new ExecutionContext;
     scriptCtx.Function = null;
     scriptCtx.Realm = scriptRecord.Realm;
     scriptCtx.ScriptOrModule = scriptRecord;
     scriptCtx.VariableEnvironment = globalEnv;
     scriptCtx.LexicalEnvironment = globalEnv;
-    push_onto_the_execution_context_stack(scriptCxt);
+    push_onto_the_execution_context_stack(scriptCtx);
     var scriptBody = scriptRecord.ECMAScriptCode;
     var result = concreteCompletion(GlobalDeclarationInstantiation(scriptBody, globalEnv));
     if (result.Type === 'normal') {
@@ -117,7 +175,7 @@ function ScriptEvaluation(scriptRecord) {
     if (result.Type === 'normal' && result.Value === empty) {
         var result = NormalCompletion(undefined);
     }
-    remove_from_the_execution_context_stack(scriptCxt);
+    remove_from_the_execution_context_stack(scriptCtx);
     Assert(the_execution_context_stack.length > 0);
     return resolveCompletion(result);
 }
@@ -699,16 +757,16 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
         var requiredModule = HostResolveImportedModule(module, required);
         requiredModule.ModuleEvaluation();
     }
-    var moduleCxt = new ExecutionContext;
-    moduleCxt.Function = null;
-    moduleCxt.Realm = module.Realm;
-    moduleCxt.ScriptOrModule = module;
+    var moduleCtx = new ExecutionContext;
+    moduleCtx.Function = null;
+    moduleCtx.Realm = module.Realm;
+    moduleCtx.ScriptOrModule = module;
     //TODO Assert( module has been linked and declarations in its module environment have been instantiated);
-    moduleCxt.VariableEnvironment = module.Environment;
-    moduleCxt.LexicalEnvironment = module.Environment;
-    push_onto_the_execution_context_stack(moduleCxt);
+    moduleCtx.VariableEnvironment = module.Environment;
+    moduleCtx.LexicalEnvironment = module.Environment;
+    push_onto_the_execution_context_stack(moduleCtx);
     var result = concreteCompletion(module.ECMAScriptCode.Evaluation());
-    remove_from_the_execution_context_stack(moduleCxt);
+    remove_from_the_execution_context_stack(moduleCtx);
     return resolveCompletion(result);
 });
 
@@ -1355,7 +1413,7 @@ Runtime_Semantics('Evaluation', [
             var hasNameProperty = HasOwnProperty(value, "name");
             if (hasNameProperty === false) SetFunctionName(value, "default");
             var env = the_running_execution_context.LexicalEnvironment;
-            InitializeBoundName("*default*", value, env);
+            InitializeBoundName("*default*", value, env, true); //MODIFIED: strict arugument === true
         }
         return empty;
     },
@@ -1369,7 +1427,7 @@ Runtime_Semantics('Evaluation', [
             if (hasNameProperty === false) SetFunctionName(value, "default");
         }
         var env = the_running_execution_context.LexicalEnvironment;
-        InitializeBoundName("*default*", value, env);
+        InitializeBoundName("*default*", value, env, true); //MODIFIED: strict arugument === true
         return empty;
     },
 ]);

@@ -1,35 +1,36 @@
 /*
-Copyright (c) 2017, Kotaro Endo.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above
-   copyright notice, this list of conditions and the following
-   disclaimer in the documentation and/or other materials provided
-   with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived
-   from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ Copyright (c) 2017, Kotaro Endo.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+ 
+ 3. Neither the name of the copyright holder nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+'use strict';
 
 // 12.1 Identifiers
 /*
@@ -380,15 +381,15 @@ function parseComputedPropertyName(Yield) {
     return Production['ComputedPropertyName: [ AssignmentExpression ]'](nt);
 }
 
+function parseInitializer_opt(In, Yield) {
+    if (peekToken() !== '=') return null;
+    return parseInitializer(In, Yield);
+}
+
 function parseInitializer(In, Yield) {
     consumeToken('=');
     var nt = parseAssignmentExpression(In, Yield);
     return Production['Initializer: = AssignmentExpression'](nt);
-}
-
-function parseInitializer_opt(In, Yield) {
-    if (peekToken() !== '=') return null;
-    return parseInitializer(In, Yield);
 }
 
 // 12.2.9 Template Literals
@@ -938,10 +939,10 @@ function parseBitwiseORExpression(In, Yield) {
     var lval = Production['BitwiseORExpression: BitwiseXORExpression'](nt);
     while (true) {
         switch (peekToken()) {
-            case '^':
-                consumeToken('^');
+            case '|':
+                consumeToken('|');
                 var nt = parseBitwiseXORExpression(In, Yield);
-                var lval = Production['BitwiseORExpression: BitwiseORExpression ^ BitwiseXORExpression'](lval, nt);
+                var lval = Production['BitwiseORExpression: BitwiseORExpression | BitwiseXORExpression'](lval, nt);
                 break;
             default:
                 return lval;
@@ -996,7 +997,7 @@ function parseLogicalORExpression(In, Yield) {
 */
 
 function parseConditionalExpression(In, Yield) {
-    var nt = parseLogicalORxpression(In, Yield);
+    var nt = parseLogicalORExpression(In, Yield);
     if (peekToken() === '?') {
         consumeToken('?');
         var expr1 = parseAssignmentExpression('In', Yield);
@@ -1004,7 +1005,7 @@ function parseConditionalExpression(In, Yield) {
         var expr2 = parseAssignmentExpression(In, Yield);
         return Production['ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression'](lval, expr1, expr2);
     }
-    return Production['ConditionalExpression: LogicalORxpression'](nt);
+    return Production['ConditionalExpression: LogicalORExpression'](nt);
 }
 
 
@@ -1025,7 +1026,7 @@ function parseAssignmentExpression(In, Yield) {
     var nt = parseConditionalExpression(In, Yield);
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
         if (nt.is('BindingIdentifier')) {
-            var nt = nt.resolve('BindingIdentifier')();
+            var nt = nt.resolve('BindingIdentifier');
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
@@ -1038,7 +1039,7 @@ function parseAssignmentExpression(In, Yield) {
         }
     }
     if (nt.is('LeftHandSideExpression')) {
-        var lhs = nt.resolve('LeftHandSideExpression')();
+        var lhs = nt.resolve('LeftHandSideExpression');
         var ope = peekToken();
         switch (ope) {
             case '=':
@@ -1197,18 +1198,19 @@ function parseDestructuringAssignmentTarget(Yield) {
     'Expression[In,Yield]: Expression[?In,?Yield] , AssignmentExpression[?In,?Yield]',
 */
 
+function parseExpression_opt(In, Yield) {
+    if (peekToken() === ';') return null;
+    if (peekToken() === '}') return null;
+    return parseExpression(In, Yield);
+}
+
 function parseExpression(In, Yield) {
-    var lval = parseAssignmentExpression(In, Yield);
+    var nt = parseAssignmentExpression(In, Yield);
+    var lval = Production['Expression: AssignmentExpression'](nt);
     while (peekToken() === ',') {
         consumeToken(',');
         var nt = parseAssignmentExpression(In, Yield);
         var lval = Production['Expression: Expression , AssignmentExpression'](lval, nt);
     }
     return lval;
-}
-
-function parseExpression_opt(In, Yield) {
-    if (peekToken() === ';') return null;
-    if (peekToken() === '}') return null;
-    return parseExpression_opt(In, Yield);
 }
