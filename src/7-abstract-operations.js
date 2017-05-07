@@ -310,14 +310,14 @@ function IsArray(argument) {
 // 7.2.3
 function IsCallable(argument) {
     if (Type(argument) !== 'Object') return false;
-    if (argument.Call) return true;
+    if ('Call' in argument) return true;
     return false;
 }
 
 // 7.2.4
 function IsConstructor(argument) {
     if (Type(argument) !== 'Object') return false;
-    if (argument.Construct) return true;
+    if ('Construct' in argument) return true;
     return false;
 }
 

@@ -436,7 +436,7 @@ function OrdinaryCallEvaluateBody(F, argumentsList) {
 }
 
 // 9.2.2
-define_method(ECMAScriptFunctionObject, 'Construct', function(argumentsList, newTarget) {
+function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
     var F = this;
     Assert(F instanceof ECMAScriptFunctionObject);
     Assert(Type(newTarget) === 'Object');
@@ -459,7 +459,7 @@ define_method(ECMAScriptFunctionObject, 'Construct', function(argumentsList, new
         if (result.Value !== undefined) throw $TypeError();
     } else ReturnIfAbrupt(result);
     return envRec.GetThisBinding();
-});
+}
 
 // 9.2.3
 function FunctionAllocate(functionPrototype, strict, functionKind) {
@@ -469,10 +469,10 @@ function FunctionAllocate(functionPrototype, strict, functionKind) {
     else var needsConstruct = false;
     if (functionKind === "non-constructor") var functionKind = "normal";
     var F = new ECMAScriptFunctionObject;
-    if (needsConstruct !== true) {
-        F.Construct = undefined;
+    if (needsConstruct === true) {
+        F.Construct = ECMAScriptFunctionObject_Construct;
+        F.ConstructorKind = "base";
     }
-    F.ConstructorKind = "base";
     F.Strict = strict;
     F.FunctionKind = functionKind;
     F.Prototype = functionPrototype;
@@ -771,7 +771,7 @@ define_method(BoundFunctionExoticObject, 'Call', function(thisArgument, argument
 });
 
 // 9.4.1.2
-define_method(BoundFunctionExoticObject, 'Construct', function(argumentsList, newTarget) {
+function BoundFunctionExoticObject_Construct(argumentsList, newTarget) {
     var F = this;
     var target = F.BoundTargetFunction;
     Assert(target.Construct);
@@ -779,15 +779,15 @@ define_method(BoundFunctionExoticObject, 'Construct', function(argumentsList, ne
     var args = boundArgs.concat(argumentsList);
     if (SameValue(F, newTarget) === true) var newTarget = target;
     return Construct(target, args, newTarget);
-});
+}
 
 // 9.4.1.3
 function BoundFunctionCreate(targetFunction, boundThis, boundArgs) {
     Assert(Type(targetFunction) === 'Object');
     var proto = targetFunction.GetPrototypeOf();
     var obj = new BoundFunctionExoticObject;
-    if (!targetFunction.Construct) {
-        obj.Construct = undefined;
+    if ('Construct' in targetFunction) {
+        obj.Construct = BoundFunctionExoticObject_Construct;
     }
     obj.Prototype = proto;
     obj.Extensible = true;
@@ -884,7 +884,7 @@ function ArraySetLength(A, Desc) {
         return OrdinaryDefineOwnProperty(A, "length", newLenDesc);
     }
     if (oldLenDesc.Writable === false) return false;
-    if (!('Writable' in newLenDesc.Writable) || newLenDesc.Writable === true) var newWritable = true;
+    if (!('Writable' in newLenDesc) || newLenDesc.Writable === true) var newWritable = true;
     else {
         var newWritable = false;
         newLenDesc.Writable = true;
@@ -1713,7 +1713,7 @@ define_method(ProxyExoticObject, 'OwnPropertyKeys', function() {
 });
 
 // 9.5.12
-define_method(ProxyExoticObject, 'Call', function(thisArgument, argumentsList) {
+function ProxyExoticObject_Call(thisArgument, argumentsList) {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1725,10 +1725,10 @@ define_method(ProxyExoticObject, 'Call', function(thisArgument, argumentsList) {
     }
     var argArray = CreateArrayFromList(argumentsList);
     return Call(trap, handler, [target, thisArgument, argArray]);
-});
+}
 
 // 9.5.13
-define_method(ProxyExoticObject, 'Construct', function(argumentsList, newTarget) {
+function ProxyExoticObject_Construct(argumentsList, newTarget) {
     var O = this;
     var handler = O.ProxyHandler;
     if (handler === null) throw $TypeError();
@@ -1743,7 +1743,7 @@ define_method(ProxyExoticObject, 'Construct', function(argumentsList, newTarget)
     var newObj = Call(trap, handler, [target, argArray, newTarget]);
     if (Type(newObj) !== 'Object') throw $TypeError();
     return newObj;
-});
+}
 
 // 9.5.14
 function ProxyCreate(target, handler) {
@@ -1752,12 +1752,11 @@ function ProxyCreate(target, handler) {
     if (Type(handler) !== 'Object') throw $TypeError();
     if (handler instanceof ProxyExoticObject && handler.ProxyHandler === null) throw $TypeError();
     var P = new ProxyExoticObject;
-    if (IsCallable(target) !== true) {
-        P.Call = undefined;
-        P.Construct = undefined;
-    }
-    if (!target.Construct) {
-        P.Construct = undefined;
+    if (IsCallable(target) === true) {
+        P.Call = ProxyExoticObject_Call;
+        if ('Construct' in target) {
+            P.Construct = ProxyExoticObject_Construct;
+        }
     }
     P.ProxyTarget = target;
     P.ProxyHandler = handler;

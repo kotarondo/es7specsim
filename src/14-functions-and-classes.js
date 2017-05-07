@@ -56,10 +56,10 @@ Syntax([
 
 // 14.1.1 Directive Prologues and the Use Strict Directive
 
-function containsUseStrictDirective(body) {
-    Assert(body.is('FunctionBody') || body.is('ScriptBody') || body.is('ModuleBody'));
+function containsUseStrictDirective(nt) {
+    Assert(nt.is('StatementList'));
     //TODO
-    return strict;
+    return false;
 }
 
 // 14.1.2
@@ -70,7 +70,9 @@ Static_Semantics('Early Errors', [
     'FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }',
     function() {
         if (this.FunctionBody.strict) {
-            Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
+            var nt = Production['StrictFormalParameters: FormalParameters'](this.FormalParameters);
+            nt.strict = true;
+            nt.apply_early_error_rules();
             if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.FunctionBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
@@ -98,6 +100,32 @@ Static_Semantics('Early Errors', [
         if (this.FunctionStatementList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
         if (this.FunctionStatementList.ContainsUndefinedBreakTarget([]) === true) throw EarlySyntaxError();
         if (this.FunctionStatementList.ContainsUndefinedContinueTarget([], []) === true) throw EarlySyntaxError();
+    },
+]);
+
+// Supplemental  // TODO clarify the specification
+
+Static_Semantics('ContainsDuplicateLabels', [
+
+    'FunctionStatementList: [empty]',
+    function(labelSet) {
+        return false;
+    },
+]);
+
+Static_Semantics('ContainsUndefinedBreakTarget', [
+
+    'FunctionStatementList: [empty]',
+    function(labelSet) {
+        return false;
+    },
+]);
+
+Static_Semantics('ContainsUndefinedContinueTarget', [
+
+    'FunctionStatementList: [empty]',
+    function(iterationSet, labelSet) {
+        return false;
     },
 ]);
 
@@ -176,7 +204,8 @@ Static_Semantics('ContainsUseStrict', [
 
     'FunctionBody: FunctionStatementList',
     function() {
-        if (containsUseStrictDirective(this)) return true;
+        if (this.is('FunctionStatementList: [empty]')) return false;
+        if (containsUseStrictDirective(this.resolve('StatementList'))) return true;
         else return false;
     },
 ]);
@@ -473,7 +502,7 @@ Runtime_Semantics('Evaluation', [
         var scope = the_running_execution_context.LexicalEnvironment;
         var funcEnv = NewDeclarativeEnvironment(scope);
         var envRec = funcEnv.EnvironmentRecord;
-        var name = BindingIdentifier.StringValue();
+        var name = this.BindingIdentifier.StringValue();
         envRec.CreateImmutableBinding(name, false);
         var closure = FunctionCreate('Normal', this.FormalParameters, this.FunctionBody, funcEnv, strict);
         MakeConstructor(closure);
@@ -526,7 +555,7 @@ Static_Semantics('BoundNames', [
     'ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
         var formals = this.CoverParenthesizedExpressionAndArrowParameterList.CoveredFormalsList();
-        return this.formals.BoundNames();
+        return formals.BoundNames();
     },
 ]);
 
@@ -723,7 +752,7 @@ Static_Semantics('Early Errors', [
 
     'MethodDefinition: set PropertyName ( PropertySetParameterList ) { FunctionBody }',
     function() {
-        if (this.PropertySetParameterList.BoundNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
+        if (this.PropertySetParameterList.BoundNames().contains_any_duplicate_elements()) throw EarlySyntaxError();
         if (this.FunctionBody.ContainsUseStrict() === true && this.PropertySetParameterList.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.PropertySetParameterList.BoundNames().also_occurs_in(this.FunctionBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
     },
@@ -767,18 +796,18 @@ Static_Semantics('HasDirectSuper', [
     'MethodDefinition: PropertyName ( StrictFormalParameters ) { FunctionBody }',
     function() {
         if (this.StrictFormalParameters.Contains('SuperCall') === true) return true;
-        return FunctionBody.Contains('SuperCall');
+        return this.FunctionBody.Contains('SuperCall');
     },
 
     'MethodDefinition: get PropertyName ( ) { FunctionBody }',
     function() {
-        return FunctionBody.Contains('SuperCall');
+        return this.FunctionBody.Contains('SuperCall');
     },
 
     'MethodDefinition: set PropertyName ( PropertySetParameterList ) { FunctionBody }',
     function() {
         if (this.PropertySetParameterList.Contains('SuperCall') === true) return true;
-        return FunctionBody.Contains('SuperCall');
+        return this.FunctionBody.Contains('SuperCall');
     },
 ]);
 
@@ -843,7 +872,7 @@ Runtime_Semantics('PropertyDefinitionEvaluation', [
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
         var scope = the_running_execution_context.LexicalEnvironment;
-        var formalParameterList = new Production['FormalParameters: [empty]'](this.params, []); //TODO check this
+        var formalParameterList = Production['FormalParameters: [empty]']([]);
         var closure = FunctionCreate('Method', formalParameterList, this.FunctionBody, scope, strict);
         MakeMethod(closure, object);
         SetFunctionName(closure, propKey, "get");
@@ -894,7 +923,9 @@ Static_Semantics('Early Errors', [
     'GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }',
     function() {
         if (this.GeneratorBody.strict) {
-            Production['StrictFormalParameters: FormalParameters'](this.FormalParameters).apply_early_error_rules();
+            var nt = Production['StrictFormalParameters: FormalParameters'](this.FormalParameters);
+            nt.strict = true;
+            nt.apply_early_error_rules();
             if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.GeneratorBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
@@ -1213,9 +1244,9 @@ Static_Semantics('ConstructorMethod', [
     'ClassElementList: ClassElement',
     function() {
         if (this.ClassElement.is('ClassElement: ;')) return empty;
-        if (this.CLassElement.IsStatic() === true) return empty;
-        if (this.CLassElement.PropName() !== "constructor") return empty;
-        return ClassElement;
+        if (this.ClassElement.IsStatic() === true) return empty;
+        if (this.ClassElement.PropName() !== "constructor") return empty;
+        return this.ClassElement;
     },
 
     'ClassElementList: ClassElementList ClassElement',
@@ -1225,7 +1256,7 @@ Static_Semantics('ConstructorMethod', [
         if (this.ClassElement.is('ClassElement: ;')) return empty;
         if (this.ClassElement.IsStatic() === true) return empty;
         if (this.ClassElement.PropName() !== "constructor") return empty;
-        return ClassElement;
+        return this.ClassElement;
     },
 ]);
 
@@ -1338,7 +1369,7 @@ Static_Semantics('NonConstructorMethodDefinitions', [
         var list = this.ClassElementList.NonConstructorMethodDefinitions();
         if (this.ClassElement.is('ClassElement: ;')) return list;
         if (this.ClassElement.IsStatic() === false && this.ClassElement.PropName() === "constructor") return list;
-        list.push(ClassElement);
+        list.push(this.ClassElement);
         return list;
     },
 ]);
@@ -1409,7 +1440,8 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         } else {
             the_running_execution_context.LexicalEnvironment = classScope;
             try {
-                var superclass = this.ClassHeritage.Evaluation();
+                var superclassRef = this.ClassHeritage.Evaluation();
+                var superclass = GetValue(superclassRef); //TODO clarify the specification
             } finally {
                 the_running_execution_context.LexicalEnvironment = lex;
             }
@@ -1428,13 +1460,19 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         else var constructor = this.ClassBody.ConstructorMethod();
         if (constructor === empty) {
             if (this.ClassHeritage) {
-                // TODO var constructor = the result of parsing the source text constructor(... args){ super (...args);} using the syntactic grammar with the goal symbol MethodDefinition;
+                var ctx = saveSourceTextContext();
+                setParsingText('constructor(... args){ super (...args);}');
+                constructor = parseMethodDefinition();
+                restoreSourceTextContext(ctx);
             } else {
-                // TODO var constructor = the result of parsing the source text constructor( ){ } using the syntactic grammar with the goal symbol MethodDefinition;
+                var ctx = saveSourceTextContext();
+                setParsingText('constructor( ){ }');
+                constructor = parseMethodDefinition();
+                restoreSourceTextContext(ctx);
             }
         }
         the_running_execution_context.LexicalEnvironment = classScope;
-        var constructorInfo = this.constructor.DefineMethod(proto, constructorParent);
+        var constructorInfo = constructor.DefineMethod(proto, constructorParent);
         //TODO Assert( constructorInfo !== an abrupt completion);
         var F = constructorInfo.Closure;
         if (this.ClassHeritage) F.ConstructorKind = "derived";
@@ -1487,7 +1525,7 @@ Runtime_Semantics('Evaluation', [
 
     'ClassDeclaration: class BindingIdentifier[opt] ClassTail',
     function() {
-        var status = this.ClassDeclaration.BindingClassDeclarationEvaluation();
+        var status = this.BindingClassDeclarationEvaluation();
         return empty;
     },
 

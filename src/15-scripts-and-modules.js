@@ -149,7 +149,10 @@ function Script_Record(like) {
 function ParseScript(sourceText, realm, hostDefined) {
     Assert(typeof sourceText === 'string');
     try {
-        var body = parseScript(sourceText);
+        setParsingText(sourceText);
+        var body = parseScript();
+        determineStrictModeCode(body, false);
+        body.apply_early_error_rules();
     } catch (e) {
         var body = [e];
     }

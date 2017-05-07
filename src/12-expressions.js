@@ -129,7 +129,7 @@ Runtime_Semantics('BindingInitialization', [
 
     'BindingIdentifier: Identifier',
     function(value, environment) {
-        var name = this.Identifier.StringValue;
+        var name = this.Identifier.StringValue();
         return InitializeBoundName(name, value, environment, this.strict);
     },
 
@@ -198,7 +198,9 @@ Static_Semantics('CoveredParenthesizedExpression', [
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression )',
     function() {
         if (!this.ParenthesizedExpression) {
-            this.ParenthesizedExpression = new Production['ParenthesizedExpression: ( Expression )'](this.Expression);
+            delete this.Expression.nested;
+            this.ParenthesizedExpression = Production['ParenthesizedExpression: ( Expression )'](this.Expression);
+            this.ParenthesizedExpression.strict = this.strict;
         }
         return this.ParenthesizedExpression;
     },
@@ -313,8 +315,8 @@ Runtime_Semantics('Evaluation', [
 
     'Literal: BooleanLiteral',
     function() {
-        if (this.BooleanLiteral === false) return false;
-        if (this.BooleanLiteral === true) return true;
+        if (this.BooleanLiteral.is('BooleanLiteral: false')) return false;
+        if (this.BooleanLiteral.is('BooleanLiteral: true')) return true;
     },
 
     'Literal: NumericLiteral',
@@ -931,7 +933,7 @@ Runtime_Semantics('Evaluation', [
     'PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
         var expr = this.CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression();
-        return this.expr.Evaluation();
+        return expr.Evaluation();
     },
 
     'ParenthesizedExpression: ( Expression )',
@@ -1237,7 +1239,7 @@ function EvaluateDirectCall(func, thisValue, _arguments, tailPosition) {
     if (IsCallable(func) === false) throw $TypeError();
     if (tailPosition === true) PrepareForTailCall();
     var result = Call(func, thisValue, argList);
-    Assert(tailPosition === true);
+    Assert(tailPosition !== true);
     Assert(Type(result) === an_ECMAScript_language_type); //TODO
     return result;
 }
@@ -1408,6 +1410,7 @@ Static_Semantics('Early Errors', [
     'UpdateExpression: ++ UnaryExpression',
     'UpdateExpression: -- UnaryExpression',
     function() {
+        debugger;
         if (this.UnaryExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
     },
 ]);
@@ -1512,7 +1515,7 @@ Syntax([
 // 12.5.1
 Static_Semantics('IsFunctionDefinition', [
 
-    'UnaryExpression: UpdateExpression',
+    // 'UnaryExpression: UpdateExpression', spec bug
     'UnaryExpression: delete UnaryExpression',
     'UnaryExpression: void UnaryExpression',
     'UnaryExpression: typeof UnaryExpression',
@@ -1528,7 +1531,7 @@ Static_Semantics('IsFunctionDefinition', [
 // 12.5.2
 Static_Semantics('IsValidSimpleAssignmentTarget', [
 
-    'UnaryExpression: UpdateExpression',
+    // 'UnaryExpression: UpdateExpression', spec bug
     'UnaryExpression: delete UnaryExpression',
     'UnaryExpression: void UnaryExpression',
     'UnaryExpression: typeof UnaryExpression',
@@ -1726,6 +1729,9 @@ Runtime_Semantics('Evaluation', [
 Syntax([
     'MultiplicativeExpression[Yield]: ExponentiationExpression[?Yield]',
     'MultiplicativeExpression[Yield]: MultiplicativeExpression[?Yield] MultiplicativeOperator ExponentiationExpression[?Yield]',
+    'MultiplicativeOperator: *',
+    'MultiplicativeOperator: /',
+    'MultiplicativeOperator: %',
 ]);
 
 // 12.7.1
@@ -1757,13 +1763,14 @@ Runtime_Semantics('Evaluation', [
         var rightValue = GetValue(right);
         var lnum = ToNumber(leftValue);
         var rnum = ToNumber(rightValue);
-        switch (this.MultiplicativeOperator) {
-            case '*':
-                return lnum * rnum;
-            case '/':
-                return lnum / rnum;
-            case '%':
-                return lnum % rnum;
+        if (this.MultiplicativeOperator.is('MultiplicativeOperator: *')) {
+            return lnum * rnum;
+        }
+        if (this.MultiplicativeOperator.is('MultiplicativeOperator: /')) {
+            return lnum / rnum;
+        }
+        if (this.MultiplicativeOperator.is('MultiplicativeOperator: %')) {
+            return lnum % rnum;
         }
     },
 ]);
@@ -2298,6 +2305,18 @@ Syntax([
     'AssignmentExpression[In,Yield]: ArrowFunction[?In,?Yield]',
     'AssignmentExpression[In,Yield]: LeftHandSideExpression[?Yield] = AssignmentExpression[?In,?Yield]',
     'AssignmentExpression[In,Yield]: LeftHandSideExpression[?Yield] AssignmentOperator AssignmentExpression[?In,?Yield]',
+    'AssignmentOperator: *=',
+    'AssignmentOperator: /=',
+    'AssignmentOperator: %=',
+    'AssignmentOperator: +=',
+    'AssignmentOperator: -=',
+    'AssignmentOperator: <<=',
+    'AssignmentOperator: >>=',
+    'AssignmentOperator: >>>=',
+    'AssignmentOperator: &=',
+    'AssignmentOperator: ^=',
+    'AssignmentOperator: |=',
+    'AssignmentOperator: **=',
 ]);
 
 // 12.15.1

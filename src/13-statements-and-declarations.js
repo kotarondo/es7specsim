@@ -212,7 +212,7 @@ Runtime_Semantics('Evaluation', [
     'BreakableStatement: SwitchStatement',
     function() {
         var newLabelSet = [];
-        return this.BreakableStatement.LabelledEvaluation(newLabelSet);
+        return this.LabelledEvaluation(newLabelSet);
     },
 ]);
 
@@ -517,7 +517,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var oldEnv = the_running_execution_context.LexicalEnvironment;
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
-        BlockDeclarationInstantiation(StatementList, blockEnv);
+        BlockDeclarationInstantiation(this.StatementList, blockEnv);
         the_running_execution_context.LexicalEnvironment = blockEnv;
         try {
             var blockValue = this.StatementList.Evaluation();
@@ -1232,10 +1232,10 @@ Runtime_Semantics('KeyedBindingInitialization', [
         if (this.Initializer && v === undefined) {
             var defaultValue = this.Initializer.Evaluation();
             var v = GetValue(defaultValue);
-        }
-        if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-            var hasNameProperty = HasOwnProperty(v, "name");
-            if (hasNameProperty === false) SetFunctionName(v, bindingId);
+            if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
+                var hasNameProperty = HasOwnProperty(v, "name");
+                if (hasNameProperty === false) SetFunctionName(v, bindingId);
+            }
         }
         if (environment === undefined) return PutValue(lhs, v);
         return InitializeReferencedBinding(lhs, v);
@@ -1700,7 +1700,7 @@ Runtime_Semantics('LabelledEvaluation', [
             }
         }
         the_running_execution_context.LexicalEnvironment = loopEnv;
-        var forDcl = cocreteCompletion(this.LexicalDeclaration.Evaluation());
+        var forDcl = concreteCompletion(this.LexicalDeclaration.Evaluation());
         if (forDcl.is_an_abrupt_completion()) {
             the_running_execution_context.LexicalEnvironment = oldEnv;
             return resolveCompletion(forDcl);
@@ -1718,16 +1718,16 @@ function ForBodyEvaluation(test, increment, stmt, perIterationBindings, labelSet
     var V = undefined;
     CreatePerIterationEnvironment(perIterationBindings);
     while (true) {
-        if (!test) {
+        if (test) {
             var testRef = test.Evaluation();
             var testValue = GetValue(testRef);
             if (ToBoolean(testValue) === false) return V;
         }
-        var result = concreteCompletion(this.stmt.Evaluation());
+        var result = concreteCompletion(stmt.Evaluation());
         if (LoopContinues(result, labelSet) === false) return resolveCompletion(UpdateEmpty(result, V));
         if (result.Value !== empty) var V = result.Value;
         CreatePerIterationEnvironment(perIterationBindings);
-        if (!increment) {
+        if (increment) {
             var incRef = increment.Evaluation();
             GetValue(incRef);
         }
@@ -2008,7 +2008,7 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
         the_running_execution_context.LexicalEnvironment = TDZ;
     }
     try {
-        var exprRef = this.expr.Evaluation();
+        var exprRef = expr.Evaluation();
     } finally {
         the_running_execution_context.LexicalEnvironment = oldEnv;
     }
@@ -2078,7 +2078,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
             the_running_execution_context.LexicalEnvironment = oldEnv;
             return IteratorClose(iterator, status);
         }
-        var result = concreteCompletion(this.stmt.Evaluation());
+        var result = concreteCompletion(stmt.Evaluation());
         the_running_execution_context.LexicalEnvironment = oldEnv;
         if (LoopContinues(result, labelSet) === false) return IteratorClose(iterator, UpdateEmpty(result, V));
         if (result.Value !== empty) var V = result.Value;
@@ -2230,7 +2230,7 @@ Static_Semantics('Early Errors', [
     'WithStatement: with ( Expression ) Statement',
     function() {
         if (this.strict) throw EarlySyntaxError();
-        if (this.IsLabelledFunction(this.Statement) === true) throw EarlySyntaxError();
+        if (IsLabelledFunction(this.Statement) === true) throw EarlySyntaxError();
     },
 ]);
 

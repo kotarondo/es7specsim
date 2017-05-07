@@ -38,9 +38,7 @@
     'ScriptBody: StatementList',
 */
 
-function parseScript(sourceText) {
-    //TODO
-    setParsingText(sourceText);
+function parseScript() {
     var nt = parseScriptBody_opt();
     return Production['Script: ScriptBody[opt]'](nt);
 }

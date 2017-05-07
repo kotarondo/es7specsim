@@ -76,7 +76,7 @@ function parseFunctionDeclaration(Yield, Default) {
 function parseFunctionExpression() {
     consumeToken('function');
     if (peekToken() !== '(') {
-        var name = parseBindingIdentifier(Yield);
+        var name = parseBindingIdentifier(!'Yield');
     } else {
         var name = null;
     }
@@ -133,7 +133,6 @@ function parseFormalParameter(Yield) {
 }
 
 function parseFunctionBody(Yield) {
-    //TODO take care of strict mode
     var nt = parseFunctionStatementList(Yield);
     return Production['FunctionBody: FunctionStatementList'](nt);
 }
@@ -169,7 +168,7 @@ function parseConciseBody(In) {
         return Production['ConciseBody: AssignmentExpression'](nt);
     }
     consumeToken('{');
-    var body = parseFunctionBody(!'Yield');
+    var nt = parseFunctionBody(!'Yield');
     consumeToken('}');
     return Production['ConciseBody: { FunctionBody }'](nt);
 }
@@ -292,13 +291,13 @@ function parseGeneratorExpression() {
 
 function parseGeneratorBody() {
     var nt = parseFunctionBody('Yield');
-    return Production['GeneratorBody: FunctionBody[Yield]'](name, param, body);
+    return Production['GeneratorBody: FunctionBody'](nt);
 }
 
 function parseYieldExpression(In) {
     consumeToken('yield');
     if (peekTokenIsLineSeparated()) {
-        return Production['YieldExpression[In]: yield']();
+        return Production['YieldExpression: yield']();
     }
     switch (peekToken()) {
         case ')':
@@ -307,7 +306,7 @@ function parseYieldExpression(In) {
         case ',':
         case ';':
         case ':':
-            return Production['YieldExpression[In]: yield']();
+            return Production['YieldExpression: yield']();
         case '*':
             consumeToken('*');
             var nt = parseAssignmentExpression(In, 'Yield');
@@ -369,12 +368,13 @@ function parseClassHeritage_opt(Yield) {
     if (peekToken() !== 'extends') return null;
     consumeToken('extends');
     var nt = parseLeftHandSideExpression(Yield);
-    return Production['ClassHeritage: extends LeftHandSideExpression'](nt, body);
+    return Production['ClassHeritage: extends LeftHandSideExpression'](nt);
 }
 
-function parseClassBody(Yield) {
+function parseClassBody_opt(Yield) {
+    if (peekToken() === '}') return null;
     var nt = parseClassElementList(Yield);
-    return Production['ClassBody: ClassElementList'](elems);
+    return Production['ClassBody: ClassElementList'](nt);
 }
 
 function parseClassElementList(Yield) {
@@ -382,7 +382,7 @@ function parseClassElementList(Yield) {
     var list = Production['ClassElementList: ClassElement'](nt);
     while (peekToken() !== '}') {
         var nt = parseClassElement(Yield);
-        var list = Production['ClassElementList: ClassElementList ClassElement'](nt);
+        var list = Production['ClassElementList: ClassElementList ClassElement'](list, nt);
     }
     return list;
 }
@@ -390,7 +390,7 @@ function parseClassElementList(Yield) {
 function parseClassElement(Yield) {
     if (peekToken() === ';') {
         consumeToken(';');
-        return Production['ClassElement: ;'](nt);
+        return Production['ClassElement: ;']();
     }
     if (peekToken() === 'static') {
         consumeToken('static');
@@ -400,14 +400,3 @@ function parseClassElement(Yield) {
     var nt = parseMethodDefinition(Yield);
     return Production['ClassElement: MethodDefinition'](nt);
 }
-
-/* TODO
-    var list = elems.list;
-    for (var i = 0; i < list.length; i++) {
-        if (list[i].static) continue;
-        if (list[i].PropName() === 'constructor') {
-            body.ConstructorMethod = list[i];
-            break;
-        }
-    }
-*/

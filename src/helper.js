@@ -48,7 +48,7 @@ function is_negative_zero(x) {
 
 function define_method(c, n, v) {
     Object.defineProperty(c.prototype, n, {
-        value: v
+        value: v,
     });
 }
 
@@ -59,6 +59,10 @@ define_method(String, 'is_an_element_of', function(a) {
 define_method(Array, 'contains', Array.prototype.includes);
 
 define_method(Array, 'contains_any_duplicate_entries', function() {
+    return (this.length !== new Set(this).size);
+});
+
+define_method(Array, 'contains_any_duplicate_elements', function() {
     return (this.length !== new Set(this).size);
 });
 
@@ -81,4 +85,8 @@ define_method(Array, 'equals', function(a) {
 
 define_method(Array, 'append_elements_of', function(a) {
     Array.prototype.push.apply(this, a);
+});
+
+define_method(Array, 'contains_more_than_one_occurrence_of', function(a) {
+    return (this.indexOf(a) !== this.lastIndexOf(a));
 });

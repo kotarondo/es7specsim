@@ -115,7 +115,7 @@ class DeclarativeEnvironmentRecord extends EnvironmentRecord {
         var envRec = this;
         Assert(envRec.attributes[N] !== undefined);
         if ((envRec.attributes[N] & ER_uninitialized) !== 0) throw $ReferenceError();
-        return envRec.values[N] = V;
+        return envRec.values[N];
     }
 
     // 8.1.1.1.7
@@ -622,103 +622,101 @@ function CreateIntrinsics(realmRec) {
     thrower.SetPrototypeOf(funcProto);
     AddRestrictedFunctionProperties(funcProto, realmRec);
 
-    /* TODO one by one
-    Set fields of intrinsics with the values listed in Table 7 that have not already been handled above. The field names are the names listed in column one of the table. The value of each field === a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 18-26. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(realmRec, <steps>, <prototype>, <slots>) where <steps> === the definition of that function provided by this specification, <prototype> === the specified value of the function's Prototype  internal slot and <slots> === a list of the names, if any, of the function's specified internal slots. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created;
+    //TODO
+    intrinsics['%Array%'] =
+        intrinsics['%ArrayBuffer%'] =
+        intrinsics['%ArrayBufferPrototype%'] =
+        intrinsics['%ArrayIteratorPrototype%'] =
+        intrinsics['%ArrayPrototype%'] =
+        intrinsics['%ArrayProto_values%'] =
+        intrinsics['%Boolean%'] =
+        intrinsics['%BooleanPrototype%'] =
+        intrinsics['%DataView%'] =
+        intrinsics['%DataViewPrototype%'] =
+        intrinsics['%Date%'] =
+        intrinsics['%DatePrototype%'] =
+        intrinsics['%decodeURI%'] =
+        intrinsics['%decodeURIComponent%'] =
+        intrinsics['%encodeURI%'] =
+        intrinsics['%encodeURIComponent%'] =
+        intrinsics['%Error%'] =
+        intrinsics['%ErrorPrototype%'] =
+        intrinsics['%eval%'] =
+        intrinsics['%EvalError%'] =
+        intrinsics['%EvalErrorPrototype%'] =
+        intrinsics['%Float32Array%'] =
+        intrinsics['%Float32ArrayPrototype%'] =
+        intrinsics['%Float64Array%'] =
+        intrinsics['%Float64ArrayPrototype%'] =
+        intrinsics['%Function%'] =
+        intrinsics['%Generator%'] = ObjectCreate(objProto);
 
-    Table 7: Well-known Intrinsic Objects
-    Intrinsic Name	Global Name	ECMAScript Language Association
-    %Array%	Array	The Array constructor (22.1.1)
-    %ArrayBuffer%	ArrayBuffer	The ArrayBuffer constructor (24.1.2)
-    %ArrayBufferPrototype%	ArrayBuffer.prototype	The initial value of the prototype data property of %ArrayBuffer%.
-    %ArrayIteratorPrototype%		The prototype of Array iterator objects (22.1.5)
-    %ArrayPrototype%	Array.prototype	The initial value of the prototype data property of %Array% (22.1.3)
-    %ArrayProto_values%	Array.prototype.values	The initial value of the values data property of %ArrayPrototype% (22.1.3.30)
-    %Boolean%	Boolean	The Boolean constructor (19.3.1)
-    %BooleanPrototype%	Boolean.prototype	The initial value of the prototype data property of %Boolean% (19.3.3)
-    %DataView%	DataView	The DataView constructor (24.2.2)
-    %DataViewPrototype%	DataView.prototype	The initial value of the prototype data property of %DataView%
-    %Date%	Date	The Date constructor (20.3.2)
-    %DatePrototype%	Date.prototype	The initial value of the prototype data property of %Date%.
-    %decodeURI%	decodeURI	The decodeURI function (18.2.6.2)
-    %decodeURIComponent%	decodeURIComponent	The decodeURIComponent function (18.2.6.3)
-    %encodeURI%	encodeURI	The encodeURI function (18.2.6.4)
-    %encodeURIComponent%	encodeURIComponent	The encodeURIComponent function (18.2.6.5)
-    %Error%	Error	The Error constructor (19.5.1)
-    %ErrorPrototype%	Error.prototype	The initial value of the prototype data property of %Error%
-    %eval%	eval	The eval function (18.2.1)
-    %EvalError%	EvalError	The EvalError constructor (19.5.5.1)
-    %EvalErrorPrototype%	EvalError.prototype	The initial value of the prototype property of %EvalError%
-    %Float32Array%	Float32Array	The Float32Array constructor (22.2)
-    %Float32ArrayPrototype%	Float32Array.prototype	The initial value of the prototype data property of %Float32Array%.
-    %Float64Array%	Float64Array	The Float64Array constructor (22.2)
-    %Float64ArrayPrototype%	Float64Array.prototype	The initial value of the prototype data property of %Float64Array%
-    %Function%	Function	The Function constructor (19.2.1)
-    %FunctionPrototype%	Function.prototype	The initial value of the prototype data property of %Function%
-    %Generator%		The initial value of the prototype property of %GeneratorFunction%
-    %GeneratorFunction%		The constructor of generator objects (25.2.1)
-    %GeneratorPrototype%		The initial value of the prototype property of %Generator%
-    %Int8Array%	Int8Array	The Int8Array constructor (22.2)
-    %Int8ArrayPrototype%	Int8Array.prototype	The initial value of the prototype data property of %Int8Array%
-    %Int16Array%	Int16Array	The Int16Array constructor (22.2)
-    %Int16ArrayPrototype%	Int16Array.prototype	The initial value of the prototype data property of %Int16Array%
-    %Int32Array%	Int32Array	The Int32Array constructor (22.2)
-    %Int32ArrayPrototype%	Int32Array.prototype	The initial value of the prototype data property of %Int32Array%
-    %isFinite%	isFinite	The isFinite function (18.2.2)
-    %isNaN%	isNaN	The isNaN function (18.2.3)
-    %IteratorPrototype%		An object that all standard built-in iterator objects indirectly inherit from
-    %JSON%	JSON	The JSON object (24.3)
-    %Map%	Map	The Map constructor (23.1.1)
-    %MapIteratorPrototype%		The prototype of Map iterator objects (23.1.5)
-    %MapPrototype%	Map.prototype	The initial value of the prototype data property of %Map%
-    %Math%	Math	The Math object (20.2)
-    %Number%	Number	The Number constructor (20.1.1)
-    %NumberPrototype%	Number.prototype	The initial value of the prototype property of %Number%
-    %Object%	Object	The Object constructor (19.1.1)
-    %ObjectPrototype%	Object.prototype	The initial value of the prototype data property of %Object%. (19.1.3)
-    %ObjProto_toString%	Object.prototype.toString	The initial value of the toString data property of %ObjectPrototype% (19.1.3.6)
-    %ObjProto_valueOf%	Object.prototype.valueOf	The initial value of the valueOf data property of %ObjectPrototype% (19.1.3.7)
-    %parseFloat%	parseFloat	The parseFloat function (18.2.4)
-    %parseInt%	parseInt	The parseInt function (18.2.5)
-    %Promise%	Promise	The Promise constructor (25.4.3)
-    %PromisePrototype%	Promise.prototype	The initial value of the prototype data property of %Promise%
-    %Proxy%	Proxy	The Proxy constructor (26.2.1)
-    %RangeError%	RangeError	The RangeError constructor (19.5.5.2)
-    %RangeErrorPrototype%	RangeError.prototype	The initial value of the prototype property of %RangeError%
-    %ReferenceError%	ReferenceError	The ReferenceError constructor (19.5.5.3)
-    %ReferenceErrorPrototype%	ReferenceError.prototype	The initial value of the prototype property of %ReferenceError%
-    %Reflect%	Reflect	The Reflect object (26.1)
-    %RegExp%	RegExp	The RegExp constructor (21.2.3)
-    %RegExpPrototype%	RegExp.prototype	The initial value of the prototype data property of %RegExp%
-    %Set%	Set	The Set constructor (23.2.1)
-    %SetIteratorPrototype%		The prototype of Set iterator objects (23.2.5)
-    %SetPrototype%	Set.prototype	The initial value of the prototype data property of %Set%
-    %String%	String	The String constructor (21.1.1)
-    %StringIteratorPrototype%		The prototype of String iterator objects (21.1.5)
-    %StringPrototype%	String.prototype	The initial value of the prototype data property of %String%
-    %Symbol%	Symbol	The Symbol constructor (19.4.1)
-    %SymbolPrototype%	Symbol.prototype	The initial value of the prototype data property of %Symbol%. (19.4.3)
-    %SyntaxError%	SyntaxError	The SyntaxError constructor (19.5.5.4)
-    %SyntaxErrorPrototype%	SyntaxError.prototype	The initial value of the prototype property of %SyntaxError%
-    %ThrowTypeError%		A function object that unconditionally throws a new instance of %TypeError%
-    %TypedArray%		The super class of all typed Array constructors (22.2.1)
-    %TypedArrayPrototype%		The initial value of the prototype property of %TypedArray%
-    %TypeError%	TypeError	The TypeError constructor (19.5.5.5)
-    %TypeErrorPrototype%	TypeError.prototype	The initial value of the prototype property of %TypeError%
-    %Uint8Array%	Uint8Array	The Uint8Array constructor (22.2)
-    %Uint8ArrayPrototype%	Uint8Array.prototype	The initial value of the prototype data property of %Uint8Array%
-    %Uint8ClampedArray%	Uint8ClampedArray	The Uint8ClampedArray constructor (22.2)
-    %Uint8ClampedArrayPrototype%	Uint8ClampedArray.prototype	The initial value of the prototype data property of %Uint8ClampedArray%
-    %Uint16Array%	Uint16Array	The Uint16Array constructor (22.2)
-    %Uint16ArrayPrototype%	Uint16Array.prototype	The initial value of the prototype data property of %Uint16Array%
-    %Uint32Array%	Uint32Array	The Uint32Array constructor (22.2)
-    %Uint32ArrayPrototype%	Uint32Array.prototype	The initial value of the prototype data property of %Uint32Array%
-    %URIError%	URIError	The URIError constructor (19.5.5.6)
-    %URIErrorPrototype%	URIError.prototype	The initial value of the prototype property of %URIError%
-    %WeakMap%	WeakMap	The WeakMap constructor (23.3.1)
-    %WeakMapPrototype%	WeakMap.prototype	The initial value of the prototype data property of %WeakMap%
-    %WeakSet%	WeakSet	The WeakSet constructor (23.4.1)
-    %WeakSetPrototype%	WeakSet.prototype	The initial value of the prototype data property of %WeakSet%
-    */
+    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+
+    intrinsics['%GeneratorPrototype%'] =
+        intrinsics['%Int8Array%'] =
+        intrinsics['%Int8ArrayPrototype%'] =
+        intrinsics['%Int16Array%'] =
+        intrinsics['%Int16ArrayPrototype%'] =
+        intrinsics['%Int32Array%'] =
+        intrinsics['%Int32ArrayPrototype%'] =
+        intrinsics['%isFinite%'] =
+        intrinsics['%isNaN%'] =
+        intrinsics['%IteratorPrototype%'] =
+        intrinsics['%JSON%'] =
+        intrinsics['%Map%'] =
+        intrinsics['%MapIteratorPrototype%'] =
+        intrinsics['%MapPrototype%'] =
+        intrinsics['%Math%'] =
+        intrinsics['%Number%'] =
+        intrinsics['%NumberPrototype%'] =
+        intrinsics['%Object%'] =
+        intrinsics['%ObjectPrototype%'] =
+        intrinsics['%ObjProto_toString%'] =
+        intrinsics['%ObjProto_valueOf%'] =
+        intrinsics['%parseFloat%'] =
+        intrinsics['%parseInt%'] =
+        intrinsics['%Promise%'] =
+        intrinsics['%PromisePrototype%'] =
+        intrinsics['%Proxy%'] =
+        intrinsics['%RangeError%'] =
+        intrinsics['%RangeErrorPrototype%'] =
+        intrinsics['%ReferenceError%'] =
+        intrinsics['%ReferenceErrorPrototype%'] =
+        intrinsics['%Reflect%'] =
+        intrinsics['%RegExp%'] =
+        intrinsics['%RegExpPrototype%'] =
+        intrinsics['%Set%'] =
+        intrinsics['%SetIteratorPrototype%'] =
+        intrinsics['%SetPrototype%'] =
+        intrinsics['%String%'] =
+        intrinsics['%StringIteratorPrototype%'] =
+        intrinsics['%StringPrototype%'] =
+        intrinsics['%Symbol%'] =
+        intrinsics['%SymbolPrototype%'] =
+        intrinsics['%SyntaxError%'] =
+        intrinsics['%SyntaxErrorPrototype%'] =
+        intrinsics['%TypedArray%'] =
+        intrinsics['%TypedArrayPrototype%'] =
+        intrinsics['%TypeError%'] =
+        intrinsics['%TypeErrorPrototype%'] =
+        intrinsics['%Uint8Array%'] =
+        intrinsics['%Uint8ArrayPrototype%'] =
+        intrinsics['%Uint8ClampedArray%'] =
+        intrinsics['%Uint8ClampedArrayPrototype%'] =
+        intrinsics['%Uint16Array%'] =
+        intrinsics['%Uint16ArrayPrototype%'] =
+        intrinsics['%Uint32Array%'] =
+        intrinsics['%Uint32ArrayPrototype%'] =
+        intrinsics['%URIError%'] =
+        intrinsics['%URIErrorPrototype%'] =
+        intrinsics['%WeakMap%'] =
+        intrinsics['%WeakMapPrototype%'] =
+        intrinsics['%WeakSet%'] =
+        intrinsics['%WeakSetPrototype%'] = ObjectCreate(objProto);
+
+    // TODO Set fields of intrinsics with the values listed in Table 7 that have not already been handled above. The field names are the names listed in column one of the table. The value of each field === a new object value fully and recursively populated with property values as defined by the specification of each object in clauses 18-26. All object property values are newly created object values. All values that are built-in function objects are created by performing CreateBuiltinFunction(realmRec, <steps>, <prototype>, <slots>) where <steps> === the definition of that function provided by this specification, <prototype> === the specified value of the function's Prototype  internal slot and <slots> === a list of the names, if any, of the function's specified internal slots. The creation of the intrinsics and their properties must be ordered to avoid any dependencies upon objects that have not yet been created;
+
     return intrinsics;
 }
 
@@ -786,7 +784,7 @@ function GetActiveScriptOrModule() {
     if (the_execution_context_stack.length === 0) return null;
     for (var i = the_execution_context_stack.length - 1; i >= 0; i--) {
         var ec = the_execution_context_stack[i];
-        if (ec.Function.ScriptOrModule !== null) return ec.Function.ScriptOrModule;
+        if (ec.Function && ec.Function.ScriptOrModule !== null) return ec.Function.ScriptOrModule;
     }
     var ec = the_running_execution_context;
     Assert(ec.ScriptOrModule !== null);

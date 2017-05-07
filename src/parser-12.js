@@ -188,13 +188,16 @@ function parseLiteral() {
     switch (peekToken()) {
         case 'null':
             consumeToken('null');
-            return Production['Literal: NullLiteral']();
+            var nt = Production['NullLiteral: null']();
+            return Production['Literal: NullLiteral'](nt);
         case 'true':
             consumeToken('true');
-            return Production['Literal: BooleanLiteral'](true);
+            var nt = Production['BooleanLiteral: true']();
+            return Production['Literal: BooleanLiteral'](nt);
         case 'false':
             consumeToken('false');
-            return Production['Literal: BooleanLiteral'](false);
+            var nt = Production['BooleanLiteral: false']();
+            return Production['Literal: BooleanLiteral'](nt);
         case '0':
             var nt = parseNumericLiteral();
             return Production['Literal: NumericLiteral'](nt);
@@ -355,10 +358,10 @@ function parseCoverInitializedName(Yield) {
 function parsePropertyName(Yield) {
     if (peekToken() === '[') {
         var nt = parseComputedPropertyName(Yield);
-        return Production['PropertyName[Yield]: LiteralPropertyName'](nt);
+        return Production['PropertyName: ComputedPropertyName'](nt);
     }
     var nt = parseLiteralPropertyName();
-    return Production['PropertyName[Yield]: ComputedPropertyName[?Yield]'](nt);
+    return Production['PropertyName: LiteralPropertyName'](nt);
 }
 
 function parseLiteralPropertyName() {
@@ -578,9 +581,8 @@ function parseCallExpression_after_CallExpression(expr, Yield) {
                 var expr = Production['CallExpression: CallExpression TemplateLiteral'](expr, nt);
                 continue;
         }
-        break;
+        return expr;
     }
-    return Production['LeftHandSideExpression: CallExpression'](expr);
 }
 
 function parseSuperCall(Yield) {
@@ -711,6 +713,7 @@ function parseExponentiationExpression(Yield) {
         return Production['ExponentiationExpression: UnaryExpression'](nt);
     }
     var lval = nt.UpdateExpression;
+    delete lval.nested;
     consumeToken('**');
     var nt = parseExponentiationExpression(Yield);
     return Production['ExponentiationExpression: UpdateExpression ** ExponentiationExpression'](lval, nt);
@@ -726,11 +729,22 @@ function parseMultiplicativeExpression(Yield) {
     var nt = parseExponentiationExpression(Yield);
     var lval = Production['MultiplicativeExpression: ExponentiationExpression'](nt);
     while (true) {
-        var ope = peekToken();
-        if (ope !== '*' && ope !== '/' && ope !== '%') {
-            return lval;
+        switch (peekToken()) {
+            case '*':
+                consumeToken('*');
+                var ope = Production['MultiplicativeOperator: *']();
+                break;
+            case '/':
+                consumeToken('/');
+                var ope = Production['MultiplicativeOperator: /']();
+                break;
+            case '%':
+                consumeToken('%');
+                var ope = Production['MultiplicativeOperator: %']();
+                break;
+            default:
+                return lval;
         }
-        consumeToken(ope);
         var nt = parseExponentiationExpression(Yield);
         var lval = Production['MultiplicativeExpression: MultiplicativeExpression MultiplicativeOperator ExponentiationExpression'](lval, ope, nt);
     }
@@ -1003,7 +1017,7 @@ function parseConditionalExpression(In, Yield) {
         var expr1 = parseAssignmentExpression('In', Yield);
         consumeToken(':');
         var expr2 = parseAssignmentExpression(In, Yield);
-        return Production['ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression'](lval, expr1, expr2);
+        return Production['ConditionalExpression: LogicalORExpression ? AssignmentExpression : AssignmentExpression'](nt, expr1, expr2);
     }
     return Production['ConditionalExpression: LogicalORExpression'](nt);
 }
@@ -1025,14 +1039,17 @@ function parseAssignmentExpression(In, Yield) {
     }
     var nt = parseConditionalExpression(In, Yield);
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
-        if (nt.is('BindingIdentifier')) {
-            var nt = nt.resolve('BindingIdentifier');
+        if (nt.is('Identifier')) {
+            var nt = nt.resolve('Identifier');
+            delete nt.nested;
+            var nt = Production['BindingIdentifier: Identifier'](nt);
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
         }
         if (nt.is('CoverParenthesizedExpressionAndArrowParameterList')) {
             var nt = nt.resolve('CoverParenthesizedExpressionAndArrowParameterList');
+            delete nt.nested;
             var nt = Production['ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
@@ -1040,8 +1057,9 @@ function parseAssignmentExpression(In, Yield) {
     }
     if (nt.is('LeftHandSideExpression')) {
         var lhs = nt.resolve('LeftHandSideExpression');
-        var ope = peekToken();
-        switch (ope) {
+        delete lhs.nested;
+        var c = peekToken();
+        switch (c) {
             case '=':
                 if (lhs.is('ObjectLiteral') || lhs.is('ArrayLiteral')) {
                     // from 12.15.1
@@ -1061,7 +1079,8 @@ function parseAssignmentExpression(In, Yield) {
             case '&=':
             case '|=':
             case '^=':
-                consumeToken(ope);
+                consumeToken(c);
+                var ope = Production['AssignmentOperator: ' + c]();
                 var nt = parseAssignmentExpression(In, Yield);
                 return Production['AssignmentExpression: LeftHandSideExpression AssignmentOperator AssignmentExpression'](lhs, ope, nt);
         }
@@ -1208,6 +1227,9 @@ function parseExpression(In, Yield) {
     var nt = parseAssignmentExpression(In, Yield);
     var lval = Production['Expression: AssignmentExpression'](nt);
     while (peekToken() === ',') {
+        if (peekToken(1) === '...') {
+            break;
+        }
         consumeToken(',');
         var nt = parseAssignmentExpression(In, Yield);
         var lval = Production['Expression: Expression , AssignmentExpression'](lval, nt);

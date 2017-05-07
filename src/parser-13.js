@@ -86,7 +86,7 @@ function parseStatement(Yield, Return) {
         case 'return':
             if (!Return) break;
             var nt = parseReturnStatement(Yield);
-            return Production['Statement:[+Return] ReturnStatement'](nt);
+            return Production['Statement: ReturnStatement'](nt);
         case 'with':
             var nt = parseWithStatement(Yield, Return);
             return Production['Statement: WithStatement'](nt);
@@ -373,6 +373,7 @@ function parseArrayBindingPattern(Yield) {
     }
     if (peekToken() === '...') {
         var nt = parseBindingRestElement(Yield);
+        consumeToken(']');
         return Production['ArrayBindingPattern: [ Elision[opt] BindingRestElement[opt] ]'](elis, nt);
     }
     var nt = parseBindingElement(Yield);
@@ -391,6 +392,7 @@ function parseArrayBindingPattern(Yield) {
         }
         if (peekToken() === '...') {
             var nt = parseBindingRestElement(Yield);
+            consumeToken(']');
             return Production['ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement[opt] ]'](list, elis, nt);
         }
         var nt = parseBindingElement(Yield);
@@ -553,10 +555,12 @@ function parseIterationStatement(Yield, Return) {
             }
             if (nt.is('BindingIdentifier')) {
                 var nt = nt.resolve('BindingIdentifier');
+                delete nt.nested;
                 var ini = parseInitializer_opt(!'In', Yield);
                 var nt = Production['VariableDeclaration: BindingIdentifier Initializer[opt]'](nt, ini);
             } else {
                 var nt = nt.resolve('BindingPattern');
+                delete nt.nested;
                 var ini = parseInitializer(!'In', Yield);
                 var nt = Production['VariableDeclaration: BindingPattern Initializer'](nt, ini);
             }
@@ -567,7 +571,7 @@ function parseIterationStatement(Yield, Return) {
             var expr2 = parseExpression_opt('In', Yield);
             consumeToken(')');
             var stmt = parseStatement(Yield, Return);
-            return Production['IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2);
+            return Production['IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2, stmt);
 
         case 'let':
             if (peekToken(1) !== '[' && peekToken(1) !== '{') {
@@ -592,13 +596,16 @@ function parseIterationStatement(Yield, Return) {
                 return Production['IterationStatement: for ( ForDeclaration of AssignmentExpression ) Statement'](nt, expr, stmt);
             }
             var lc = nt.LetOrConst;
+            delete lc.nested;
             var nt = nt.ForBinding;
             if (nt.is('BindingIdentifier')) {
                 var nt = nt.resolve('BindingIdentifier');
+                delete nt.nested;
                 var ini = parseInitializer_opt(!'In', Yield);
                 var nt = Production['LexicalBinding: BindingIdentifier Initializer[opt]'](nt, ini);
             } else {
                 var nt = nt.resolve('BindingPattern');
+                delete nt.nested;
                 var ini = parseInitializer(!'In', Yield);
                 var nt = Production['LexicalBinding: BindingPattern Initializer'](nt, ini);
             }
@@ -610,7 +617,7 @@ function parseIterationStatement(Yield, Return) {
             var expr2 = parseExpression_opt('In', Yield);
             consumeToken(')');
             var stmt = parseStatement(Yield, Return);
-            return Production['IterationStatement: for ( LexicalDeclaration ; Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2);
+            return Production['IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2, stmt);
     }
 
     var nt = parseExpression_opt(!'In', Yield);
@@ -618,6 +625,8 @@ function parseIterationStatement(Yield, Return) {
         if (!nt.is('LeftHandSideExpression')) {
             throw EarlySyntaxError();
         }
+        nt = nt.resolve('LeftHandSideExpression');
+        delete nt.nested;
         if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
             // from 13.7.5.1
             //TODO re-parseAssignmentPattern(Yield);
@@ -630,10 +639,12 @@ function parseIterationStatement(Yield, Return) {
     }
     if (peekToken() === 'of') {
         if (type === 'let') throw EarlySyntaxError();
-        if (!expr.is('LeftHandSideExpression')) {
+        if (!nt.is('LeftHandSideExpression')) {
             throw EarlySyntaxError();
         }
-        if (expr.is('ArrayLiteral') || expr.is('ObjectLiteral')) {
+        nt = nt.resolve('LeftHandSideExpression');
+        delete nt.nested;
+        if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
             // from 13.7.5.1
             //TODO re-parseAssignmentPattern(Yield);
         }
@@ -649,7 +660,7 @@ function parseIterationStatement(Yield, Return) {
     var expr2 = parseExpression_opt('In', Yield);
     consumeToken(')');
     var stmt = parseStatement(Yield, Return);
-    return Production['IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2);
+    return Production['IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2, stmt);
 }
 
 function parseForDeclaration(Yield) {
@@ -855,7 +866,7 @@ function parseTryStatement(Yield, Return) {
         return Production['TryStatement: try Block Catch'](blk, cat);
     }
     var fin = parseFinally(Yield, Return);
-    return Production['TryStatement: try Finally'](blk, fin);
+    return Production['TryStatement: try Block Finally'](blk, fin);
 }
 
 function parseCatch(Yield, Return) {

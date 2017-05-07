@@ -83,6 +83,7 @@ function Syntax(arr) {
 
 function createProduction(g) {
     var elems = g.split(' ').map(abbrev);
+    var name = elems.join(' ');
     var types = [];
     var index = [];
     for (var i = 1; i < elems.length; i++) {
@@ -91,18 +92,17 @@ function createProduction(g) {
             index.push(i);
         }
     }
-    var name = elems.join(' ');
     var refs = types.map(rename_duplicated);
     if (name.indexOf('[opt]') < 0) {
-        var proto = createProductionPrototype(name);
+        var proto = createProductionPrototype(name, refs);
         Production[name] = function() {
             var obj = Object.create(proto);
             for (var i = 0; i < arguments.length; i++) {
                 var nt = arguments[i];
-                Assert(nt);
-                //if (nt.goal !== types[i]) console.log(nt, types[i]); TODO
-                Assert(nt.goal === types[i] || 'MultiplicativeOperator' === types[i]);
+                Assert(nt.goal === types[i]);
                 obj[refs[i]] = nt;
+                Assert(!nt.nested);
+                nt.nested = obj;
             }
             return obj;
         };
@@ -124,7 +124,8 @@ function createProduction(g) {
         if (el.length === 1) el.push('[empty]');
         var n = el.join(' ');
         Assert(n.indexOf('[opt]') < 0);
-        protos[j] = createProductionPrototype(n);
+        var rf = refs.filter((e, i) => !(j & (1 << i)));
+        protos[j] = createProductionPrototype(n, rf);
     }
     Production[name] = function() {
         var j = 0;
@@ -137,69 +138,54 @@ function createProduction(g) {
         var obj = Object.create(proto);
         for (var i = 0; i < arguments.length; i++) {
             var nt = arguments[i];
+            Assert(nt === null || nt.goal === types[i]);
             if (!nt) continue;
-            Assert(nt.goal === types[i]);
             obj[refs[i]] = nt;
+            Assert(!nt.nested);
+            nt.nested = obj;
         }
         return obj;
     };
     return;
 }
 
-const commonProductionPrototype = Object.create(null);
+// 5.1.5 Grammar Notation
 
-function createProductionPrototype(name) {
-    Assert(!ProductionPrototype[name]);
-    var elems = name.split(' ');
-    var goal = strip(elems[0]);
-    var proto = Object.create(commonProductionPrototype);
-    Object.defineProperty(proto, 'name', { value: name });
-    Object.defineProperty(proto, 'goal', { value: goal });
-    if (elems.length === 2 && isref(elems[1])) {
-        var ident = elems[1];
-        Object.defineProperty(proto, 'is', {
-            value: function(a) {
-                if (a === name) return true;
-                if (a === goal) return true;
-                return this[ident].is(a);
-            }
-        });
-        Object.defineProperty(proto, 'resolve', {
-            value: function(a) {
-                if (a === name) return this;
-                if (a === goal) return this;
-                return this[ident].resolve(a);
-            }
-        });
-    } else {
-        Object.defineProperty(proto, 'is', {
-            value: function(a) {
-                if (a === name) return true;
-                if (a === goal) return true;
-                return false;
-            }
-        });
-        Object.defineProperty(proto, 'resolve', {
-            value: function(a) {
-                if (a === name) return this;
-                if (a === goal) return this;
-                return null;
-            }
-        });
-    }
-    ProductionPrototype[name] = proto;
-    return proto;
+// 5.2 Algorithm Conventions
+
+function implicit_chain_algorithm(ref, method) {
+    return function() {
+        return this[ref][method].apply(this[ref], arguments);
+    };
 }
 
-function expand_opts(name, func) {
-    if (name.indexOf('[opt]') < 0) {
-        return func(name);
+function create_implicit_definitions_on_chain_productions() {
+    var dirty = true;
+    while (dirty) {
+        dirty = false;
+        for (var name in ProductionPrototype) {
+            create(name);
+        }
     }
-    var n = name.replace('[opt]', '');
-    expand_opts(n, func);
-    var n = name.replace(/ [^ ]*?\[opt]/, '');
-    expand_opts(n, func);
+
+    function create(name) {
+        var proto = ProductionPrototype[name];
+        if (proto.refs.length !== 1) return;
+        var ref = proto.refs[0];
+        for (var n in ProductionPrototype) {
+            var p = ProductionPrototype[n];
+            if (p.goal !== ref) continue;
+            for (var m in p) {
+                Assert(p[m] instanceof Function);
+                if (m in proto) continue;
+                proto[m] = implicit_chain_algorithm(ref, m);
+                dirty = true;
+            }
+        }
+    }
 }
+
+// 5.3 Static Semantic Rules
 
 function Static_Semantics(method, arr) {
     var prods = [];
@@ -237,41 +223,107 @@ function Runtime_Semantics(method, arr) {
     Static_Semantics(method, arr);
 }
 
-// 5.1.5 Grammar Notation
-
-// 5.2 Algorithm Conventions
-
-function implicit_chain_algorithm(ref, method) {
-    return function() {
-        return this[ref][method].apply(this[ref], Array.prototype.slice.call(arguments, 2));
-    };
+function expand_opts(name, func) {
+    if (name.indexOf('[opt]') < 0) {
+        return func(name);
+    }
+    var n = name.replace('[opt]', '');
+    expand_opts(n, func);
+    var n = name.replace(/ [^ ]*?\[opt]/, '');
+    expand_opts(n, func);
 }
 
-function create_implicit_definitions_on_chain_productions() {
-    var dirty = true;
-    while (dirty) {
-        dirty = false;
-        for (var name in ProductionPrototype) {
-            create(name);
-        }
-    }
+const commonProductionPrototype = Object.create(null);
 
-    function create(name) {
-        var refs = name.split(' ').slice(1).filter(isref);
-        if (refs.length !== 1) return;
-        var proto = ProductionPrototype[name];
-        var ref = refs[0];
-        for (var n in ProductionPrototype) {
-            var p = ProductionPrototype[n];
-            if (p.goal !== ref) continue;
-            for (var m in p) {
-                Assert(p[m] instanceof Function);
-                if (m in proto) continue;
-                proto[m] = implicit_chain_algorithm(ref, m);
-                dirty = true;
+function createProductionPrototype(name, refs) {
+    Assert(!ProductionPrototype[name]);
+    var elems = name.split(' ');
+    var goal = strip(elems[0]);
+    var proto = Object.create(commonProductionPrototype);
+    Object.defineProperty(proto, 'name', { value: name });
+    Object.defineProperty(proto, 'goal', { value: goal });
+    Object.defineProperty(proto, 'refs', { value: refs });
+    if (elems.length === 2 && isref(elems[1])) {
+        var ident = elems[1];
+        Object.defineProperty(proto, 'is', {
+            value: function(a) {
+                if (a === goal) return true;
+                if (a === name) return true;
+                return this[ident].is(a);
+            }
+        });
+        Object.defineProperty(proto, 'resolve', {
+            value: function(a) {
+                if (a === goal) return this;
+                if (a === name) return this;
+                return this[ident].resolve(a);
+            }
+        });
+    } else {
+        Object.defineProperty(proto, 'is', {
+            value: function(a) {
+                if (a === goal) return true;
+                if (a === name) return true;
+                return false;
+            }
+        });
+        Object.defineProperty(proto, 'resolve', {
+            value: function(a) {
+                if (a === goal) return this;
+                if (a === name) return this;
+                return null;
+            }
+        });
+    }
+    Object.defineProperty(proto, 'apply_early_error_rules', {
+        value: function() {
+            var rules = this['Early Errors'];
+            if (rules) {
+                for (var rule of rules) {
+                    rule.call(this);
+                }
+            }
+            for (var ref of refs) {
+                this[ref].apply_early_error_rules();
             }
         }
+    });
+    if (goal === 'FunctionBody' || goal === 'GeneratorBody' || goal === 'ConciseBody') {
+        Object.defineProperty(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', {
+            value: function(a) {
+                if (a === goal) return true;
+                if (a === name) return true;
+                return false;
+            }
+        });
+    } else {
+        Object.defineProperty(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', {
+            value: function(a) {
+                if (a === goal) return true;
+                if (a === name) return true;
+                if (!this.nested) return false;
+                return this.nested.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within(a);
+            }
+        });
     }
+    ProductionPrototype[name] = proto;
+    return proto;
 }
 
-// 5.3 Static Semantic Rules
+function create_implicit_static_semantic_rule_Contains() {
+    for (var name in ProductionPrototype) {
+        var proto = ProductionPrototype[name];
+        if ('Contains' in proto) continue;
+        let refs = proto.refs;
+        let syms = name.split(' ').map(strip);
+        Object.defineProperty(proto, 'Contains', {
+            value: function(symbol) {
+                if (syms.includes(symbol)) return true;
+                for (var ref of refs) {
+                    if (this[ref].Contains(symbol)) return true;
+                }
+                return false;
+            }
+        });
+    }
+}
