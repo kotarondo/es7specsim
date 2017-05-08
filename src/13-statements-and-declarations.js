@@ -232,8 +232,8 @@ Static_Semantics('Early Errors', [
 
     'Block: { StatementList }',
     function() {
-        if (this.StatementList.LexicallyDeclaredNames().contains_any_duplicate_entries()) throw EarlySytaxError();
-        if (this.StatementList.LexicallyDeclaredNames().also_occurs_in(this.StatementList.VarDeclaredNames())) throw EarlySytaxError();
+        if (this.StatementList.LexicallyDeclaredNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
+        if (this.StatementList.LexicallyDeclaredNames().also_occurs_in(this.StatementList.VarDeclaredNames())) throw EarlySyntaxError();
     }
 ]);
 
@@ -345,7 +345,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
 
     'StatementListItem: Declaration',
     function() {
-        return [Declaration.DeclarationPart()];
+        return [this.Declaration.DeclarationPart()];
     },
 ]);
 
@@ -2622,7 +2622,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses }',
     function(input) {
         var V = undefined;
-        var A = listCaseClauses(this.CaseClauses);
+        var A = listCaseClauses(this.CaseClauses); //TODO
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2642,7 +2642,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(input) {
         var V = undefined;
-        var A = listCaseClauses(this.CaseClauses1);
+        var A = listCaseClauses(this.CaseClauses1); //TODO
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2657,7 +2657,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             }
         }
         var foundInB = false;
-        var B = listCaseClauses(this.CaseClauses2);
+        var B = listCaseClauses(this.CaseClauses2); //TODO
         if (found === false) {
             for (var C of B) {
                 if (foundInB === false) {
@@ -2704,7 +2704,7 @@ Runtime_Semantics('Evaluation', [
         var switchValue = GetValue(exprRef);
         var oldEnv = the_running_execution_context.LexicalEnvironment;
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
-        BlockDeclarationInstantiation(CaseBlock, blockEnv);
+        BlockDeclarationInstantiation(this.CaseBlock, blockEnv);
         the_running_execution_context.LexicalEnvironment = blockEnv;
         var R = concreteCompletion(this.CaseBlock.CaseBlockEvaluation(switchValue));
         the_running_execution_context.LexicalEnvironment = oldEnv;

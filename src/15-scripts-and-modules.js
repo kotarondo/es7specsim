@@ -284,8 +284,8 @@ Static_Semantics('Early Errors', [
         if (this.ModuleItemList.LexicallyDeclaredNames().also_occurs_in(this.ModuleItemList.VarDeclaredNames())) throw EarlySyntaxError();
         if (this.ModuleItemList.ExportedNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
         if (!this.ModuleItemList.ExportedBindings().also_occur_in(this.ModuleItemList.VarDeclaredNames().concat(this.ModuleItemList.LexicallyDeclaredNames()))) throw EarlySyntaxError();
-        if (ModuleItemList.Contains('super')) throw EarlySyntaxError();
-        if (ModuleItemList.Contains('NewTarget')) throw EarlySyntaxError();
+        if (this.ModuleItemList.Contains('super')) throw EarlySyntaxError();
+        if (this.ModuleItemList.Contains('NewTarget')) throw EarlySyntaxError();
         if (this.ModuleItemList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
         if (this.ModuleItemList.ContainsUndefinedBreakTarget([]) === true) throw EarlySyntaxError();
         if (this.ModuleItemList.ContainsUndefinedContinueTarget([], []) === true) throw EarlySyntaxError();
@@ -872,7 +872,7 @@ Static_Semantics('Early Errors', [
 
     'ModuleItem: ImportDeclaration',
     function() {
-        if (this.ImportDeclaration.BoundNames().contains_any_duplicate_entries()) throw earlySyntaxError();
+        if (this.ImportDeclaration.BoundNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
     },
 ]);
 
@@ -973,21 +973,21 @@ Static_Semantics('ImportEntriesForModule', [
     },
 
     'ImportsList: ImportsList , ImportSpecifier',
-    function() {
+    function(module) {
         var specs = this.ImportsList.ImportEntriesForModule(module);
         specs.append_elements_of(this.ImportSpecifier.ImportEntriesForModule(module));
         return specs;
     },
 
     'ImportSpecifier: ImportedBinding',
-    function() {
+    function(module) {
         var localName = this.ImportedBinding.BoundNames()[0];
         var entry = Record({ ModuleRequest: module, ImportName: localName, LocalName: localName });
         return [entry];
     },
 
     'ImportSpecifier: IdentifierName as ImportedBinding',
-    function() {
+    function(module) {
         var importName = this.IdentifierName.StringValue();
         var localName = this.ImportedBinding.StringValue();
         var entry = Record({ ModuleRequest: module, ImportName: importName, LocalName: localName });
@@ -1425,7 +1425,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var rhs = this.AssignmentExpression.Evaluation();
         var value = GetValue(rhs);
-        if (IsAnonymousFunctionDefinition(AssignmentExpression) === true) {
+        if (IsAnonymousFunctionDefinition(this.AssignmentExpression) === true) {
             var hasNameProperty = HasOwnProperty(value, "name");
             if (hasNameProperty === false) SetFunctionName(value, "default");
         }

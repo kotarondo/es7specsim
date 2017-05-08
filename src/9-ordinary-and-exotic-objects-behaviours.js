@@ -412,7 +412,7 @@ function PrepareForOrdinaryCall(F, newTarget) {
 // 9.2.1.2
 function OrdinaryCallBindThis(F, calleeContext, thisArgument) {
     var thisMode = F.ThisMode;
-    if (thisMode === 'lexical') return;
+    if (thisMode === 'lexical') return undefined;
     var calleeRealm = F.Realm;
     var localEnv = calleeContext.LexicalEnvironment;
     if (thisMode === 'strict') var thisValue = thisArgument;
@@ -1108,7 +1108,7 @@ function CreateMappedArgumentsObject(func, formals, argumentsList, env) {
         }
         var index = index - 1;
     }
-    DefinePropertyOrThrow(obj, wellKnwonSymbols['@@iterator'], PropertyDescriptor({ Value: currentRealm.Intrinsics['%ArrayProto_values%'], Writable: true, Enumerable: false, Configurable: true }));
+    DefinePropertyOrThrow(obj, wellKnownSymbols['@@iterator'], PropertyDescriptor({ Value: currentRealm.Intrinsics['%ArrayProto_values%'], Writable: true, Enumerable: false, Configurable: true }));
     DefinePropertyOrThrow(obj, "callee", PropertyDescriptor({ Value: func, Writable: true, Enumerable: false, Configurable: true }));
     return obj;
 }
@@ -1117,9 +1117,8 @@ function CreateMappedArgumentsObject(func, formals, argumentsList, env) {
 function MakeArgGetter(name, env) {
     var realm = currentRealm;
     var steps = function() {
-        var f = getter;
-        var name = f.Name;
-        var env = f.Env;
+        // var name = f.Name;
+        // var env = f.Env;
         return env.GetBindingValue(name, false);
     };
     var getter = CreateBuiltinFunction(realm, steps, currentRealm.Intrinsics['%FunctionPrototype%'], ['Name', 'Env']);
@@ -1132,9 +1131,8 @@ function MakeArgGetter(name, env) {
 function MakeArgSetter(name, env) {
     var realm = currentRealm;
     var steps = function() {
-        var f = setter;
-        var name = f.Name;
-        var env = f.Env;
+        // var name = f.Name;
+        // var env = f.Env;
         return env.SetMutableBinding(name, value, false);
     };
     var setter = CreateBuiltinFunction(realm, steps, currentRealm.Intrinsics['%FunctionPrototype%'], ['Name', 'Env']);

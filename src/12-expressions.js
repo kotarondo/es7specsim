@@ -232,7 +232,7 @@ Static_Semantics('IsFunctionDefinition', [
     },
     'PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
-        var expr = CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression();
+        var expr = this.CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression();
         return expr.IsFunctionDefinition();
     },
 ]);
@@ -278,7 +278,7 @@ Static_Semantics('IsValidSimpleAssignmentTarget', [
 
     'PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
-        var expr = CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression();
+        var expr = this.CoverParenthesizedExpressionAndArrowParameterList.CoveredParenthesizedExpression();
         return expr.IsValidSimpleAssignmentTarget();
     },
 ]);
@@ -317,6 +317,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.BooleanLiteral.is('BooleanLiteral: false')) return false;
         if (this.BooleanLiteral.is('BooleanLiteral: true')) return true;
+        return Assert(false);
     },
 
     'Literal: NumericLiteral',
@@ -1183,7 +1184,7 @@ Runtime_Semantics('Evaluation', [
         var func = GetValue(ref);
         if (Type(ref) === 'Reference' && IsPropertyReference(ref) === false && GetReferencedName(ref) === "eval") {
             if (SameValue(func, currentRealm.Intrinsics['%eval%']) === true) {
-                var argList = ArgumentListEvaluation(this.Arguments);
+                var argList = this.Arguments.ArgumentListEvaluation();
                 if (argList.length === 0) return undefined;
                 var evalText = argList[0];
                 if (this.strict) var strictCaller = true;
@@ -1234,13 +1235,13 @@ function EvaluateCall(ref, _arguments, tailPosition) {
 
 // 12.3.4.3
 function EvaluateDirectCall(func, thisValue, _arguments, tailPosition) {
-    var argList = ArgumentListEvaluation(_arguments);
+    var argList = _arguments.ArgumentListEvaluation();
     if (Type(func) !== 'Object') throw $TypeError();
     if (IsCallable(func) === false) throw $TypeError();
     if (tailPosition === true) PrepareForTailCall();
     var result = Call(func, thisValue, argList);
     Assert(tailPosition !== true);
-    Assert(Type(result) === an_ECMAScript_language_type); //TODO
+    Assert(Type(result).is_an_element_of(['Undefined', 'Boolean', 'Number', 'String', 'Symbol', 'Null', 'Object']));
     return result;
 }
 
@@ -1366,7 +1367,7 @@ Runtime_Semantics('Evaluation', [
         var tagRef = this.MemberExpression.Evaluation();
         var thisCall = this;
         var tailCall = IsInTailPosition(thisCall);
-        return EvaluateCall(tagRef, TemplateLiteral, tailCall);
+        return EvaluateCall(tagRef, this.TemplateLiteral, tailCall);
     },
 
     'CallExpression: CallExpression TemplateLiteral',
@@ -1374,7 +1375,7 @@ Runtime_Semantics('Evaluation', [
         var tagRef = this.CallExpression.Evaluation();
         var thisCall = this;
         var tailCall = IsInTailPosition(thisCall);
-        return EvaluateCall(tagRef, TemplateLiteral, tailCall);
+        return EvaluateCall(tagRef, this.TemplateLiteral, tailCall);
     },
 ]);
 
@@ -1410,7 +1411,6 @@ Static_Semantics('Early Errors', [
     'UpdateExpression: ++ UnaryExpression',
     'UpdateExpression: -- UnaryExpression',
     function() {
-        debugger;
         if (this.UnaryExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
     },
 ]);
@@ -1626,6 +1626,7 @@ Runtime_Semantics('Evaluation', [
                 if (val.Call) return "function";
                 return "object";
         }
+        return Assert(false);
     }
 ]);
 
@@ -1772,6 +1773,7 @@ Runtime_Semantics('Evaluation', [
         if (this.MultiplicativeOperator.is('MultiplicativeOperator: %')) {
             return lnum % rnum;
         }
+        return Assert(false);
     },
 ]);
 
@@ -2428,6 +2430,7 @@ Runtime_Semantics('Evaluation', [
                 var lnum = ToNumber(lval);
                 var rnum = ToNumber(rval);
                 var r = lnum - rnum;
+                break;
             case '<<=':
                 var lnum = ToInt32(lval);
                 var rnum = ToUint32(rval);
@@ -2722,7 +2725,7 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             else {
                 var nextValue = concreteCompletion(IteratorValue(next));
                 if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
-                ReturnIfAbrupt(valueValue);
+                ReturnIfAbrupt(nextValue);
                 nextValue = resolveCompletion(nextValue);
                 var status = CreateDataProperty(A, ToString(n), nextValue);
                 Assert(status === true);
@@ -2755,7 +2758,7 @@ Runtime_Semantics('KeyedDestructuringAssignmentEvaluation', [
             var assignmentPattern = this.DestructuringAssignmentTarget.AssignmentPattern;
             return assignmentPattern.DestructuringAssignmentEvaluation(rhsValue);
         }
-        if (this.Initializer && v === undefined && IsAnonymousFunctionDefinition(Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {
+        if (this.Initializer && v === undefined && IsAnonymousFunctionDefinition(this.Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {
             var hasNameProperty = HasOwnProperty(rhsValue, "name");
             if (hasNameProperty === false) SetFunctionName(rhsValue, GetReferencedName(lref));
         }

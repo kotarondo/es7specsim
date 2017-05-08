@@ -860,6 +860,7 @@ function parseRelationalExpression(In, Yield) {
                     var lval = Production['RelationalExpression: RelationalExpression in ShiftExpression'](lval, nt);
                     break;
                 }
+                // falls through
             default:
                 return lval;
         }

@@ -200,6 +200,7 @@ function parseStatementListItem(Yield, Return) {
                     break;
                 }
             }
+            // falls through
         case 'const':
         case 'function':
         case 'class':
@@ -237,6 +238,7 @@ function parseLetOrConst() {
             consumeToken('const');
             return Production['LetOrConst: const']();
     }
+    throw EarlySyntaxError();
 }
 
 function parseBindingList(In, Yield) {
@@ -579,6 +581,7 @@ function parseIterationStatement(Yield, Return) {
                     break;
                 }
             }
+            // falls through
         case 'const':
             var nt = parseForDeclaration(Yield);
             if (peekToken() === 'in') {
@@ -788,6 +791,7 @@ function parseCaseClauses_opt(Yield, Return) {
         var nt = parseCaseClause(Yield, Return);
         var list = Production['CaseClauses: CaseClauses CaseClause'](list, nt);
     }
+    return list;
 }
 
 function parseCaseClause(Yield, Return) {

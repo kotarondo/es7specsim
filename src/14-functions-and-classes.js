@@ -566,7 +566,7 @@ Static_Semantics('Contains', [
     function(symbol) {
         if (!symbol.is_an_element_of(['NewTarget', 'SuperProperty', 'SuperCall', 'super', 'this'])) return false;
         if (this.ArrowParameters.Contains(symbol) === true) return true;
-        return ConciseBody.Contains(symbol);
+        return this.ConciseBody.Contains(symbol);
     },
 
     'ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList',
@@ -1039,7 +1039,7 @@ Runtime_Semantics('EvaluateBody', [
     'GeneratorBody: FunctionBody',
     function(functionObject) {
         var G = OrdinaryCreateFromConstructor(functionObject, currentRealm.Intrinsics["%GeneratorPrototype%"], ['GeneratorState', 'GeneratorContext']);
-        GeneratorStart(G, FunctionBody);
+        GeneratorStart(G, this.FunctionBody);
         throw Completion({ Type: 'return', Value: G, Target: empty });
     },
 ]);
@@ -1270,7 +1270,7 @@ Static_Semantics('Contains', [
             if (this.ClassHeritage) return true;
             else return false;
         }
-        var inHeritage = ClassHeritage.Contains(symbol);
+        var inHeritage = this.ClassHeritage.Contains(symbol);
         if (inHeritage === true) return true;
         return this.ClassBody.ComputedPropertyContains(symbol);
     },
@@ -1280,19 +1280,19 @@ Static_Semantics('Contains', [
 Static_Semantics('ComputedPropertyContains', [
 
     'ClassElementList: ClassElementList ClassElement',
-    function() {
+    function(symbol) {
         var inList = this.ClassElementList.ComputedPropertyContains(symbol);
         if (inList === true) return true;
         return this.ClassElement.ComputedPropertyContains(symbol);
     },
 
     'ClassElement: MethodDefinition',
-    function() {
+    function(symbol) {
         return this.MethodDefinition.ComputedPropertyContains(symbol);
     },
 
     'ClassElement: static MethodDefinition',
-    function() {
+    function(symbol) {
         return this.MethodDefinition.ComputedPropertyContains(symbol);
     },
 
@@ -1447,7 +1447,7 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
             }
             if (superclass === null) {
                 var protoParent = null;
-                var constructorParent = curentRealm.Intrinsics['%FunctionPrototype%'];
+                var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];
             } else if (IsConstructor(superclass) === false) throw $TypeError();
             else {
                 var protoParent = Get(superclass, "prototype");
@@ -1550,6 +1550,7 @@ Runtime_Semantics('Evaluation', [
 function IsInTailPosition(nonterminal) {
     // TODO Assert( nonterminal === a parsed grammar production);
     if (!nonterminal.strict) return false;
+    var body = null; //TODO
     //TODO if( nonterminal !== contained within a FunctionBody or ConciseBody) return false;
     //TODO var body = the FunctionBody or ConciseBody that most closely contains nonterminal;
     //TODO if( body === the FunctionBody of a GeneratorBody) return false;

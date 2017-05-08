@@ -93,21 +93,6 @@ function createProduction(g) {
         }
     }
     var refs = types.map(rename_duplicated);
-    if (name.indexOf('[opt]') < 0) {
-        var proto = createProductionPrototype(name, refs);
-        Production[name] = function() {
-            var obj = Object.create(proto);
-            for (var i = 0; i < arguments.length; i++) {
-                var nt = arguments[i];
-                Assert(nt.goal === types[i]);
-                obj[refs[i]] = nt;
-                Assert(!nt.nested);
-                nt.nested = obj;
-            }
-            return obj;
-        };
-        return;
-    }
     var protos = [];
     var jmax = Math.pow(2, index.length);
     loop: for (var j = 0; j < jmax; j++) {
@@ -127,7 +112,11 @@ function createProduction(g) {
         var rf = refs.filter((e, i) => !(j & (1 << i)));
         protos[j] = createProductionPrototype(n, rf);
     }
-    Production[name] = function() {
+    Production[name] = createProductionConstructor(types, protos, refs);
+}
+
+function createProductionConstructor(types, protos, refs) {
+    return function() {
         var j = 0;
         for (var i = 0; i < types.length; i++) {
             var nt = arguments[i];
@@ -146,7 +135,6 @@ function createProduction(g) {
         }
         return obj;
     };
-    return;
 }
 
 // 5.1.5 Grammar Notation
@@ -164,25 +152,27 @@ function create_implicit_definitions_on_chain_productions() {
     while (dirty) {
         dirty = false;
         for (var name in ProductionPrototype) {
-            create(name);
+            dirty |= create_implicit_definitions_on_chain_production(name);
         }
     }
+}
 
-    function create(name) {
-        var proto = ProductionPrototype[name];
-        if (proto.refs.length !== 1) return;
-        var ref = proto.refs[0];
-        for (var n in ProductionPrototype) {
-            var p = ProductionPrototype[n];
-            if (p.goal !== ref) continue;
-            for (var m in p) {
-                Assert(p[m] instanceof Function);
-                if (m in proto) continue;
-                proto[m] = implicit_chain_algorithm(ref, m);
-                dirty = true;
-            }
+function create_implicit_definitions_on_chain_production(name) {
+    var proto = ProductionPrototype[name];
+    if (proto.refs.length !== 1) return false;
+    var dirty = false;
+    var ref = proto.refs[0];
+    for (var n in ProductionPrototype) {
+        var p = ProductionPrototype[n];
+        if (p.goal !== ref) continue;
+        for (var m in p) {
+            Assert(p[m] instanceof Function);
+            if (m in proto) continue;
+            proto[m] = implicit_chain_algorithm(ref, m);
+            dirty = true;
         }
     }
+    return dirty;
 }
 
 // 5.3 Static Semantic Rules
@@ -202,6 +192,9 @@ function Static_Semantics(method, arr) {
                 console.log('unknown production', name);
                 continue;
             }
+            Object.defineProperty(e, 'name', {
+                value: name + '.' + method
+            });
             if (method === 'Early Errors') {
                 if (!(method in proto)) {
                     Object.defineProperty(proto, method, { value: [] });
@@ -225,7 +218,8 @@ function Runtime_Semantics(method, arr) {
 
 function expand_opts(name, func) {
     if (name.indexOf('[opt]') < 0) {
-        return func(name);
+        func(name);
+        return;
     }
     var n = name.replace('[opt]', '');
     expand_opts(n, func);
@@ -245,65 +239,51 @@ function createProductionPrototype(name, refs) {
     Object.defineProperty(proto, 'refs', { value: refs });
     if (elems.length === 2 && isref(elems[1])) {
         var ident = elems[1];
-        Object.defineProperty(proto, 'is', {
-            value: function(a) {
-                if (a === goal) return true;
-                if (a === name) return true;
-                return this[ident].is(a);
-            }
+        define_method_direct(proto, 'is', function(a) {
+            if (a === goal) return true;
+            if (a === name) return true;
+            return this[ident].is(a);
         });
-        Object.defineProperty(proto, 'resolve', {
-            value: function(a) {
-                if (a === goal) return this;
-                if (a === name) return this;
-                return this[ident].resolve(a);
-            }
+        define_method_direct(proto, 'resolve', function(a) {
+            if (a === goal) return this;
+            if (a === name) return this;
+            return this[ident].resolve(a);
         });
     } else {
-        Object.defineProperty(proto, 'is', {
-            value: function(a) {
-                if (a === goal) return true;
-                if (a === name) return true;
-                return false;
-            }
+        define_method_direct(proto, 'is', function(a) {
+            if (a === goal) return true;
+            if (a === name) return true;
+            return false;
         });
-        Object.defineProperty(proto, 'resolve', {
-            value: function(a) {
-                if (a === goal) return this;
-                if (a === name) return this;
-                return null;
-            }
+        define_method_direct(proto, 'resolve', function(a) {
+            if (a === goal) return this;
+            if (a === name) return this;
+            return null;
         });
     }
-    Object.defineProperty(proto, 'apply_early_error_rules', {
-        value: function() {
-            var rules = this['Early Errors'];
-            if (rules) {
-                for (var rule of rules) {
-                    rule.call(this);
-                }
+    define_method_direct(proto, 'apply_early_error_rules', function() {
+        var rules = this['Early Errors'];
+        if (rules) {
+            for (var rule of rules) {
+                rule.call(this);
             }
-            for (var ref of refs) {
-                this[ref].apply_early_error_rules();
-            }
+        }
+        for (var ref of refs) {
+            this[ref].apply_early_error_rules();
         }
     });
     if (goal === 'FunctionBody' || goal === 'GeneratorBody' || goal === 'ConciseBody') {
-        Object.defineProperty(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', {
-            value: function(a) {
-                if (a === goal) return true;
-                if (a === name) return true;
-                return false;
-            }
+        define_method_direct(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', function(a) {
+            if (a === goal) return true;
+            if (a === name) return true;
+            return false;
         });
     } else {
-        Object.defineProperty(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', {
-            value: function(a) {
-                if (a === goal) return true;
-                if (a === name) return true;
-                if (!this.nested) return false;
-                return this.nested.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within(a);
-            }
+        define_method_direct(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', function(a) {
+            if (a === goal) return true;
+            if (a === name) return true;
+            if (!this.nested) return false;
+            return this.nested.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within(a);
         });
     }
     ProductionPrototype[name] = proto;
@@ -316,14 +296,12 @@ function create_implicit_static_semantic_rule_Contains() {
         if ('Contains' in proto) continue;
         let refs = proto.refs;
         let syms = name.split(' ').map(strip);
-        Object.defineProperty(proto, 'Contains', {
-            value: function(symbol) {
-                if (syms.includes(symbol)) return true;
-                for (var ref of refs) {
-                    if (this[ref].Contains(symbol)) return true;
-                }
-                return false;
+        define_method_direct(proto, 'Contains', function(symbol) {
+            if (syms.includes(symbol)) return true;
+            for (var ref of refs) {
+                if (this[ref].Contains(symbol)) return true;
             }
+            return false;
         });
     }
 }

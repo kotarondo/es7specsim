@@ -46,9 +46,21 @@ function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
 }
 
+function define_method_direct(p, n, v) {
+    Object.defineProperty(v, 'name', {
+        value: p.name ? p.name + '.' + n : n
+    });
+    Object.defineProperty(p, n, {
+        value: v
+    });
+}
+
 function define_method(c, n, v) {
+    Object.defineProperty(v, 'name', {
+        value: c.name ? c.name + '.' + n : n
+    });
     Object.defineProperty(c.prototype, n, {
-        value: v,
+        value: v
     });
 }
 
