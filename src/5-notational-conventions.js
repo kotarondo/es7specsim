@@ -130,7 +130,6 @@ function createProductionConstructor(types, protos, refs) {
             Assert(nt === null || nt.goal === types[i]);
             if (!nt) continue;
             obj[refs[i]] = nt;
-            Assert(!nt.nested);
             nt.nested = obj;
         }
         return obj;
@@ -143,7 +142,7 @@ function createProductionConstructor(types, protos, refs) {
 
 function implicit_chain_algorithm(ref, method) {
     return function() {
-        return this[ref][method].apply(this[ref], arguments);
+        return this[ref][method](...arguments);
     };
 }
 
@@ -169,6 +168,9 @@ function create_implicit_definitions_on_chain_production(name) {
             Assert(p[m] instanceof Function);
             if (m in proto) continue;
             proto[m] = implicit_chain_algorithm(ref, m);
+            Object.defineProperty(proto[m], 'name', {
+                value: name + '.' + m
+            });
             dirty = true;
         }
     }
@@ -227,13 +229,13 @@ function expand_opts(name, func) {
     expand_opts(n, func);
 }
 
-const commonProductionPrototype = Object.create(null);
+function ParsedGrammarProduction() {}
 
 function createProductionPrototype(name, refs) {
     Assert(!ProductionPrototype[name]);
     var elems = name.split(' ');
     var goal = strip(elems[0]);
-    var proto = Object.create(commonProductionPrototype);
+    var proto = new ParsedGrammarProduction;
     Object.defineProperty(proto, 'name', { value: name });
     Object.defineProperty(proto, 'goal', { value: goal });
     Object.defineProperty(proto, 'refs', { value: refs });
@@ -286,6 +288,24 @@ function createProductionPrototype(name, refs) {
             return this.nested.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within(a);
         });
     }
+    define_method_direct(proto, 'is_contained_within', function() {
+        for (var i = 0; i < arguments.length; i++) {
+            var a = arguments[i];
+            if (a === goal) return true;
+            if (a === name) return true;
+        }
+        if (!this.nested) return false;
+        return this.nested.is_contained_within(...arguments);
+    });
+    define_method_direct(proto, 'most_closely_contains', function() {
+        for (var i = 0; i < arguments.length; i++) {
+            var a = arguments[i];
+            if (a === goal) return this;
+            if (a === name) return this;
+        }
+        if (!this.nested) return null;
+        return this.nested.most_closely_contains(...arguments);
+    });
     ProductionPrototype[name] = proto;
     return proto;
 }

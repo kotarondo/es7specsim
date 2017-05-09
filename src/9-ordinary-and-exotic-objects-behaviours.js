@@ -375,6 +375,12 @@ function GetPrototypeFromConstructor(constructor, intrinsicDefaultProto) {
 
 class ECMAScriptFunctionObject extends OrdinaryObject {}
 
+function PendingTailCall(func, thisValue, argList) {
+    this.func = func;
+    this.thisValue = thisValue;
+    this.argList = argList;
+}
+
 // 9.2.1
 define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, argumentsList) {
     var F = this;
@@ -384,7 +390,13 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
     var calleeContext = PrepareForOrdinaryCall(F, undefined);
     Assert(calleeContext === the_running_execution_context);
     OrdinaryCallBindThis(F, calleeContext, thisArgument);
-    var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
+    try {
+        var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
+    } catch (e) {
+        if (!(e instanceof PendingTailCall)) throw e;
+        Assert(callerContext === the_running_execution_context);
+        return Call(e.func, e.thisValue, e.argList); // we assume underlying TailCall works fine.
+    }
     remove_from_the_execution_context_stack(calleeContext);
     Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') return result.Value;
@@ -450,7 +462,13 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
     if (kind === "base") OrdinaryCallBindThis(F, calleeContext, thisArgument);
     var constructorEnv = calleeContext.LexicalEnvironment;
     var envRec = constructorEnv.EnvironmentRecord;
-    var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
+    try {
+        var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
+    } catch (e) {
+        if (!(e instanceof PendingTailCall)) throw e;
+        Assert(callerContext === the_running_execution_context);
+        return Call(e.func, e.thisValue, e.argList); // we assume underlying TailCall works fine.
+    }
     remove_from_the_execution_context_stack(calleeContext);
     Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') {

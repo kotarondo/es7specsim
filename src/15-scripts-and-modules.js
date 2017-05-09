@@ -163,6 +163,7 @@ function ParseScript(sourceText, realm, hostDefined) {
 // 15.1.10
 function ScriptEvaluation(scriptRecord) {
     var globalEnv = scriptRecord.Realm.GlobalEnv;
+    var callerContext = the_running_execution_context;
     var scriptCtx = new ExecutionContext;
     scriptCtx.Function = null;
     scriptCtx.Realm = scriptRecord.Realm;
@@ -180,6 +181,7 @@ function ScriptEvaluation(scriptRecord) {
     }
     remove_from_the_execution_context_stack(scriptCtx);
     Assert(the_execution_context_stack.length > 0);
+    Assert(callerContext === the_running_execution_context);
     return resolveCompletion(result);
 }
 
@@ -760,6 +762,7 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
         var requiredModule = HostResolveImportedModule(module, required);
         requiredModule.ModuleEvaluation();
     }
+    var callerContext = the_running_execution_context;
     var moduleCtx = new ExecutionContext;
     moduleCtx.Function = null;
     moduleCtx.Realm = module.Realm;
@@ -770,6 +773,7 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
     push_onto_the_execution_context_stack(moduleCtx);
     var result = concreteCompletion(module.ECMAScriptCode.Evaluation());
     remove_from_the_execution_context_stack(moduleCtx);
+    Assert(callerContext === the_running_execution_context);
     return resolveCompletion(result);
 });
 

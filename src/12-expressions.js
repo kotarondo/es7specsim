@@ -198,7 +198,6 @@ Static_Semantics('CoveredParenthesizedExpression', [
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression )',
     function() {
         if (!this.ParenthesizedExpression) {
-            delete this.Expression.nested;
             this.ParenthesizedExpression = Production['ParenthesizedExpression: ( Expression )'](this.Expression);
             this.ParenthesizedExpression.strict = this.strict;
         }
@@ -1239,6 +1238,7 @@ function EvaluateDirectCall(func, thisValue, _arguments, tailPosition) {
     if (Type(func) !== 'Object') throw $TypeError();
     if (IsCallable(func) === false) throw $TypeError();
     if (tailPosition === true) PrepareForTailCall();
+    if (tailPosition === true) throw new PendingTailCall(func, thisValue, argList);
     var result = Call(func, thisValue, argList);
     Assert(tailPosition !== true);
     Assert(Type(result).is_an_element_of(['Undefined', 'Boolean', 'Number', 'String', 'Symbol', 'Null', 'Object']));

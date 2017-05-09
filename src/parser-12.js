@@ -713,7 +713,6 @@ function parseExponentiationExpression(Yield) {
         return Production['ExponentiationExpression: UnaryExpression'](nt);
     }
     var lval = nt.UpdateExpression;
-    delete lval.nested;
     consumeToken('**');
     var nt = parseExponentiationExpression(Yield);
     return Production['ExponentiationExpression: UpdateExpression ** ExponentiationExpression'](lval, nt);
@@ -1042,7 +1041,6 @@ function parseAssignmentExpression(In, Yield) {
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
         if (nt.is('Identifier')) {
             var nt = nt.resolve('Identifier');
-            delete nt.nested;
             var nt = Production['BindingIdentifier: Identifier'](nt);
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
@@ -1050,7 +1048,6 @@ function parseAssignmentExpression(In, Yield) {
         }
         if (nt.is('CoverParenthesizedExpressionAndArrowParameterList')) {
             var nt = nt.resolve('CoverParenthesizedExpressionAndArrowParameterList');
-            delete nt.nested;
             var nt = Production['ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
@@ -1058,7 +1055,6 @@ function parseAssignmentExpression(In, Yield) {
     }
     if (nt.is('LeftHandSideExpression')) {
         var lhs = nt.resolve('LeftHandSideExpression');
-        delete lhs.nested;
         var c = peekToken();
         switch (c) {
             case '=':

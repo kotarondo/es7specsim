@@ -1548,12 +1548,11 @@ Runtime_Semantics('Evaluation', [
 
 // 14.6.1
 function IsInTailPosition(nonterminal) {
-    // TODO Assert( nonterminal === a parsed grammar production);
+    Assert(nonterminal instanceof ParsedGrammarProduction);
     if (!nonterminal.strict) return false;
-    var body = null; //TODO
-    //TODO if( nonterminal !== contained within a FunctionBody or ConciseBody) return false;
-    //TODO var body = the FunctionBody or ConciseBody that most closely contains nonterminal;
-    //TODO if( body === the FunctionBody of a GeneratorBody) return false;
+    if (!nonterminal.is_contained_within('FunctionBody', 'ConciseBody')) return false;
+    var body = nonterminal.most_closely_contains('FunctionBody', 'ConciseBody');
+    if (body.nested.is('GeneratorBody')) return false;
     return body.HasProductionInTailPosition(nonterminal);
 }
 
@@ -1782,11 +1781,6 @@ Static_Semantics('HasProductionInTailPosition', [
 
 // 14.6.3
 function PrepareForTailCall() {
-    /* TODO
-    var leafContext = the running execution context;
-    Suspend leafContext;
-    Pop leafContext from the execution context stack. The execution context now on the top of the stack becomes the running execution context;
-    Assert( leafContext has no further use. It will never = activated as the running execution context;
-    A tail position call must either release any transient internal resources associated with the currently executing function execution context before invoking the target function or reuse those resources in support of the target function;
-    */
+    var leafContext = the_running_execution_context;
+    remove_from_the_execution_context_stack(leafContext);
 }

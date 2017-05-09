@@ -557,12 +557,10 @@ function parseIterationStatement(Yield, Return) {
             }
             if (nt.is('BindingIdentifier')) {
                 var nt = nt.resolve('BindingIdentifier');
-                delete nt.nested;
                 var ini = parseInitializer_opt(!'In', Yield);
                 var nt = Production['VariableDeclaration: BindingIdentifier Initializer[opt]'](nt, ini);
             } else {
                 var nt = nt.resolve('BindingPattern');
-                delete nt.nested;
                 var ini = parseInitializer(!'In', Yield);
                 var nt = Production['VariableDeclaration: BindingPattern Initializer'](nt, ini);
             }
@@ -599,16 +597,13 @@ function parseIterationStatement(Yield, Return) {
                 return Production['IterationStatement: for ( ForDeclaration of AssignmentExpression ) Statement'](nt, expr, stmt);
             }
             var lc = nt.LetOrConst;
-            delete lc.nested;
             var nt = nt.ForBinding;
             if (nt.is('BindingIdentifier')) {
                 var nt = nt.resolve('BindingIdentifier');
-                delete nt.nested;
                 var ini = parseInitializer_opt(!'In', Yield);
                 var nt = Production['LexicalBinding: BindingIdentifier Initializer[opt]'](nt, ini);
             } else {
                 var nt = nt.resolve('BindingPattern');
-                delete nt.nested;
                 var ini = parseInitializer(!'In', Yield);
                 var nt = Production['LexicalBinding: BindingPattern Initializer'](nt, ini);
             }
@@ -629,7 +624,6 @@ function parseIterationStatement(Yield, Return) {
             throw EarlySyntaxError();
         }
         nt = nt.resolve('LeftHandSideExpression');
-        delete nt.nested;
         if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
             // from 13.7.5.1
             //TODO re-parseAssignmentPattern(Yield);
@@ -646,7 +640,6 @@ function parseIterationStatement(Yield, Return) {
             throw EarlySyntaxError();
         }
         nt = nt.resolve('LeftHandSideExpression');
-        delete nt.nested;
         if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
             // from 13.7.5.1
             //TODO re-parseAssignmentPattern(Yield);

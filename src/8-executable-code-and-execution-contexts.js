@@ -855,7 +855,7 @@ function EnqueueJob(queueName, job, _arguments) {
 }
 
 // 8.4.2
-function NextJob(result) { // We assume Tail-Call-Optimization properly works in underlying virtual machine.
+function NextJob(result) {
     if (result.is_an_abrupt_completion()) HostReportErrors([result.Value]);
     remove_from_the_execution_context_stack(the_running_execution_context);
     Assert(the_execution_context_stack.length === 0);
@@ -872,7 +872,7 @@ function NextJob(result) { // We assume Tail-Call-Optimization properly works in
     newContext.Realm = nextPending.Realm;
     newContext.ScriptOrModule = nextPending.ScriptOrModule;
     push_onto_the_execution_context_stack(newContext);
-    return nextPending.Job.apply(null, nextPending.Arguments);
+    return nextPending.Job.apply(null, nextPending.Arguments); // we assume underlying TailCall works fine.
 }
 
 // 8.5
