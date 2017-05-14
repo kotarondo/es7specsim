@@ -48,12 +48,11 @@ var Production = {};
 var ProductionPrototype = {};
 
 function isref(e) {
-    if (e === 'ReservedWord') return false;
     return (/[A-Z]/.exec(e[0]) !== null);
 }
 
 function abbrev(e) {
-    if (!isref(e)) return e;
+    if (e === '[empty]') return e;
     return e.replace(/\[(?!opt]).*?]/g, '');
 }
 
@@ -264,14 +263,14 @@ function createProductionPrototype(name, refs) {
         });
     }
     define_method_direct(proto, 'apply_early_error_rules', function() {
+        for (var ref of refs) {
+            this[ref].apply_early_error_rules();
+        }
         var rules = this['Early Errors'];
         if (rules) {
             for (var rule of rules) {
                 rule.call(this);
             }
-        }
-        for (var ref of refs) {
-            this[ref].apply_early_error_rules();
         }
     });
     if (goal === 'FunctionBody' || goal === 'GeneratorBody' || goal === 'ConciseBody') {

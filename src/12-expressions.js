@@ -43,7 +43,7 @@ Syntax([
     'BindingIdentifier[Yield]:[~Yield] yield',
     'LabelIdentifier[Yield]: Identifier',
     'LabelIdentifier[Yield]:[~Yield] yield',
-    'Identifier: IdentifierName but not ReservedWord',
+    'Identifier: IdentifierName but_not_ReservedWord',
 ]);
 
 // 12.1.1
@@ -70,7 +70,7 @@ Static_Semantics('Early Errors', [
         // if (Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
     },
 
-    'Identifier: IdentifierName but not ReservedWord',
+    'Identifier: IdentifierName but_not_ReservedWord',
     function() {
         var name = this.IdentifierName.StringValue();
         if (this.strict && (name === "implements" || name === "interface" || name === "let" || name === "package" || name === "private" || name === "protected" || name === "public" || name === "static" || name === "yield")) throw EarlySyntaxError();
@@ -118,7 +118,7 @@ Static_Semantics('StringValue', [
         return "yield";
     },
 
-    'Identifier: IdentifierName but not ReservedWord',
+    'Identifier: IdentifierName but_not_ReservedWord',
     function() {
         return this.IdentifierName.StringValue();
     },
@@ -314,8 +314,8 @@ Runtime_Semantics('Evaluation', [
 
     'Literal: BooleanLiteral',
     function() {
-        if (this.BooleanLiteral.is('BooleanLiteral: false')) return false;
-        if (this.BooleanLiteral.is('BooleanLiteral: true')) return true;
+        if (this.BooleanLiteral.is('BooleanLiteral:: false')) return false;
+        if (this.BooleanLiteral.is('BooleanLiteral:: true')) return true;
         return Assert(false);
     },
 
@@ -675,8 +675,15 @@ Static_Semantics('Early Errors', [
 
     'PrimaryExpression: RegularExpressionLiteral',
     function() {
-        //TODO It === a Syntax Error if BodyText of RegularExpressionLiteral cannot = recognized using the goal symbol Pattern of the ECMAScript RegExp grammar specified in 21.2.1;
-        //TODO It === a Syntax Error if FlagText of RegularExpressionLiteral contains any code points other than "g", "i", "m", "u", or "y", or if it contains the same code point more than once;
+        var pattern = this.RegularExpressionLiteral.BodyText();
+        var flags = this.RegularExpressionLiteral.FlagText();
+        try {
+            new RegExp(pattern); //TODO independent RegExp parser
+        } catch (e) {
+            throw EarlySyntaxError();
+        }
+        if (flags.search(/[^gimuy]/) >= 0) throw EarlySyntaxError();
+        if (["g", "i", "m", "u", "y"].some(e => (flags.indexOf(e) !== flags.lastIndexOf(e)))) throw EarlySyntaxError();
     },
 ]);
 

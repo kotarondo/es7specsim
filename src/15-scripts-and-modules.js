@@ -65,7 +65,8 @@ Static_Semantics('IsStrict', [
 
     'ScriptBody: StatementList',
     function() {
-        //TODO if(the Directive  Prologue of StatementList  contains a Use Strict Directive) return true; else return false;
+        if (containsUseStrictDirective(this.StatementList)) return true;
+        else return false;
     },
 ]);
 
@@ -582,7 +583,6 @@ function SourceTextModuleRecord(like) {
 
 // 15.2.1.16.1
 function ParseModule(sourceText, realm, hostDefined) {
-
     Assert(typeof sourceText === 'string');
     //TODO Parse sourceText using Module as the goal symbol and analyze the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let body = the resulting parse tree. Otherwise, let body = a List of one or more SyntaxError or ReferenceError objects representing the parsing errors and/or early errors. 
     if (Type(body) === 'List') return body;

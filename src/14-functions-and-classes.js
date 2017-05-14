@@ -58,7 +58,7 @@ Syntax([
 
 function containsUseStrictDirective(nt) {
     Assert(nt.is('StatementList'));
-    //TODO
+    //TODO use strict directive
     return false;
 }
 
@@ -103,13 +103,11 @@ Static_Semantics('Early Errors', [
     },
 ]);
 
-// Supplemental  // TODO clarify the specification
-
 Static_Semantics('ContainsDuplicateLabels', [
 
     'FunctionStatementList: [empty]',
     function(labelSet) {
-        return false;
+        return false; // TODO clarify the specification
     },
 ]);
 
@@ -117,7 +115,7 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
 
     'FunctionStatementList: [empty]',
     function(labelSet) {
-        return false;
+        return false; // TODO clarify the specification
     },
 ]);
 
@@ -125,7 +123,7 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
 
     'FunctionStatementList: [empty]',
     function(iterationSet, labelSet) {
-        return false;
+        return false; // TODO clarify the specification
     },
 ]);
 
@@ -1473,7 +1471,6 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         }
         the_running_execution_context.LexicalEnvironment = classScope;
         var constructorInfo = constructor.DefineMethod(proto, constructorParent);
-        //TODO Assert( constructorInfo !== an abrupt completion);
         var F = constructorInfo.Closure;
         if (this.ClassHeritage) F.ConstructorKind = "derived";
         MakeConstructor(F, false, proto);

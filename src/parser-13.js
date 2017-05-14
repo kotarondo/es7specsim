@@ -196,7 +196,7 @@ function parseStatementListItem(Yield, Return) {
     switch (peekToken()) {
         case 'let':
             if (peekToken(1) !== '[' && peekToken(1) !== '{') {
-                if (!peekTokenIsIdentifierName(1) || peekTokenIsReservedWord(1)) {
+                if (!peekTokenIsIdentifierName(1) || isReservedWord(peekToken(1))) {
                     break;
                 }
             }
@@ -575,7 +575,7 @@ function parseIterationStatement(Yield, Return) {
 
         case 'let':
             if (peekToken(1) !== '[' && peekToken(1) !== '{') {
-                if (!peekTokenIsIdentifierName(1) || peekTokenIsReservedWord(1)) {
+                if (!peekTokenIsIdentifierName(1) || isReservedWord(peekToken(1))) {
                     break;
                 }
             }

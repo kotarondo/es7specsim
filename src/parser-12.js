@@ -40,7 +40,7 @@
     'BindingIdentifier[Yield]:[~Yield] yield',
     'LabelIdentifier[Yield]: Identifier',
     'LabelIdentifier[Yield]:[~Yield] yield',
-    'Identifier: IdentifierName but not ReservedWord',
+    'Identifier: IdentifierName but_not_ReservedWord',
 */
 
 function parseIdentifierReference(Yield) {
@@ -74,11 +74,11 @@ function parseLabelIdentifier(Yield) {
 }
 
 function parseIdentifier() {
-    if (peekTokenIsReservedWord()) {
+    if (isReservedWord(peekToken())) {
         throw EarlySyntaxError();
     }
     var nt = parseIdentifierName();
-    return Production['Identifier: IdentifierName but not ReservedWord'](nt);
+    return Production['Identifier: IdentifierName but_not_ReservedWord'](nt);
 }
 
 // 12.2 Primary Expression
@@ -188,15 +188,15 @@ function parseLiteral() {
     switch (peekToken()) {
         case 'null':
             consumeToken('null');
-            var nt = Production['NullLiteral: null']();
+            var nt = Production['NullLiteral:: null']();
             return Production['Literal: NullLiteral'](nt);
         case 'true':
             consumeToken('true');
-            var nt = Production['BooleanLiteral: true']();
+            var nt = Production['BooleanLiteral:: true']();
             return Production['Literal: BooleanLiteral'](nt);
         case 'false':
             consumeToken('false');
-            var nt = Production['BooleanLiteral: false']();
+            var nt = Production['BooleanLiteral:: false']();
             return Production['Literal: BooleanLiteral'](nt);
         case '0':
             var nt = parseNumericLiteral();

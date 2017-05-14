@@ -2472,8 +2472,8 @@ Static_Semantics('LexicallyDeclaredNames', [
 
     'CaseClauses: CaseClauses CaseClause',
     function() {
-        var names = this.CaseClauses1.LexicallyDeclaredNames();
-        names.append_elements_of(this.CaseClauses2.LexicallyDeclaredNames());
+        var names = this.CaseClauses.LexicallyDeclaredNames();
+        names.append_elements_of(this.CaseClause.LexicallyDeclaredNames());
         return names;
     },
 
@@ -2611,6 +2611,19 @@ Static_Semantics('VarScopedDeclarations', [
     },
 ]);
 
+function listCaseClauses(nt) {
+    if (!nt) return [];
+    Assert(nt.is('CaseClauses'));
+    var list = [];
+    while (!nt.is('CaseClause')) {
+        Assert(nt.is('CaseClauses: CaseClauses CaseClause'));
+        list.unshift(nt.CaseClause);
+        nt = nt.CaseClauses;
+    }
+    list.unshift(nt.CaseClause);
+    return list;
+}
+
 // 13.12.9
 Runtime_Semantics('CaseBlockEvaluation', [
 
@@ -2622,7 +2635,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses }',
     function(input) {
         var V = undefined;
-        var A = listCaseClauses(this.CaseClauses); //TODO
+        var A = listCaseClauses(this.CaseClauses);
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2642,7 +2655,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
     'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(input) {
         var V = undefined;
-        var A = listCaseClauses(this.CaseClauses1); //TODO
+        var A = listCaseClauses(this.CaseClauses1)
         var found = false;
         for (var C of A) {
             if (found === false) {
@@ -2657,7 +2670,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             }
         }
         var foundInB = false;
-        var B = listCaseClauses(this.CaseClauses2); //TODO
+        var B = listCaseClauses(this.CaseClauses2);
         if (found === false) {
             for (var C of B) {
                 if (foundInB === false) {
@@ -2673,7 +2686,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             }
         }
         if (foundInB === true) return V;
-        var R = this.DefaultClause.Evaluation();
+        var R = concreteCompletion(this.DefaultClause.Evaluation());
         if (R.Value !== empty) var V = R.Value;
         if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
         for (var C of B) {
