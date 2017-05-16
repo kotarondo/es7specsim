@@ -59,20 +59,20 @@ function isWhiteSpace(c) {
 function parseLineTerminatorSequence() {
     switch (peekChar()) {
         case '\u000A':
-            consumeChar();
+            consumeChar('\u000A');
             return Production['LineTerminatorSequence:: <LF>']();
         case '\u000D':
-            consumeChar();
+            consumeChar('\u000D');
             if (peekChar() !== '\u000A') {
                 return Production['LineTerminatorSequence:: <CR>[lookahead≠<LF>]']();
             } else {
                 return Production['LineTerminatorSequence:: <CR><LF>']();
             }
         case '\u2028':
-            consumeChar();
+            consumeChar('\u2028');
             return Production['LineTerminatorSequence:: <LS>']();
         case '\u2029':
-            consumeChar();
+            consumeChar('\u2029');
             return Production['LineTerminatorSequence:: <PS>']();
     }
 }
@@ -97,14 +97,14 @@ function skipMultiLineComment() {
         var c = peekChar();
         if (c === '') throw EarlySyntaxError();
         if (c === '*' && peekChar(1) === '/') {
-            consumeChar();
-            consumeChar();
+            consumeChar('*');
+            consumeChar('/');
             break;
         }
         if (isLineTerminator(c)) {
             var isLineSeparated = true;
         }
-        consumeChar();
+        consumeChar(c);
     }
     return isLineSeparated;
 }
@@ -117,7 +117,7 @@ function skipSingleLineComment() {
         if (c === '' || isLineTerminator(c)) {
             break;
         }
-        consumeChar();
+        consumeChar(c);
     }
 }
 
@@ -129,12 +129,12 @@ function skipSeparators() {
             break;
         }
         if (isWhiteSpace(c)) {
-            consumeChar();
+            consumeChar(c);
             continue;
         }
         if (isLineTerminator(c)) {
             var isLineSeparated = true;
-            consumeChar();
+            consumeChar(c);
             continue;
         }
         if (c === '/' && peekChar(1) === '*') {
@@ -157,12 +157,12 @@ function skipSeparators() {
 function peekToken(ahead) {
     Assert(ahead === undefined || ahead >= 0);
     try {
-        var pos = getParsingPosition();
+        var pos = parsingPosition;
         skipSeparators();
-        var start = getParsingPosition();
+        var start = parsingPosition;
         if (skipIfIdentifierName() || skipIfPunctuator()) {
             if (ahead) return peekToken(ahead - 1);
-            var end = getParsingPosition();
+            var end = parsingPosition;
             return sourceText.substring(start, end);
         }
         Assert(!ahead);
@@ -195,38 +195,38 @@ function peekToken(ahead) {
                 return '';
         }
     } finally {
-        setParsingPosition(pos);
+        parsingPosition = pos;
     }
     throw EarlySyntaxError();
 }
 
 function peekTokenIsLineSeparated() {
     try {
-        var pos = getParsingPosition();
+        var pos = parsingPosition;
         return skipSeparators();
     } finally {
-        setParsingPosition(pos);
+        parsingPosition = pos;
     }
 }
 
 function peekTokenIsIdentifierName(ahead) {
     try {
-        var pos = getParsingPosition();
+        var pos = parsingPosition;
         skipSeparators();
         return skipIfIdentifierStart();
     } finally {
-        setParsingPosition(pos);
+        parsingPosition = pos;
     }
 }
 
 function consumeToken(expected) {
     skipSeparators();
-    var start = getParsingPosition();
+    var start = parsingPosition;
     var end = start + expected.length;
     if (expected !== sourceText.substring(start, end)) {
         throw EarlySyntaxError();
     }
-    setParsingPosition(end);
+    parsingPosition = end;
 }
 
 // 11.6.1 Identifier Names
@@ -264,13 +264,13 @@ function parseIdentifierStart() {
     var c = peekChar();
     switch (c) {
         case '$':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierStart:: $']();
         case '_':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierStart:: _']();
         case '\\':
-            consumeChar();
+            consumeChar(c);
             var nt = parseUnicodeEscapeSequence();
             return Production['IdentifierStart:: \\ UnicodeEscapeSequence'](nt);
 
@@ -283,20 +283,20 @@ function parseIdentifierPart_opt() {
     var c = peekChar();
     switch (c) {
         case '$':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierPart:: $']();
         case '_':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierPart:: _']();
         case '\\':
-            consumeChar();
+            consumeChar(c);
             var nt = parseUnicodeEscapeSequence();
             return Production['IdentifierPart:: \\ UnicodeEscapeSequence'](nt);
         case '\u200C':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierPart:: <ZWNJ>']();
         case '\u200D':
-            consumeChar();
+            consumeChar(c);
             return Production['IdentifierPart:: <ZWJ>']();
 
 
@@ -312,7 +312,7 @@ function parseIdentifierPart_opt() {
 function parseUnicodeIDStart() {
     var c = peekChar();
     if (!isUnicodeIDStart(c)) throw EarlySyntaxError();
-    consumeChar();
+    consumeChar(c);
     var nt = Production['UnicodeIDStart:: any_code_point_“ID_Start”']();
     nt.char = c;
     return nt;
@@ -322,7 +322,7 @@ function parseUnicodeIDStart() {
 function parseUnicodeIDContinue() {
     var c = peekChar();
     if (!isUnicodeIDContinue(c)) throw EarlySyntaxError();
-    consumeChar();
+    consumeChar(c);
     var nt = Production['UnicodeIDContinue:: any_code_point_“ID_Continue”']();
     nt.char = c;
     return nt;
@@ -339,16 +339,16 @@ function skipIfIdentifierName() {
 function skipIfIdentifierStart() {
     var c = peekChar();
     if (isUnicodeIDStart(c)) {
-        consumeChar();
+        consumeChar(c);
         return true;
     }
     switch (c) {
         case '$':
         case '_':
-            consumeChar();
+            consumeChar(c);
             return true;
         case '\\':
-            consumeChar();
+            consumeChar(c);
             skipUnicodeEscapeSequence();
             return true;
     }
@@ -358,7 +358,7 @@ function skipIfIdentifierStart() {
 function skipIfIdentifierPart() {
     var c = peekChar();
     if (isUnicodeIDContinue(c)) {
-        consumeChar();
+        consumeChar(c);
         return true;
     }
     switch (c) {
@@ -366,10 +366,10 @@ function skipIfIdentifierPart() {
         case '_':
         case '\u200C':
         case '\u200D':
-            consumeChar();
+            consumeChar(c);
             return true;
         case '\\':
-            consumeChar();
+            consumeChar(c);
             skipUnicodeEscapeSequence();
             return true;
     }
@@ -419,9 +419,7 @@ function isReservedWord(token) {
         case 'false':
             return true;
         case 'await':
-            if (isInModule()) { //TODO
-                return true;
-            }
+            if (isInModule) return true;
             break;
     }
     return false;
@@ -442,63 +440,63 @@ function skipIfPunctuator() {
         case '~':
         case '?':
         case ':':
-            consumeChar();
+            consumeChar(c);
             return true;
         case '.':
             if (isDecimalDigit(peekChar(1))) {
                 return false;
             }
-            consumeChar();
+            consumeChar(c);
             if (peekChar() === '.' && peekChar(1) === '.') {
-                consumeChar();
-                consumeChar();
+                consumeChar('.');
+                consumeChar('.');
             }
             return true;
         case '<':
-            consumeChar();
-            peekChar() === '<' && consumeChar();
-            peekChar() === '=' && consumeChar();
+            consumeChar(c);
+            peekChar() === '<' && consumeChar('<');
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '>':
-            consumeChar();
-            peekChar() === '>' && consumeChar();
-            peekChar() === '>' && consumeChar();
-            peekChar() === '=' && consumeChar();
+            consumeChar(c);
+            peekChar() === '>' && consumeChar('>');
+            peekChar() === '>' && consumeChar('>');
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '=':
-            consumeChar();
+            consumeChar(c);
             if (peekChar() === '>') {
-                consumeChar();
+                consumeChar('>');
                 return true;
             }
-            peekChar() === '=' && consumeChar();
-            peekChar() === '=' && consumeChar();
+            peekChar() === '=' && consumeChar('=');
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '!':
-            consumeChar();
-            peekChar() === '=' && consumeChar();
-            peekChar() === '=' && consumeChar();
+            consumeChar(c);
+            peekChar() === '=' && consumeChar('=');
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '+':
         case '-':
         case '&':
         case '|':
-            consumeChar();
+            consumeChar(c);
             if (peekChar() === c) {
-                consumeChar();
+                consumeChar(c);
                 return true;
             }
-            peekChar() === '=' && consumeChar();
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '*':
-            consumeChar();
-            peekChar() === '*' && consumeChar();
-            peekChar() === '=' && consumeChar();
+            consumeChar(c);
+            peekChar() === '*' && consumeChar('*');
+            peekChar() === '=' && consumeChar('=');
             return true;
         case '%':
         case '^':
-            consumeChar();
-            peekChar() === '=' && consumeChar();
+            consumeChar(c);
+            peekChar() === '=' && consumeChar('=');
             return true;
     }
     return false;
@@ -543,9 +541,9 @@ function skipIfPunctuator() {
 
 function parseNumericLiteral() {
     skipSeparators();
-    var start = getParsingPosition();
+    var start = parsingPosition;
     var nt = parseNumeric();
-    var end = getParsingPosition();
+    var end = parsingPosition;
     nt.raw = sourceText.substring(start, end);
     var c = peekChar();
     // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
@@ -577,14 +575,14 @@ function parseNumeric() {
 
 function parseDecimalLiteral() {
     if (peekChar() === '.') {
-        consumeChar();
+        consumeChar('.');
         var dgts = parseDecimalDigits();
         var ep = parseExponentPart_opt();
         return Production['DecimalLiteral:: . DecimalDigits ExponentPart[opt]'](dgts, ep);
     }
     var dil = parseDecimalIntegerLiteral();
     if (peekChar() === '.') {
-        consumeChar();
+        consumeChar('.');
         var dgts = parseDecimalDigits_opt();
         var ep = parseExponentPart_opt();
         return Production['DecimalLiteral:: DecimalIntegerLiteral . DecimalDigits[opt] ExponentPart[opt]'](dil, dgts, ep);
@@ -595,7 +593,7 @@ function parseDecimalLiteral() {
 
 function parseDecimalIntegerLiteral() {
     if (peekChar() === '0') {
-        consumeChar();
+        consumeChar('0');
         return Production['DecimalIntegerLiteral:: 0']();
     }
     var d = parseNonZeroDigit();
@@ -623,7 +621,7 @@ function parseDecimalDigits() {
 function parseDecimalDigit_opt() {
     var c = peekChar();
     if (!isDecimalDigit(c)) return null;
-    consumeChar();
+    consumeChar(c);
     var nt = Production['DecimalDigit:: one_of_0123456789']();
     nt.char = c;
     return nt;
@@ -636,7 +634,7 @@ function isDecimalDigit(c) {
 function parseNonZeroDigit() {
     var c = peekChar();
     if (!isDecimalDigit(c) || c === '0') throw EarlySyntaxError();
-    consumeChar();
+    consumeChar(c);
     var nt = Production['NonZeroDigit:: one_of_123456789']();
     nt.char = c;
     return nt;
@@ -645,7 +643,7 @@ function parseNonZeroDigit() {
 function parseExponentPart_opt() {
     var c = peekChar();
     if (c !== 'e' || c !== 'E') return null;
-    consumeChar();
+    consumeChar(c);
     var ei = Production['ExponentIndicator:: one_of_eE']();
     var nt = parseSignedInteger();
     return Production['ExponentPart:: ExponentIndicator SignedInteger'](ei, nt);
@@ -653,12 +651,12 @@ function parseExponentPart_opt() {
 
 function parseSignedInteger() {
     if (peekChar() === '+') {
-        consumeChar();
+        consumeChar('+');
         var nt = parseDecimalDigits();
         return Production['SignedInteger:: + DecimalDigits'](nt);
     }
     if (peekChar() === '-') {
-        consumeChar();
+        consumeChar('-');
         var nt = parseDecimalDigits();
         return Production['SignedInteger:: - DecimalDigits'](nt);
     }
@@ -669,12 +667,12 @@ function parseSignedInteger() {
 function parseBinaryIntegerLiteral() {
     consumeChar('0');
     if (peekChar() === 'b') {
-        consumeChar();
+        consumeChar('b');
         var nt = parseBinaryDigits();
         return Production['BinaryIntegerLiteral:: 0b BinaryDigits'](nt);
     }
     if (peekChar() === 'B') {
-        consumeChar();
+        consumeChar('B');
         var nt = parseBinaryDigits();
         return Production['BinaryIntegerLiteral:: 0B BinaryDigits'](nt);
     }
@@ -694,7 +692,7 @@ function parseBinaryDigits() {
 function parseBinaryDigit_opt() {
     var c = peekChar();
     if ('01'.indexOf(c) < 0 || c === '') return null;
-    consumeChar();
+    consumeChar(c);
     var nt = Production['BinaryDigit:: one_of_01']();
     nt.char = c;
     return nt;
@@ -703,12 +701,12 @@ function parseBinaryDigit_opt() {
 function parseOctalIntegerLiteral() {
     consumeChar('0');
     if (peekChar() === 'o') {
-        consumeChar();
+        consumeChar('o');
         var nt = parseOctalDigits();
         return Production['OctalIntegerLiteral:: 0o OctalDigits'](nt);
     }
     if (peekChar() === 'O') {
-        consumeChar();
+        consumeChar('O');
         var nt = parseOctalDigits();
         return Production['OctalIntegerLiteral:: 0O OctalDigits'](nt);
     }
@@ -728,7 +726,7 @@ function parseOctalDigits() {
 function parseOctalDigit_opt() {
     var c = peekChar();
     if ('01234567'.indexOf(c) < 0 || c === '') return null;
-    consumeChar();
+    consumeChar(c);
     var nt = Production['OctalDigit:: one_of_01234567']();
     nt.char = c;
     return nt;
@@ -737,12 +735,12 @@ function parseOctalDigit_opt() {
 function parseHexIntegerLiteral() {
     consumeChar('0');
     if (peekChar() === 'x') {
-        consumeChar();
+        consumeChar('x');
         var nt = parseHexDigits();
         return Production['HexIntegerLiteral:: 0x HexDigits'](nt);
     }
     if (peekChar() === 'X') {
-        consumeChar();
+        consumeChar('X');
         var nt = parseHexDigits();
         return Production['HexIntegerLiteral:: 0X HexDigits'](nt);
     }
@@ -768,7 +766,7 @@ function parseHexDigit() {
 function parseHexDigit_opt() {
     var c = peekChar();
     if ('0123456789abcdefABCDEF'.indexOf(c) < 0 || c === '') return null;
-    consumeChar();
+    consumeChar(c);
     var nt = Production['HexDigit:: one_of_0123456789abcdefABCDEF']();
     nt.char = c;
     return nt;
@@ -857,7 +855,7 @@ function parseDoubleStringCharacter() {
             var nt = parseLineContinuation();
             return Production['DoubleStringCharacter:: LineContinuation'](nt);
         }
-        consumeChar();
+        consumeChar('\\');
         var nt = parseEscapeSequence();
         return Production['DoubleStringCharacter:: \\ EscapeSequence'](nt);
     }
@@ -871,7 +869,7 @@ function parseSingleStringCharacter() {
             var nt = parseLineContinuation();
             return Production['SingleStringCharacter:: LineContinuation'](nt);
         }
-        consumeChar();
+        consumeChar('\\');
         var nt = parseEscapeSequence();
         return Production['SingleStringCharacter:: \\ EscapeSequence'](nt);
     }
@@ -1146,7 +1144,7 @@ function parseTemplateCharacters_opt() {
 
 function parseTemplateCharacter() {
     if (peekChar() === '$') {
-        consumeChar();
+        consumeChar('$');
         if (peekChar() === '{') throw EarlySyntaxError();
         return Production['TemplateCharacter:: $[lookahead≠{]']();
     }
@@ -1155,7 +1153,7 @@ function parseTemplateCharacter() {
             var nt = parseLineContinuation();
             return Production['TemplateCharacter:: LineContinuation'](nt);
         }
-        consumeChar();
+        consumeChar('\\');
         var nt = parseEscapeSequence();
         return Production['TemplateCharacter:: \\ EscapeSequence'](nt);
     }

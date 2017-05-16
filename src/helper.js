@@ -46,6 +46,10 @@ function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
 }
 
+function modulo(x, y) {
+    return x - y * Math.floor(x / y);
+}
+
 function define_method_direct(p, n, v) {
     Object.defineProperty(v, 'name', {
         value: p.name ? p.name + '.' + n : n

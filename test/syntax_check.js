@@ -9,7 +9,7 @@ var filenames = [
     "7-abstract-operations.js",
     "8-executable-code-and-execution-contexts.js",
     "9-ordinary-and-exotic-objects-behaviours.js",
-    //TODO 10
+    "10-source-text.js",
     "11-lexical-grammar.js",
     "12-expressions.js",
     "13-statements-and-declarations.js",

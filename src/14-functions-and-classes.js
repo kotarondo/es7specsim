@@ -1458,15 +1458,11 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         else var constructor = this.ClassBody.ConstructorMethod();
         if (constructor === empty) {
             if (this.ClassHeritage) {
-                var ctx = saveSourceTextContext();
                 setParsingText('constructor(... args){ super (...args);}');
                 constructor = parseMethodDefinition();
-                restoreSourceTextContext(ctx);
             } else {
-                var ctx = saveSourceTextContext();
                 setParsingText('constructor( ){ }');
                 constructor = parseMethodDefinition();
-                restoreSourceTextContext(ctx);
             }
         }
         the_running_execution_context.LexicalEnvironment = classScope;
