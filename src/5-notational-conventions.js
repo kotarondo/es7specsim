@@ -108,7 +108,7 @@ function createProduction(g) {
         if (el.length === 1) el.push('[empty]');
         var n = el.join(' ');
         Assert(n.indexOf('[opt]') < 0);
-        var rf = refs.filter((e, i) => !(j & (1 << i)));
+        var rf = refs.filter((e, k) => !(j & (1 << k)));
         protos[j] = createProductionPrototype(n, rf);
     }
     Production[name] = createProductionConstructor(types, protos, refs);
@@ -238,6 +238,7 @@ function createProductionPrototype(name, refs) {
     Object.defineProperty(proto, 'name', { value: name });
     Object.defineProperty(proto, 'goal', { value: goal });
     Object.defineProperty(proto, 'refs', { value: refs });
+
     if (elems.length === 2 && isref(elems[1])) {
         var ident = elems[1];
         define_method_direct(proto, 'is', function(a) {
@@ -262,9 +263,17 @@ function createProductionPrototype(name, refs) {
             return null;
         });
     }
+
     define_method_direct(proto, 'apply_early_error_rules', function() {
-        for (var ref of refs) {
-            this[ref].apply_early_error_rules();
+        if (goal === 'LeftHandSideExpression' && this.AssignmentPattern) {
+            this.AssignmentPattern.apply_early_error_rules();
+        } else if (goal === 'CoverParenthesizedExpressionAndArrowParameterList') {
+            // see 12.2.10.1
+            // see 14.2.1
+        } else {
+            for (var ref of refs) {
+                this[ref].apply_early_error_rules();
+            }
         }
         var rules = this['Early Errors'];
         if (rules) {
@@ -273,6 +282,7 @@ function createProductionPrototype(name, refs) {
             }
         }
     });
+
     if (goal === 'FunctionBody' || goal === 'GeneratorBody' || goal === 'ConciseBody') {
         define_method_direct(proto, 'is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within', function(a) {
             if (a === goal) return true;
@@ -287,6 +297,7 @@ function createProductionPrototype(name, refs) {
             return this.nested.is_nested_directly_or_indirectly_but_not_crossing_function_boundaries_within(a);
         });
     }
+
     define_method_direct(proto, 'is_contained_within', function() {
         for (var i = 0; i < arguments.length; i++) {
             var a = arguments[i];
@@ -296,6 +307,7 @@ function createProductionPrototype(name, refs) {
         if (!this.nested) return false;
         return this.nested.is_contained_within(...arguments);
     });
+
     define_method_direct(proto, 'most_closely_contains', function() {
         for (var i = 0; i < arguments.length; i++) {
             var a = arguments[i];
@@ -305,6 +317,7 @@ function createProductionPrototype(name, refs) {
         if (!this.nested) return null;
         return this.nested.most_closely_contains(...arguments);
     });
+
     ProductionPrototype[name] = proto;
     return proto;
 }
@@ -322,5 +335,17 @@ function create_implicit_static_semantic_rule_Contains() {
             }
             return false;
         });
+    }
+}
+
+function EarlySyntaxError() {
+    if (!this) {
+        return new EarlySyntaxError;
+    }
+}
+
+function EarlyReferenceError() {
+    if (!this) {
+        return new EarlyReferenceError;
     }
 }

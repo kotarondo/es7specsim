@@ -61,13 +61,14 @@ function UTF16Decode(lead, trail) {
 // 10.2.1 Strict Mode Code
 
 function determineStrictModeCode(nt, strict) {
+    var thisStrict = strict;
+    var nextStrict = strict;
     switch (nt.goal) {
         case 'Script':
             if (nt.name === 'Script: [empty]') {
-                nt.strict = strict;
-                return;
+                break;
             }
-            var thisStrict = strict || containsUseStrictDirective(nt.resolve('StatementList'));
+            var thisStrict = strict || containsUseStrictDirective(nt);
             var nextStrict = thisStrict;
             break;
         case 'Module':
@@ -91,8 +92,6 @@ function determineStrictModeCode(nt, strict) {
             break;
         case 'MethodDefinition':
             if (nt.name === 'MethodDefinition: GeneratorMethod') {
-                var thisStrict = strict;
-                var nextStrict = strict;
                 break;
             }
             var thisStrict = strict;
@@ -103,9 +102,19 @@ function determineStrictModeCode(nt, strict) {
             var thisStrict = strict;
             var nextStrict = strict || nt.ConciseBody.ContainsUseStrict();
             break;
-        default:
-            var thisStrict = strict;
-            var nextStrict = strict;
+        case 'CoverParenthesizedExpressionAndArrowParameterList':
+            nt.strict = strict;
+            if (nt.ArrowFormalParameters) {
+                determineStrictModeCode(nt.ArrowFormalParameters, strict);
+            } else if (nt.ParenthesizedExpression) {
+                determineStrictModeCode(nt.ParenthesizedExpression, strict);
+            }
+            return;
+        case 'LeftHandSideExpression':
+            if (nt.AssignmentPattern) {
+                determineStrictModeCode(nt.AssignmentPattern, strict);
+                return;
+            }
             break;
     }
     nt.strict = thisStrict;

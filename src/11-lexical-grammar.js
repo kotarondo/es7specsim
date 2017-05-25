@@ -110,7 +110,9 @@ Static_Semantics('StringValue', [
                 sequence.unshift('$');
             } else if (c.is('IdentifierPart:: _')) {
                 sequence.unshift('_');
-            } else if (c.is('IdentifierPart:: \\ UnicodeEscapeSequence')) {} else if (c.is('IdentifierPart:: <ZWNJ>')) {
+            } else if (c.is('IdentifierPart:: \\ UnicodeEscapeSequence')) {
+                sequence.unshift(c.UnicodeEscapeSequence.SV());
+            } else if (c.is('IdentifierPart:: <ZWNJ>')) {
                 sequence.unshift('\u200C');
             } else if (c.is('IdentifierPart:: <ZWJ>')) {
                 sequence.unshift('\u200D');
@@ -193,7 +195,7 @@ Static_Semantics('MV', [
         if (i >= 0) return i;
         var i = '0123456789ABCDEF'.indexOf(c);
         if (i >= 0) return i;
-        Assert(false);
+        return Assert(false);
     },
 
     'HexDigits:: HexDigit',
@@ -372,7 +374,7 @@ Static_Semantics('SV', [
             case '\\':
                 return '\u005C';
         }
-        Assert(false);
+        return Assert(false);
     },
 
     'CharacterEscapeSequence:: NonEscapeCharacter',
@@ -478,9 +480,9 @@ Syntax([
 
 // 11.8.6.1
 Static_Semantics('TV', [
-    //TODO
+    //TODO TV
 ]);
 
 Static_Semantics('TRV', [
-    //TODO
+    //TODO TRV
 ]);

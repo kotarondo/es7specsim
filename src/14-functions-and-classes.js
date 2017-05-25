@@ -56,10 +56,30 @@ Syntax([
 
 // 14.1.1 Directive Prologues and the Use Strict Directive
 
+function isDirectivePrologue(nt) {
+    Assert(nt.is('StatementList'));
+    var list = nt.resolve('StatementList');
+    var stmt = list.StatementListItem.resolve('ExpressionStatement');
+    if (!stmt) return false;
+    var str = stmt.Expression.resolve('StringLiteral');
+    if (!str) return false;
+    if (!list.StatementList) return true;
+    return isDirectivePrologue(list.StatementList);
+}
+
 function containsUseStrictDirective(nt) {
     Assert(nt.is('StatementList'));
-    //TODO use strict directive
-    return false;
+    var list = nt.resolve('StatementList');
+    var stmt = list.StatementListItem.resolve('ExpressionStatement');
+    if (stmt) {
+        var str = stmt.Expression.resolve('StringLiteral');
+        if (str && str.SV() === 'use strict' && !str.Contains('EscapeSequence') && !str.Contains('LineContinuation')) {
+            if (!list.StatementList) return true;
+            if (isDirectivePrologue(list.StatementList)) return true;
+        }
+    }
+    if (!list.StatementList) return false;
+    return containsUseStrictDirective(list.StatementList);
 }
 
 // 14.1.2
@@ -203,7 +223,7 @@ Static_Semantics('ContainsUseStrict', [
     'FunctionBody: FunctionStatementList',
     function() {
         if (this.is('FunctionStatementList: [empty]')) return false;
-        if (containsUseStrictDirective(this.resolve('StatementList'))) return true;
+        if (containsUseStrictDirective(this)) return true;
         else return false;
     },
 ]);
@@ -542,7 +562,6 @@ Static_Semantics('Early Errors', [
     'ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList',
     function() {
         // moved into the parser.
-        // parseArrowFormalParameters(Yield);
         this.CoverParenthesizedExpressionAndArrowParameterList.CoveredFormalsList().apply_early_error_rules();
     },
 ]);
@@ -641,7 +660,6 @@ Static_Semantics('CoveredFormalsList', [
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression , ... BindingPattern )',
     function() {
         // moved into the parser.
-        // parseArrowFormalParameters(Yield);
         return this.ArrowFormalParameters;
     },
 ]);

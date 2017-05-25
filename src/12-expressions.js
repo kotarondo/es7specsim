@@ -67,7 +67,6 @@ Static_Semantics('Early Errors', [
     'LabelIdentifier: Identifier',
     function() {
         // moved into the parser.
-        // if (Yield && this.Identifier.StringValue() === "yield") throw EarlySyntaxError();
     },
 
     'Identifier: IdentifierName but_not_ReservedWord',
@@ -197,10 +196,7 @@ Static_Semantics('CoveredParenthesizedExpression', [
 
     'CoverParenthesizedExpressionAndArrowParameterList: ( Expression )',
     function() {
-        if (!this.ParenthesizedExpression) {
-            this.ParenthesizedExpression = Production['ParenthesizedExpression: ( Expression )'](this.Expression);
-            this.ParenthesizedExpression.strict = this.strict;
-        }
+        // moved into the parser.
         return this.ParenthesizedExpression;
     },
 ]);
@@ -678,7 +674,7 @@ Static_Semantics('Early Errors', [
         var pattern = this.RegularExpressionLiteral.BodyText();
         var flags = this.RegularExpressionLiteral.FlagText();
         try {
-            new RegExp(pattern); //TODO independent RegExp parser
+            RegExp(pattern); //TODO independent RegExp parser
         } catch (e) {
             throw EarlySyntaxError();
         }
@@ -2335,7 +2331,6 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
             // moved into the parser.
-            // parseAssignmentPattern(Yield);
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
         }
@@ -2391,7 +2386,7 @@ Runtime_Semantics('Evaluation', [
             PutValue(lref, rval);
             return rval;
         }
-        var assignmentPattern = this.AssignmentPattern;
+        var assignmentPattern = this.LeftHandSideExpression.AssignmentPattern;
         var rref = this.AssignmentExpression.Evaluation();
         var rval = GetValue(rref);
         var status = assignmentPattern.DestructuringAssignmentEvaluation(rval);
@@ -2517,7 +2512,6 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
             // moved into the parser.
-            // parseAssignmentPattern(Yield);
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
         }
@@ -2706,7 +2700,7 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var v = GetValue(defaultValue);
         } else var v = value;
         if (this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral')) {
-            var nestedAssignmentPattern = this.DestructuringAssignmentTarget.AssignmentPattern;
+            var nestedAssignmentPattern = this.DestructuringAssignmentTarget.LeftHandSideExpression.AssignmentPattern;
             return nestedAssignmentPattern.DestructuringAssignmentEvaluation(v);
         }
         if (this.Initializer && value === undefined && IsAnonymousFunctionDefinition(this.Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {
@@ -2742,7 +2736,7 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
         if (!(this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral'))) {
             return PutValue(lref, A);
         }
-        var nestedAssignmentPattern = this.DestructuringAssignmentTarget.AssignmentPattern;
+        var nestedAssignmentPattern = this.DestructuringAssignmentTarget.LeftHandSideExpression.AssignmentPattern;
         return nestedAssignmentPattern.DestructuringAssignmentEvaluation(A);
     },
 
@@ -2762,7 +2756,7 @@ Runtime_Semantics('KeyedDestructuringAssignmentEvaluation', [
             var rhsValue = GetValue(defaultValue);
         } else var rhsValue = v;
         if (this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral')) {
-            var assignmentPattern = this.DestructuringAssignmentTarget.AssignmentPattern;
+            var assignmentPattern = this.DestructuringAssignmentTarget.LeftHandSideExpression.AssignmentPattern;
             return assignmentPattern.DestructuringAssignmentEvaluation(rhsValue);
         }
         if (this.Initializer && v === undefined && IsAnonymousFunctionDefinition(this.Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {

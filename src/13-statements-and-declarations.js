@@ -1763,7 +1763,6 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
             // moved into the parser.
-            // parseAssignmentPattern(Yield);
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlySyntaxError();
             var expr = this.LeftHandSideExpression;

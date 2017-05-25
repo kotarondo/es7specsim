@@ -47,7 +47,7 @@ function parseScriptBody_opt() {
     if (peekToken() === '') return null;
     var nt = parseStatementList(!'Yield', !'Return');
     if (peekToken() !== '') {
-        throw new EarlySyntaxError();
+        throw EarlySyntaxError();
     }
     return Production['ScriptBody: StatementList'](nt);
 }

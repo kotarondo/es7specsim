@@ -243,7 +243,7 @@ function parseLetOrConst() {
 
 function parseBindingList(In, Yield) {
     var nt = parseLexicalBinding(In, Yield);
-    return parseBindingList_after_Binding(nt, In, Yield);
+    return parseBindingList_after_LexicalBinding(nt, In, Yield);
 }
 
 function parseBindingList_after_LexicalBinding(nt, In, Yield) {
@@ -618,6 +618,7 @@ function parseIterationStatement(Yield, Return) {
             return Production['IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement'](nt, expr1, expr2, stmt);
     }
 
+    var pos = parsingPosition;
     var nt = parseExpression_opt(!'In', Yield);
     if (peekToken() === 'in') {
         if (!nt.is('LeftHandSideExpression')) {
@@ -625,8 +626,11 @@ function parseIterationStatement(Yield, Return) {
         }
         nt = nt.resolve('LeftHandSideExpression');
         if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
-            // from 13.7.5.1
-            //TODO re-parseAssignmentPattern(Yield);
+            // moved from 13.7.5.1
+            var end = parsingPosition;
+            parsingPosition = pos;
+            nt.AssignmentPattern = parseAssignmentPattern(Yield)
+            Assert(end === parsingPosition);
         }
         consumeToken('in');
         var expr = parseExpression('In', Yield);
@@ -641,8 +645,11 @@ function parseIterationStatement(Yield, Return) {
         }
         nt = nt.resolve('LeftHandSideExpression');
         if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
-            // from 13.7.5.1
-            //TODO re-parseAssignmentPattern(Yield);
+            // moved from 13.7.5.1
+            var end = parsingPosition;
+            parsingPosition = pos;
+            nt.AssignmentPattern = parseAssignmentPattern(Yield)
+            Assert(end === parsingPosition);
         }
         consumeToken('of');
         var expr = parseAssignmentExpression('In', Yield);

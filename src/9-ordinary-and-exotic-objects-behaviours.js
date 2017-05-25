@@ -1148,7 +1148,7 @@ function MakeArgGetter(name, env) {
 // 9.4.4.8.2
 function MakeArgSetter(name, env) {
     var realm = currentRealm;
-    var steps = function() {
+    var steps = function(value) {
         // var name = f.Name;
         // var env = f.Env;
         return env.SetMutableBinding(name, value, false);

@@ -32,6 +32,9 @@
 */
 'use strict';
 
+// 16 Error Handling and Language Extensions
+
+// 16.1
 function HostReportErrors(errorList) {
     console.log(errorList);
 }

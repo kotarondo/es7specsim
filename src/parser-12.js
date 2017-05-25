@@ -49,7 +49,7 @@ function parseIdentifierReference(Yield) {
         return Production['IdentifierReference: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // moved from 12.1.1
     return Production['IdentifierReference: Identifier'](nt);
 }
 
@@ -59,7 +59,7 @@ function parseBindingIdentifier(Yield) {
         return Production['BindingIdentifier: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // moved from 12.1.1
     return Production['BindingIdentifier: Identifier'](nt);
 }
 
@@ -69,7 +69,7 @@ function parseLabelIdentifier(Yield) {
         return Production['LabelIdentifier: yield']();
     }
     var nt = parseIdentifier();
-    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // from 12.1.1
+    if (Yield && nt.StringValue() === "yield") throw EarlySyntaxError(); // moved from 12.1.1
     return Production['LabelIdentifier: Identifier'](nt);
 }
 
@@ -164,7 +164,10 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(Yield) {
     var expr = parseExpression('In', Yield);
     if (peekToken() === ')') {
         consumeToken(')');
-        return Production['CoverParenthesizedExpressionAndArrowParameterList: ( Expression )'](expr);
+        var nt = Production['CoverParenthesizedExpressionAndArrowParameterList: ( Expression )'](expr);
+        // moved from 12.2.1.1
+        nt.ParenthesizedExpression = Production['ParenthesizedExpression: ( Expression )'](expr);
+        return nt;
     }
     consumeToken(',');
     consumeToken('...');
@@ -1037,6 +1040,7 @@ function parseAssignmentExpression(In, Yield) {
         var nt = parseYieldExpression(In);
         return Production['AssignmentExpression: YieldExpression'](nt);
     }
+    var pos = parsingPosition;
     var nt = parseConditionalExpression(In, Yield);
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
         if (nt.is('Identifier')) {
@@ -1048,6 +1052,11 @@ function parseAssignmentExpression(In, Yield) {
         }
         if (nt.is('CoverParenthesizedExpressionAndArrowParameterList')) {
             var nt = nt.resolve('CoverParenthesizedExpressionAndArrowParameterList');
+            // moved from 14.2.9
+            var end = parsingPosition;
+            parsingPosition = pos;
+            nt.ArrowFormalParameters = parseArrowFormalParameters(Yield)
+            Assert(end === parsingPosition);
             var nt = Production['ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
@@ -1059,8 +1068,11 @@ function parseAssignmentExpression(In, Yield) {
         switch (c) {
             case '=':
                 if (lhs.is('ObjectLiteral') || lhs.is('ArrayLiteral')) {
-                    // from 12.15.1
-                    //TODO parseAssignmentPattern(Yield)
+                    // moved from 12.15.1
+                    var end = parsingPosition;
+                    parsingPosition = pos;
+                    lhs.AssignmentPattern = parseAssignmentPattern(Yield)
+                    Assert(end === parsingPosition);
                 }
                 consumeToken('=');
                 var nt = parseAssignmentExpression(In, Yield);
@@ -1200,10 +1212,14 @@ function parseAssignmentRestElement(Yield) {
 }
 
 function parseDestructuringAssignmentTarget(Yield) {
+    var pos = parsingPosition;
     var nt = parseLeftHandSideExpression(Yield);
     if (nt.is('ObjectLiteral') || nt.is('ArrayLiteral')) {
-        // from 12.15.5.1
-        //TODO parseAssignmentPattern(Yield)
+        // moved from 12.15.5.1
+        var end = parsingPosition;
+        parsingPosition = pos;
+        nt.AssignmentPattern = parseAssignmentPattern(Yield)
+        Assert(end === parsingPosition);
     }
     return Production['DestructuringAssignmentTarget: LeftHandSideExpression'](nt);
 }

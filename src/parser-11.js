@@ -75,6 +75,7 @@ function parseLineTerminatorSequence() {
             consumeChar('\u2029');
             return Production['LineTerminatorSequence:: <PS>']();
     }
+    throw EarlySyntaxError();
 }
 
 function isLineTerminator(c) {
@@ -567,7 +568,7 @@ function parseNumeric() {
                 var nt = parseHexIntegerLiteral();
                 return Production['NumericLiteral:: HexIntegerLiteral'](nt);
         }
-        if (isDecimalDigit(peekChar(1))) throw new EarlySyntaxError();
+        if (isDecimalDigit(peekChar(1))) throw EarlySyntaxError();
     }
     var nt = parseDecimalLiteral();
     return Production['NumericLiteral:: DecimalLiteral'](nt);
@@ -676,6 +677,7 @@ function parseBinaryIntegerLiteral() {
         var nt = parseBinaryDigits();
         return Production['BinaryIntegerLiteral:: 0B BinaryDigits'](nt);
     }
+    throw EarlySyntaxError();
 }
 
 function parseBinaryDigits() {
@@ -710,6 +712,7 @@ function parseOctalIntegerLiteral() {
         var nt = parseOctalDigits();
         return Production['OctalIntegerLiteral:: 0O OctalDigits'](nt);
     }
+    throw EarlySyntaxError();
 }
 
 function parseOctalDigits() {
@@ -744,6 +747,7 @@ function parseHexIntegerLiteral() {
         var nt = parseHexDigits();
         return Production['HexIntegerLiteral:: 0X HexDigits'](nt);
     }
+    throw EarlySyntaxError();
 }
 
 function parseHexDigits() {
@@ -770,6 +774,13 @@ function parseHexDigit_opt() {
     var nt = Production['HexDigit:: one_of_0123456789abcdefABCDEF']();
     nt.char = c;
     return nt;
+}
+
+function skipIfHexDigit() {
+    var c = peekChar();
+    if ('0123456789abcdefABCDEF'.indexOf(c) < 0 || c === '') return false;
+    consumeChar(c);
+    return true;
 }
 
 // 11.8.4 String Literals
@@ -880,7 +891,7 @@ function parseSingleStringCharacter() {
 function parseLineContinuation() {
     consumeChar('\\');
     var nt = parseLineTerminatorSequence();
-    var nt = Production['LineContinuation:: \\ LineTerminatorSequence'](nt);
+    return Production['LineContinuation:: \\ LineTerminatorSequence'](nt);
 }
 
 function parseEscapeSequence() {
@@ -948,6 +959,18 @@ function parseHex4Digits() {
     var d3 = parseHexDigit();
     var d4 = parseHexDigit();
     return Production['Hex4Digits:: HexDigit HexDigit HexDigit HexDigit'](d1, d2, d3, d4);
+}
+
+function skipUnicodeEscapeSequence() {
+    consumeChar('u');
+    if (peekChar() === '{') {
+        consumeChar('{');
+        if (!skipIfHexDigit()) throw EarlySyntaxError();
+        while (skipIfHexDigit());
+        consumeChar('}');
+        return;
+    }
+    if (!(skipIfHexDigit() && skipIfHexDigit() && skipIfHexDigit() && skipIfHexDigit())) throw EarlySyntaxError();
 }
 
 // 11.8.5 Regular Expression Literals
@@ -1174,7 +1197,7 @@ function insertAutoSemicolon() {
         return;
     }
     if (!isAutoSemicolonCapable()) {
-        throw new EarlySyntaxError();
+        throw EarlySyntaxError();
     }
 }
 

@@ -153,7 +153,6 @@ function parseFunctionStatementList(Yield) {
 */
 
 function parseArrowFunction_after_ArrowParameters(nt, In, Yield) {
-    //TODO re-parseArrowFormalParameters(Yield)
     if (peekTokenIsLineSeparated()) {
         throw EarlySyntaxError();
     }
@@ -171,6 +170,13 @@ function parseConciseBody(In) {
     var nt = parseFunctionBody(!'Yield');
     consumeToken('}');
     return Production['ConciseBody: { FunctionBody }'](nt);
+}
+
+function parseArrowFormalParameters(Yield) {
+    consumeToken('(');
+    var nt = parseStrictFormalParameters(Yield);
+    consumeToken(')');
+    return Production['ArrowFormalParameters: ( StrictFormalParameters )'](nt);
 }
 
 // 14.3 Method Definitions
@@ -210,6 +216,10 @@ function parseMethodDefinition(Yield) {
             return Production['MethodDefinition: GeneratorMethod'](nt);
     }
     var name = parsePropertyName(Yield);
+    return parseMethodDefinition_after_PropertyName(name, Yield);
+}
+
+function parseMethodDefinition_after_PropertyName(name, Yield) {
     consumeToken('(');
     var param = parseStrictFormalParameters(!'Yield');
     consumeToken(')');
