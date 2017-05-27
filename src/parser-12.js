@@ -410,11 +410,11 @@ function parseInitializer(In, Yield) {
 
 function parseTemplateLiteral(Yield) {
     var nt = parseTemplate(Yield);
-    if (nt.is('Template: NoSubstitutionTemplate')) {
+    if (nt.is('Template:: NoSubstitutionTemplate')) {
         var nt = nt.NoSubstitutionTemplate;
         return Production['TemplateLiteral: NoSubstitutionTemplate'](nt);
     }
-    Assert(nt.is('Template: TemplateHead'));
+    Assert(nt.is('Template:: TemplateHead'));
     var head = nt.TemplateHead;
     var expr = parseExpression('In', Yield);
     var nt = parseTemplateSpans(Yield);
@@ -423,21 +423,21 @@ function parseTemplateLiteral(Yield) {
 
 function parseTemplateSpans(Yield) {
     var nt = parseTemplateSubstitutionTail();
-    if (nt.is('TemplateSubstitutionTail: TemplateTail')) {
+    if (nt.is('TemplateSubstitutionTail:: TemplateTail')) {
         var nt = nt.TemplateTail;
         return Production['TemplateSpans: TemplateTail'](nt);
     }
-    Assert(nt.is('TemplateSubstitutionTail: TemplateMiddle'));
+    Assert(nt.is('TemplateSubstitutionTail:: TemplateMiddle'));
     var nt = nt.TemplateMiddle;
     var expr = parseExpression('In', Yield);
     var list = Production['TemplateMiddleList: TemplateMiddle Expression'](nt, expr);
     while (true) {
         var nt = parseTemplateSubstitutionTail();
-        if (nt.is('TemplateSubstitutionTail: TemplateTail')) {
+        if (nt.is('TemplateSubstitutionTail:: TemplateTail')) {
             var nt = nt.TemplateTail;
             return Production['TemplateSpans: TemplateMiddleList TemplateTail'](list, nt);
         }
-        Assert(nt.is('TemplateSubstitutionTail: TemplateMiddle'));
+        Assert(nt.is('TemplateSubstitutionTail:: TemplateMiddle'));
         var nt = nt.TemplateMiddle;
         var expr = parseExpression('In', Yield);
         var list = Production['TemplateMiddleList: TemplateMiddleList TemplateMiddle Expression'](list, nt, expr);

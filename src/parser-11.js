@@ -50,7 +50,7 @@ function isWhiteSpace(c) {
 // 11.3 Line Terminators
 /*
     'LineTerminatorSequence:: <LF>',
-    'LineTerminatorSequence:: <CR>[lookahead≠<LF>]',
+    'LineTerminatorSequence:: <CR>',
     'LineTerminatorSequence:: <LS>',
     'LineTerminatorSequence:: <PS>',
     'LineTerminatorSequence:: <CR><LF>',
@@ -64,7 +64,7 @@ function parseLineTerminatorSequence() {
         case '\u000D':
             consumeChar('\u000D');
             if (peekChar() !== '\u000A') {
-                return Production['LineTerminatorSequence:: <CR>[lookahead≠<LF>]']();
+                return Production['LineTerminatorSequence:: <CR>']();
             } else {
                 return Production['LineTerminatorSequence:: <CR><LF>']();
             }
@@ -797,7 +797,7 @@ function skipIfHexDigit() {
     'SingleStringCharacter:: LineContinuation',
     'LineContinuation:: \\ LineTerminatorSequence',
     'EscapeSequence:: CharacterEscapeSequence',
-    'EscapeSequence:: 0[lookahead∉DecimalDigit]',
+    'EscapeSequence:: 0',
     'EscapeSequence:: HexEscapeSequence',
     'EscapeSequence:: UnicodeEscapeSequence',
     'CharacterEscapeSequence:: SingleEscapeCharacter',
@@ -898,7 +898,7 @@ function parseEscapeSequence() {
     switch (peekChar()) {
         case '0':
             if (!isDecimalDigit(peekChar(1))) {
-                return Production['EscapeSequence:: 0[lookahead∉DecimalDigit]']();
+                return Production['EscapeSequence:: 0']();
             }
             throw EarlySyntaxError();
         case 'x':
@@ -999,10 +999,19 @@ function skipUnicodeEscapeSequence() {
 function parseRegularExpressionLiteral() {
     skipSeparators();
     consumeChar('/');
+    var start = parsingPosition;
     var body = parseRegularExpressionBody();
+    var end = parsingPosition;
+    // moved from 11.8.5.2
+    body.text = sourceText.substring(start, end);
     consumeChar('/');
+    var start = parsingPosition;
     var flags = parseRegularExpressionFlags();
-    return Production['RegularExpressionLiteral:: / RegularExpressionBody / RegularExpressionFlags'](body, flags);
+    var end = parsingPosition;
+    // moved from 11.8.5.3
+    flags.text = sourceText.substring(start, end);
+    var nt = Production['RegularExpressionLiteral:: / RegularExpressionBody / RegularExpressionFlags'](body, flags);
+    return nt;
 }
 
 function parseRegularExpressionBody() {
@@ -1112,7 +1121,7 @@ function parseRegularExpressionFlags() {
     'TemplateMiddle:: } TemplateCharacters[opt] ${',
     'TemplateTail:: } TemplateCharacters[opt] `',
     'TemplateCharacters:: TemplateCharacter TemplateCharacters[opt]',
-    'TemplateCharacter:: $[lookahead≠{]',
+    'TemplateCharacter:: $',
     'TemplateCharacter:: \\ EscapeSequence',
     'TemplateCharacter:: LineContinuation',
     'TemplateCharacter:: LineTerminatorSequence',
@@ -1169,7 +1178,7 @@ function parseTemplateCharacter() {
     if (peekChar() === '$') {
         consumeChar('$');
         if (peekChar() === '{') throw EarlySyntaxError();
-        return Production['TemplateCharacter:: $[lookahead≠{]']();
+        return Production['TemplateCharacter:: $']();
     }
     if (peekChar() === '\\') {
         if (isLineTerminator(peekChar(1))) {

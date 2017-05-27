@@ -37,7 +37,7 @@
 // 11.3 Line Terminators
 Syntax([
     'LineTerminatorSequence:: <LF>',
-    'LineTerminatorSequence:: <CR>[lookahead≠<LF>]',
+    'LineTerminatorSequence:: <CR>',
     'LineTerminatorSequence:: <LS>',
     'LineTerminatorSequence:: <PS>',
     'LineTerminatorSequence:: <CR><LF>',
@@ -224,7 +224,7 @@ Syntax([
     'SingleStringCharacter:: LineContinuation',
     'LineContinuation:: \\ LineTerminatorSequence',
     'EscapeSequence:: CharacterEscapeSequence',
-    'EscapeSequence:: 0[lookahead∉DecimalDigit]',
+    'EscapeSequence:: 0',
     'EscapeSequence:: HexEscapeSequence',
     'EscapeSequence:: UnicodeEscapeSequence',
     'CharacterEscapeSequence:: SingleEscapeCharacter',
@@ -446,7 +446,8 @@ Static_Semantics('BodyText', [
 
     'RegularExpressionLiteral:: / RegularExpressionBody / RegularExpressionFlags',
     function() {
-        //TODO Return the source text that was recognized as RegularExpressionBody.
+        // moved into the parser.
+        return this.RegularExpressionBody.text;
     },
 ]);
 
@@ -455,7 +456,8 @@ Static_Semantics('FlagText', [
 
     'RegularExpressionLiteral:: / RegularExpressionBody / RegularExpressionFlags',
     function() {
-        //TODO Return the source text that was recognized as RegularExpressionFlags.
+        // moved into the parser.
+        return this.RegularExpressionFlags.text;
     },
 ]);
 
@@ -471,7 +473,7 @@ Syntax([
     'TemplateMiddle:: } TemplateCharacters[opt] ${',
     'TemplateTail:: } TemplateCharacters[opt] `',
     'TemplateCharacters:: TemplateCharacter TemplateCharacters[opt]',
-    'TemplateCharacter:: $[lookahead≠{]',
+    'TemplateCharacter:: $',
     'TemplateCharacter:: \\ EscapeSequence',
     'TemplateCharacter:: LineContinuation',
     'TemplateCharacter:: LineTerminatorSequence',
@@ -480,9 +482,212 @@ Syntax([
 
 // 11.8.6.1
 Static_Semantics('TV', [
-    //TODO TV
+    'NoSubstitutionTemplate:: ` `',
+    'TemplateHead:: ` ${',
+    'TemplateMiddle:: } ${',
+    'TemplateTail:: } `',
+    function() {
+        return '';
+    },
+
+    'NoSubstitutionTemplate:: ` TemplateCharacters `',
+    'TemplateHead:: ` TemplateCharacters ${',
+    'TemplateMiddle:: } TemplateCharacters ${',
+    'TemplateTail:: } TemplateCharacters `',
+    function() {
+        return this.TemplateCharacters.TV();
+    },
+
+    'TemplateCharacters:: TemplateCharacter',
+    function() {
+        return this.TemplateCharacter.TV();
+    },
+
+    'TemplateCharacters:: TemplateCharacter TemplateCharacters',
+    function() {
+        return this.TemplateCharacter.TV() + this.TemplateCharacters.TV();
+    },
+
+    'TemplateCharacter:: SourceCharacter but_not_one_of_`_or_\\_or_$_or_LineTerminator',
+    function() {
+        return this.SourceCharacter.char;
+    },
+
+    'TemplateCharacter:: $',
+    function() {
+        return String.fromCharCode(0x0024);
+    },
+
+    'TemplateCharacter:: \\ EscapeSequence',
+    function() {
+        return this.EscapeSequence.SV();
+    },
+
+    'TemplateCharacter:: LineContinuation',
+    function() {
+        return this.LineContinuation.TV();
+    },
+
+    'TemplateCharacter:: LineTerminatorSequence',
+    function() {
+        return this.LineTerminatorSequence.TRV();
+    },
+
+    'LineContinuation:: \\ LineTerminatorSequence',
+    function() {
+        return '';
+    },
 ]);
 
 Static_Semantics('TRV', [
-    //TODO TRV
+    'NoSubstitutionTemplate:: ` `',
+    'TemplateHead:: ` ${',
+    'TemplateMiddle:: } ${',
+    'TemplateTail:: } `',
+    function() {
+        return '';
+    },
+
+    'NoSubstitutionTemplate:: ` TemplateCharacters `',
+    'TemplateHead:: ` TemplateCharacters ${',
+    'TemplateMiddle:: } TemplateCharacters ${',
+    'TemplateTail:: } TemplateCharacters `',
+    function() {
+        return this.TemplateCharacters.TRV();
+    },
+
+    'TemplateCharacters:: TemplateCharacter',
+    function() {
+        return this.TemplateCharacter.TRV();
+    },
+
+    'TemplateCharacters:: TemplateCharacter TemplateCharacters',
+    function() {
+        return this.TemplateCharacter.TRV() + this.TemplateCharacters.TRV();
+    },
+
+    'TemplateCharacter:: SourceCharacter but_not_one_of_`_or_\\_or_$_or_LineTerminator',
+    function() {
+        return this.SourceCharacter.char;
+    },
+
+    'TemplateCharacter:: $',
+    function() {
+        return String.fromCharCode(0x0024);
+    },
+
+    'TemplateCharacter:: \\ EscapeSequence',
+    function() {
+        return String.fromCharCode(0x005C) + this.EscapeSequence.TRV();
+    },
+
+    'TemplateCharacter:: LineContinuation',
+    function() {
+        return this.LineContinuation.TRV();
+    },
+
+    'TemplateCharacter:: LineTerminatorSequence',
+    function() {
+        return this.LineTerminatorSequence.TRV();
+    },
+
+    'EscapeSequence:: CharacterEscapeSequence',
+    function() {
+        return this.CharacterEscapeSequence.TRV();
+    },
+
+    'EscapeSequence:: 0',
+    function() {
+        return String.fromCharCode(0x0030);
+    },
+
+    'EscapeSequence:: HexEscapeSequence',
+    function() {
+        return this.HexEscapeSequence.TRV();
+    },
+
+    'EscapeSequence:: UnicodeEscapeSequence',
+    function() {
+        return this.UnicodeEscapeSequence.TRV();
+    },
+
+    'CharacterEscapeSequence:: SingleEscapeCharacter',
+    function() {
+        return this.SingleEscapeCharacter.TRV();
+    },
+
+    'CharacterEscapeSequence:: NonEscapeCharacter',
+    function() {
+        return this.NonEscapeCharacter.SV();
+    },
+
+    'SingleEscapeCharacter:: one_of_\'"\\bfnrtv',
+    function() {
+        return this.char;
+    },
+
+    'HexEscapeSequence:: x HexDigit HexDigit',
+    function() {
+        return String.fromCharCode(0x0078) + this.HexDigit1.TRV() + this.HexDigit2.TRV();
+    },
+
+    'UnicodeEscapeSequence:: u Hex4Digits',
+    function() {
+        return String.fromCharCode(0x0075) + this.Hex4Digits.TRV();
+    },
+
+    'UnicodeEscapeSequence:: u { HexDigits }',
+    function() {
+        return String.fromCharCode(0x0075, 0x007B) + this.HexDigits.TRV() + String.fromCharCode(0x007D);
+    },
+
+    'Hex4Digits:: HexDigit HexDigit HexDigit HexDigit',
+    function() {
+        return this.HexDigit1.TRV() + this.HexDigit2.TRV() + this.HexDigit3.TRV() + this.HexDigit4.TRV();
+    },
+
+    'HexDigits:: HexDigit',
+    function() {
+        return this.HexDigit.TRV();
+    },
+
+    'HexDigits:: HexDigits HexDigit',
+    function() {
+        return this.HexDigits.TRV() + this.HexDigit.TRV();
+    },
+
+    'HexDigit:: one_of_0123456789abcdefABCDEF',
+    function() {
+        return this.char;
+    },
+
+    'LineContinuation:: \\ LineTerminatorSequence',
+    function() {
+        return String.fromCharCode(0x005C) + this.LineTerminatorSequence.TRV();
+    },
+
+    'LineTerminatorSequence:: <LF>',
+    function() {
+        return String.fromCharCode(0x000A);
+    },
+
+    'LineTerminatorSequence:: <CR>',
+    function() {
+        return String.fromCharCode(0x000A);
+    },
+
+    'LineTerminatorSequence:: <LS>',
+    function() {
+        return String.fromCharCode(0x2028);
+    },
+
+    'LineTerminatorSequence:: <PS>',
+    function() {
+        return String.fromCharCode(0x2029);
+    },
+
+    'LineTerminatorSequence:: <CR><LF>',
+    function() {
+        return String.fromCharCode(0x000A);
+    },
 ]);
