@@ -651,7 +651,7 @@ function EnumerableOwnNames(O) {
             }
         }
     }
-    //TODO Order the elements of names so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method was invoked with O;
+    //NOTICE: The elements of names are in the same relative order as EnumerateObjectProperties().
     return names;
 }
 
@@ -752,7 +752,7 @@ function CreateListIterator(list) {
 // 7.4.8.1
 function ListIterator_next() {
     var O = this;
-    var f = activeFunction;
+    var f = active_function_object;
     if (O.IteratorNext === undefined) throw $TypeError();
     var next = O.IteratorNext;
     if (SameValue(f, next) === false) throw $TypeError();

@@ -1521,7 +1521,7 @@ Runtime_Semantics('BindingClassDeclarationEvaluation', [
         var hasNameProperty = HasOwnProperty(value, "name");
         if (hasNameProperty === false) SetFunctionName(value, className);
         var env = the_running_execution_context.LexicalEnvironment;
-        InitializeBoundName(className, value, env, true); //MODIFIED: strict arugument === true
+        InitializeBoundName(className, value, env);
         return value;
     },
 

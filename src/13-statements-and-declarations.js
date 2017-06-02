@@ -2042,7 +2042,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
                 var lhsRef = concreteCompletion(lhs.Evaluation());
             }
         } else {
-            Assert(lhsKind.is('lexicalBinding'));
+            Assert(lhsKind === 'lexicalBinding');
             Assert(lhs.is('ForDeclaration'));
             var iterationEnv = NewDeclarativeEnvironment(oldEnv);
             lhs.BindingInstantiation(iterationEnv);
@@ -2050,7 +2050,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
             if (destructuring === false) {
                 Assert(lhs.BoundNames().length === 1);
                 var lhsName = lhs.BoundNames()[0];
-                var lhsRef = NormalCompletion(ResolveBinding(lhsName, undefined, this.strict));
+                var lhsRef = NormalCompletion(ResolveBinding(lhsName, undefined, lhs.strict));
             }
         }
         if (destructuring === false) {
@@ -2097,7 +2097,38 @@ Runtime_Semantics('Evaluation', [
 // 13.7.5.15
 function EnumerateObjectProperties(O) {
     Assert(Type(O) === 'Object');
-    //TODO return an Iterator object (25.1.1.2) whose next method iterates over all the String-valued keys of enumerable properties of O.
+    var iterator = ObjectCreate(currentRealm.Intrinsics['%IteratorPrototype%'], ['visited', 'obj', 'ownKeys', 'index']);
+    iterator.visited = new Set;
+    iterator.obj = O;
+    iterator.ownKeys = O.OwnPropertyKeys();
+    iterator.index = 0;
+    var next = CreateBuiltinFunction(currentRealm, EnumerateObjectProperties_next, currentRealm.Intrinsics['%FunctionPrototype%']);
+    CreateMethodProperty(iterator, "next", next);
+    return iterator;
+}
+
+function EnumerateObjectProperties_next() {
+    Assert(this.obj !== null);
+    while (true) {
+        while (this.index < this.ownKeys.length) {
+            var key = this.ownKeys[this.index++];
+            if (typeof key === "string") {
+                var desc = this.obj.GetOwnProperty(key);
+                if (desc && !this.visited.has(key)) {
+                    this.visited.add(key);
+                    if (desc.Enumerable) {
+                        return CreateIterResultObject(key, false);
+                    }
+                }
+            }
+        }
+        this.obj = obj.GetPrototypeOf();
+        if (this.obj === null) {
+            return CreateIterResultObject(undefined, true);
+        }
+        this.ownKeys = this.obj.OwnPropertyKeys();
+        this.index = 0;
+    }
 }
 
 // 13.8 The continue Statement

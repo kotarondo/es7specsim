@@ -1427,7 +1427,7 @@ Runtime_Semantics('Evaluation', [
             var hasNameProperty = HasOwnProperty(value, "name");
             if (hasNameProperty === false) SetFunctionName(value, "default");
             var env = the_running_execution_context.LexicalEnvironment;
-            InitializeBoundName("*default*", value, env, true); //MODIFIED: strict arugument === true
+            InitializeBoundName("*default*", value, env);
         }
         return empty;
     },
@@ -1441,7 +1441,7 @@ Runtime_Semantics('Evaluation', [
             if (hasNameProperty === false) SetFunctionName(value, "default");
         }
         var env = the_running_execution_context.LexicalEnvironment;
-        InitializeBoundName("*default*", value, env, true); //MODIFIED: strict arugument === true
+        InitializeBoundName("*default*", value, env);
         return empty;
     },
 ]);

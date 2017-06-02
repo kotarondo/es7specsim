@@ -337,7 +337,7 @@ define_method(OrdinaryObject, 'OwnPropertyKeys', function() {
 // 9.1.11.1
 function OrdinaryOwnPropertyKeys(O) {
     // Here we rely on underlying virtual machine.
-    // NOTICE: String&Symbol is in ascending chronological order of property creation
+    // NOTICE: Non integer index keys are in ascending chronological order of property creation.
     var keys = Reflect.ownKeys(O.property);
     return keys;
 }
@@ -683,7 +683,6 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
             }
         }
     }
-    // TODO NOTE: Annex B.3.3.1 adds additional steps at this point.
     if (strict === false) {
         var lexEnv = NewDeclarativeEnvironment(varEnv);
     } else var lexEnv = varEnv;
@@ -735,7 +734,7 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
 });
 
 // 9.3.2
-define_method(BuiltinFunctionObject, 'Construct', function(argumentsList, newTarget) {
+function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
     var F = this;
     var callerContext = the_running_execution_context;
     var calleeContext = new ExecutionContext;
@@ -753,7 +752,7 @@ define_method(BuiltinFunctionObject, 'Construct', function(argumentsList, newTar
         Assert(callerContext === the_running_execution_context);
     }
     return result;
-});
+}
 
 // 9.3.3
 function CreateBuiltinFunction(realm, steps, prototype, internalSlotsList) {
@@ -820,7 +819,7 @@ function BoundFunctionCreate(targetFunction, boundThis, boundArgs) {
 class ArrayExoticObject extends OrdinaryObject {}
 
 function is_an_array_index(P) {
-    return (ToString(ToUint32(P)) === P && ToUint32(P) !== 0xffffffff);
+    return (typeof P === 'string' && ToString(ToUint32(P)) === P && ToUint32(P) !== 0xffffffff);
 }
 
 // 9.4.2.1
@@ -1293,9 +1292,9 @@ function IntegerIndexedElementGet(O, index) {
     if (index < 0 || index >= length) return undefined;
     var offset = O.ByteOffset;
     var arrayTypeName = O.TypedArrayName;
-    var elementSize = Table50[arrayTypeName].ElementSize; //TODO table50
+    var elementSize = Table50[arrayTypeName].ElementSize;
     var indexedPosition = (index * elementSize) + offset;
-    var elementType = Table50[arrayTypeName].ElementType; //TODO table50
+    var elementType = Table50[arrayTypeName].ElementType;
     return GetValueFromBuffer(buffer, indexedPosition, elementType);
 }
 
@@ -1312,9 +1311,9 @@ function IntegerIndexedElementSet(O, index, value) {
     if (index < 0 || index >= length) return false;
     var offset = O.ByteOffset;
     var arrayTypeName = O.TypedArrayName;
-    var elementSize = Table50[arrayTypeName].ElementSize; //TODO table50
+    var elementSize = Table50[arrayTypeName].ElementSize;
     var indexedPosition = (index * elementSize) + offset;
-    var elementType = Table50[arrayTypeName].ElementType; //TODO table50
+    var elementType = Table50[arrayTypeName].ElementType;
     SetValueInBuffer(buffer, indexedPosition, elementType, numValue);
     return true;
 }
