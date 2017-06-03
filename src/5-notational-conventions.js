@@ -339,7 +339,6 @@ function create_implicit_static_semantic_rule_Contains() {
 }
 
 function EarlySyntaxError() {
-    debugger;
     if (!this) {
         return new EarlySyntaxError;
     }

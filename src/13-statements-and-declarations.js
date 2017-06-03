@@ -2122,7 +2122,7 @@ function EnumerateObjectProperties_next() {
                 }
             }
         }
-        this.obj = obj.GetPrototypeOf();
+        this.obj = this.obj.GetPrototypeOf();
         if (this.obj === null) {
             return CreateIterResultObject(undefined, true);
         }

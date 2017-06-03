@@ -57,28 +57,29 @@ var filenames = [
     'parser-13.js',
     'parser-14.js',
     'parser-15.js',
+    '18-the-global-object.js',
     '22-indexed-collections.js',
 ];
 
-function expand_concreteCompletion(text) {
-    return text.replace(/var (\w*) = concreteCompletion(\(.*\));$/gm,
+function expand_concreteCompletion(raw) {
+    return raw.replace(/var (\w*) = concreteCompletion(\(.*\));$/gm,
         'try{var $1=$2;$1=NormalCompletion($1)}catch(_e){if(!(_e instanceof Completion))throw _e;$1=_e}');
 }
 
 for (var filename of filenames) {
-    var text = fs.readFileSync(path.join(__dirname, filename), 'utf8');
-    var code= expand_concreteCompletion(text);
+    var text = fs.readFileSync(path.join(__dirname, 'src', filename), 'utf8');
+    var code = expand_concreteCompletion(text);
     vm.runInThisContext(code, {
         filename: filename,
         displayErrors: true,
     });
 }
 
-function expand_TypedArray(text, __TypedArray__) {
-    return text.replace(/__TypedArray__/g, __TypedArray__);
+function expand_TypedArray(raw, __TypedArray__) {
+    return raw.replace(/__TypedArray__/g, __TypedArray__);
 }
 
-var text = fs.readFileSync(path.join(__dirname, '2224-typed-array-constructor.js'), 'utf8');
+var text = fs.readFileSync(path.join(__dirname, 'src', '2224-typed-array-constructor.js'), 'utf8');
 for (var __TypedArray__ in Table50) {
     var code = expand_TypedArray(text, __TypedArray__);
     vm.runInThisContext(code, {

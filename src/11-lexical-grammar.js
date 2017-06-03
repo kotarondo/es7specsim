@@ -191,11 +191,7 @@ Static_Semantics('MV', [
     'HexDigit:: one_of_0123456789abcdefABCDEF',
     function() {
         var c = this.char;
-        var i = '0123456789abcdef'.indexOf(c);
-        if (i >= 0) return i;
-        var i = '0123456789ABCDEF'.indexOf(c);
-        if (i >= 0) return i;
-        return Assert(false);
+        return mv_of_hexdigit_char(c);
     },
 
     'HexDigits:: HexDigit',

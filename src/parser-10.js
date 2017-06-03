@@ -51,9 +51,9 @@ function peekChar(ahead) {
         if (c === undefined) {
             return '';
         }
-        var lead = c.charCodeAt(0);
+        var lead = code_unit_value(c);
         if (0xD800 <= lead && lead <= 0xDBFF) {
-            var trail = sourceText.charCodeAt(i + 1);
+            var trail = code_unit_value(sourceText[i + 1]);
             if (0xDC00 <= trail && trail <= 0xDFFF) {
                 if (ahead === 0) {
                     return String.fromCharCode(lead, trail);

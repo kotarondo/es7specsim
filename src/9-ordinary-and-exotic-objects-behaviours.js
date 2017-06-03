@@ -605,7 +605,7 @@ function FunctionDeclarationInstantiation(func, argumentsList) {
     var functionNames = [];
     var functionsToInitialize = [];
     for (var d of varDeclarations.slice().reverse()) {
-        if (!d.is('VariableDeclaration') || !d.is('ForBinding')) {
+        if (!(d.is('VariableDeclaration') || d.is('ForBinding'))) {
             Assert(d.is('FunctionDeclaration') || d.is('GeneratorDeclaration'));
             var fn = d.BoundNames()[0];
             if (!fn.is_an_element_of(functionNames)) {

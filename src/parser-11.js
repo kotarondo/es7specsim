@@ -769,7 +769,7 @@ function parseHexDigit() {
 
 function parseHexDigit_opt() {
     var c = peekChar();
-    if ('0123456789abcdefABCDEF'.indexOf(c) < 0 || c === '') return null;
+    if (!is_hexdigit_char(c)) return null;
     consumeChar(c);
     var nt = Production['HexDigit:: one_of_0123456789abcdefABCDEF']();
     nt.char = c;
@@ -778,7 +778,7 @@ function parseHexDigit_opt() {
 
 function skipIfHexDigit() {
     var c = peekChar();
-    if ('0123456789abcdefABCDEF'.indexOf(c) < 0 || c === '') return false;
+    if (!is_hexdigit_char(c)) return false;
     consumeChar(c);
     return true;
 }

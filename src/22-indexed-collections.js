@@ -331,7 +331,7 @@ function Array_prototype_filter(callbackfn, thisArg) {
     var O = ToObject(this);
     var len = ToLength(Get(O, "length"));
     if (IsCallable(callbackfn) === false) throw $TypeError();
-    T = thisArg;
+    var T = thisArg;
     var A = ArraySpeciesCreate(O, 0);
     var k = 0;
     var to = 0;
@@ -456,7 +456,7 @@ function Array_prototype_join(separator) {
     var len = ToLength(Get(O, "length"));
     if (separator === undefined) var separator = ",";
     var sep = ToString(separator);
-    if (len === zero) return '';
+    if (len === 0) return '';
     var element0 = Get(O, "0");
     if (element0 === undefined || element0 === null) var R = '';
     else var R = ToString(element0);
@@ -528,7 +528,7 @@ function Array_prototype_map(callbackfn, thisArg) {
 function Array_prototype_pop() {
     var O = ToObject(this);
     var len = ToLength(Get(O, "length"));
-    if (len === zero) {
+    if (len === 0) {
         _Set(O, "length", 0, true);
         return undefined;
     } else {
@@ -548,7 +548,7 @@ function Array_prototype_push(...items) {
     var argCount = arguments.length;
     if (len + argCount > 0x1fffffffffffff) throw $TypeError();
     while (items.length > 0) {
-        E = items.shift();
+        var E = items.shift();
         _Set(O, ToString(len), E, true);
         var len = len + 1;
     }
@@ -659,7 +659,7 @@ function Array_prototype_reverse() {
 function Array_prototype_shift() {
     var O = ToObject(this);
     var len = ToLength(Get(O, "length"));
-    if (len === zero) {
+    if (len === 0) {
         _Set(O, "length", 0, true);
         return undefined;
     }
@@ -734,20 +734,20 @@ function Array_prototype_some(callbackfn, thisArg) {
 function Array_prototype_sort(comparefn) {
     var obj = ToObject(this);
     var len = ToLength(Get(obj, "length"));
-    var values = [];
-    for (var i = 0; i < len; i++) {
-        var P = ToString(i);
+    var actual = [];
+    for (var j = 0; j < len; j++) {
+        var P = ToString(j);
         if (HasOwnProperty(obj, P)) {
-            values.push(obj.Get(P, obj));
+            actual.push(obj.Get(P, obj));
         }
     }
-    var actlen = values.length;
-    for (var i = actlen; i < len; i++) {
-        var P = ToString(i);
+    var actlen = actual.length;
+    for (var j = actlen; j < len; j++) {
+        var P = ToString(j);
         DeletePropertyOrThrow(obj, P);
     }
     var index = 0;
-    qsort(values);
+    qsort(actual);
     Assert(index === actlen);
     return obj;
 
@@ -755,8 +755,7 @@ function Array_prototype_sort(comparefn) {
         var l = values.length;
         if (l <= 1) {
             if (l === 1) {
-                var P = ToString(index++);
-                if (obj.Set(P, values[0], obj) === false) throw $TypeError();
+                if (obj.Set(ToString(index++), values[0], obj) === false) throw $TypeError();
             }
             return;
         }
@@ -782,8 +781,7 @@ function Array_prototype_sort(comparefn) {
         values = null;
         qsort(lower);
         for (var i = 0; i < same.length; i++) {
-            var P = ToString(index++);
-            if (obj.Set(P, same[i], obj) === false) throw $TypeError();
+            if (obj.Set(ToString(index++), same[i], obj) === false) throw $TypeError();
         }
         qsort(higher);
     }
@@ -889,7 +887,7 @@ function Array_prototype_toLocaleString() {
     var array = ToObject(this);
     var len = ToLength(Get(array, "length"));
     var separator = ', ';
-    if (len === zero) return '';
+    if (len === 0) return '';
     var firstElement = Get(array, "0");
     if (firstElement === undefined || firstElement === null) {
         var R = '';
@@ -1255,7 +1253,7 @@ function TypedArray_prototype_filter(callbackfn, thisArg) {
     ValidateTypedArray(O);
     var len = O.ArrayLength;
     if (IsCallable(callbackfn) === false) throw $TypeError();
-    T = thisArg;
+    var T = thisArg;
     var kept = [];
     var k = 0;
     var captured = 0;
@@ -1271,7 +1269,7 @@ function TypedArray_prototype_filter(callbackfn, thisArg) {
     }
     var A = TypedArraySpeciesCreate(O, [captured]);
     var n = 0;
-    for (var element of kept) {
+    for (var e of kept) {
         _Set(A, ToString(n), e, true);
         n++;
     }
@@ -1389,7 +1387,7 @@ function TypedArray_prototype_join(separator) {
     var len = O.ArrayLength;
     if (separator === undefined) var separator = ",";
     var sep = ToString(separator);
-    if (len === zero) return '';
+    if (len === 0) return '';
     var element0 = Get(O, "0");
     if (element0 === undefined || element0 === null) var R = '';
     else var R = ToString(element0);
@@ -1733,13 +1731,13 @@ function TypedArray_prototype_sort(comparefn) {
     var obj = this;
     var buffer = ValidateTypedArray(obj);
     var len = obj.ArrayLength;
-    var values = [];
-    for (var i = 0; i < len; i++) {
-        values[i] = obj.Get(ToString(i), obj);
+    var actual = [];
+    for (var j = 0; j < len; j++) {
+        actual[j] = obj.Get(ToString(j), obj);
     }
-    var actlen = values.length;
+    var actlen = actual.length;
     var index = 0;
-    qsort(values);
+    qsort(actual);
     Assert(index === actlen);
     return obj;
 
@@ -1747,8 +1745,7 @@ function TypedArray_prototype_sort(comparefn) {
         var l = values.length;
         if (l <= 1) {
             if (l === 1) {
-                var P = ToString(index++);
-                if (obj.Set(P, values[0], obj) === false) throw $TypeError();
+                if (obj.Set(ToString(index++), values[0], obj) === false) throw $TypeError();
             }
             return;
         }
@@ -1774,8 +1771,7 @@ function TypedArray_prototype_sort(comparefn) {
         values = null;
         qsort(lower);
         for (var i = 0; i < same.length; i++) {
-            var P = ToString(index++);
-            if (obj.Set(P, same[i], obj) === false) throw $TypeError();
+            if (obj.Set(ToString(index++), same[i], obj) === false) throw $TypeError();
         }
         qsort(higher);
     }
@@ -1827,9 +1823,9 @@ function TypedArray_prototype_subarray(begin, end) {
 function TypedArray_prototype_toLocaleString() {
     var array = this;
     ValidateTypedArray(array);
-    var len = O.ArrayLength;
+    var len = array.ArrayLength;
     var separator = ', ';
-    if (len === zero) return '';
+    if (len === 0) return '';
     var firstElement = Get(array, "0");
     if (firstElement === undefined || firstElement === null) {
         var R = '';
@@ -1878,7 +1874,7 @@ function AllocateTypedArray(constructorName, newTarget, defaultProto, length) {
     var obj = IntegerIndexedObjectCreate(proto, ['ViewedArrayBuffer', 'TypedArrayName', 'ByteLength', 'ByteOffset', 'ArrayLength']);
     Assert(obj.ViewedArrayBuffer === undefined);
     obj.TypedArrayName = constructorName;
-    if (argument.length <= 3) {
+    if (arguments.length <= 3) {
         obj.ByteLength = 0;
         obj.ByteOffset = 0;
         obj.ArrayLength = 0;

@@ -1,4 +1,4 @@
-require('../src/loader');
+require('../loader');
 
 Error.stackTraceLimit = 20;
 
@@ -66,4 +66,5 @@ InitializeHostDefinedRealm([
     { sourceText: "var aa=100;({aa=1,bb:{cc=2,dd:{ee=3}}}={bb:{cc:4,dd:5}});if(aa!==1||cc!==4||ee!==3)throw Error()" },
     { sourceText: "[b]=[2];if(b!==2)throw Error();" },
     { sourceText: "[5,3,6,,7,].sort();" },
+    { sourceText: "eval('x=100;for(var i=0;i<10;i++)x++;')" },
 ]);

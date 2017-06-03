@@ -54,6 +54,24 @@ function modulo(x, y) {
     return x - y * Math.floor(x / y);
 }
 
+function is_hexdigit_char(c) {
+    if (c.length !== 1) return false;
+    return ('0123456789ABCDEFabcdef'.indexOf(c) >= 0);
+}
+
+function mv_of_hexdigit_char(c) {
+    Assert(c.length === 1);
+    var x = '0123456789ABCDEFabcdef'.indexOf(c);
+    Assert(x >= 0);
+    if (x < 16) return x;
+    return x - 6;
+}
+
+function code_unit_value(c) {
+    Assert(c.length === 1);
+    return c.charCodeAt(0);
+}
+
 function define_method_direct(p, n, v) {
     Object.defineProperty(v, 'name', {
         value: p.name ? p.name + '.' + n : n

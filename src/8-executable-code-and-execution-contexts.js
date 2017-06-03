@@ -626,8 +626,11 @@ function intrinsic_function(realmRec, intrinsicName, P, steps, length, options) 
     var V = CreateBuiltinFunction(realmRec, steps, intrinsics['%FunctionPrototype%']);
     V.DefineOwnProperty('name', PropertyDescriptor({ Value: name, Writable: false, Enumerable: false, Configurable: true }));
     V.DefineOwnProperty('length', PropertyDescriptor({ Value: length, Writable: false, Enumerable: false, Configurable: true }));
-    var O = intrinsics[intrinsicName];
-    O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
+    if (intrinsicName) {
+        var O = intrinsics[intrinsicName];
+        O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
+    }
+    return V;
 }
 
 function intrinsic_constructor(realmRec, name, steps, length, options) {
@@ -683,20 +686,13 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%DataViewPrototype%'] =
         intrinsics['%Date%'] =
         intrinsics['%DatePrototype%'] =
-        intrinsics['%decodeURI%'] =
-        intrinsics['%decodeURIComponent%'] =
-        intrinsics['%encodeURI%'] =
-        intrinsics['%encodeURIComponent%'] =
         intrinsics['%Error%'] =
         intrinsics['%ErrorPrototype%'] =
-        intrinsics['%eval%'] =
         intrinsics['%EvalError%'] =
         intrinsics['%EvalErrorPrototype%'] =
         intrinsics['%Function%'] =
         intrinsics['%Generator%'] =
         intrinsics['%GeneratorPrototype%'] =
-        intrinsics['%isFinite%'] =
-        intrinsics['%isNaN%'] =
         intrinsics['%IteratorPrototype%'] =
         intrinsics['%JSON%'] =
         intrinsics['%Map%'] =
@@ -709,8 +705,6 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%ObjectPrototype%'] =
         intrinsics['%ObjProto_toString%'] =
         intrinsics['%ObjProto_valueOf%'] =
-        intrinsics['%parseFloat%'] =
-        intrinsics['%parseInt%'] =
         intrinsics['%Promise%'] =
         intrinsics['%PromisePrototype%'] =
         intrinsics['%Proxy%'] =
@@ -741,6 +735,16 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%WeakSetPrototype%'] = ObjectCreate(objProto);
     intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
 
+
+    intrinsics['%eval%'] = intrinsic_function(realmRec, null, 'eval', global_eval, 1); // 18.2.1
+    intrinsics['%isFinite%'] = intrinsic_function(realmRec, null, 'isFinite', global_isFinite, 1); // 18.2.2
+    intrinsics['%isNaN%'] = intrinsic_function(realmRec, null, 'isNaN', global_isNaN, 1); // 18.2.3
+    intrinsics['%parseFloat%'] = intrinsic_function(realmRec, null, 'parseFloat', global_parseFloat, 1); // 18.2.4
+    intrinsics['%parseInt%'] = intrinsic_function(realmRec, null, 'parseInt', global_parseInt, 1); // 18.2.5
+    intrinsics['%decodeURI%'] = intrinsic_function(realmRec, null, 'decodeURI', global_decodeURI, 1); // 18.2.6.2
+    intrinsics['%decodeURIComponent%'] = intrinsic_function(realmRec, null, 'decodeURIComponent', global_decodeURIComponent, 1); // 18.2.6.3
+    intrinsics['%encodeURI%'] = intrinsic_function(realmRec, null, 'encodeURI', global_encodeURI, 1); // 18.2.6.4
+    intrinsics['%encodeURIComponent%'] = intrinsic_function(realmRec, null, 'encodeURIComponent', global_encodeURIComponent, 1); // 18.2.6.5
 
     intrinsics['%Array%'] = intrinsic_constructor(realmRec, 'Array', $Array, 1); // 22.1.1
     intrinsics['%ArrayPrototype%'] = ArrayCreate(0, intrinsics['%ObjectPrototype%']); // 22.1.3
@@ -968,7 +972,7 @@ function GetNewTarget() {
 // 8.3.6
 function GetGlobalObject() {
     var ctx = the_running_execution_context;
-    var currentRealm = ctx.Realm;
+    Assert(currentRealm === ctx.Realm);
     return currentRealm.GlobalObject;
 }
 
@@ -1021,11 +1025,11 @@ function InitializeHostDefinedRealm(entries) {
     newContext.Realm = realm;
     newContext.ScriptOrModule = null;
     push_onto_the_execution_context_stack(newContext);
-    var global = undefined; // implementation defined
-    var thisValue = undefined; // implementation defined
+    var global = undefined; // TODO implementation defined
+    var thisValue = undefined; // TODO implementation defined
     SetRealmGlobalObject(realm, global, thisValue);
     var globalObj = SetDefaultGlobalBindings(realm);
-    // Create any implementation defined global object properties on globalObj.
+    // TODO Create any implementation defined global object properties on globalObj.
     for (var e of entries) {
         var sourceText = e.sourceText;
         var hostDefined = e.hostDefined;

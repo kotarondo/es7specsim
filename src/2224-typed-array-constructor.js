@@ -127,7 +127,7 @@ function $__TypedArray__$4(object) {
 
 // 22.2.4.5
 function $__TypedArray__$5(buffer, byteOffset, length) {
-    Assert(Type(object) === 'Object' && 'ArrayBufferData' in buffer);
+    Assert(Type(buffer) === 'Object' && 'ArrayBufferData' in buffer);
     if (NewTarget === undefined) throw $TypeError();
     var constructorName = '__TypedArray__';
     var O = AllocateTypedArray(constructorName, NewTarget, "%__TypedArray__Prototype%");
