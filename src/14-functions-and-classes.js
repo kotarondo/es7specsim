@@ -1054,7 +1054,7 @@ Runtime_Semantics('EvaluateBody', [
 
     'GeneratorBody: FunctionBody',
     function(functionObject) {
-        var G = OrdinaryCreateFromConstructor(functionObject, currentRealm.Intrinsics["%GeneratorPrototype%"], ['GeneratorState', 'GeneratorContext']);
+        var G = OrdinaryCreateFromConstructor(functionObject, "%GeneratorPrototype%", ['GeneratorState', 'GeneratorContext']);
         GeneratorStart(G, this.FunctionBody);
         throw Completion({ Type: 'return', Value: G, Target: empty });
     },

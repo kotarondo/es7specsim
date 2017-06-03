@@ -630,9 +630,10 @@ function intrinsic_function(realmRec, intrinsicName, P, steps, length, options) 
     O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
 }
 
-function intrinsic_constructor(realmRec, name, steps, length) {
+function intrinsic_constructor(realmRec, name, steps, length, options) {
     var intrinsics = realmRec.Intrinsics;
-    var V = CreateBuiltinFunction(realmRec, steps, intrinsics['%FunctionPrototype%']);
+    var proto = (options && options.proto) || intrinsics['%FunctionPrototype%'];
+    var V = CreateBuiltinFunction(realmRec, steps, proto);
     V.Construct = BuiltinFunctionObject_Construct;
     V.DefineOwnProperty('name', PropertyDescriptor({ Value: name, Writable: false, Enumerable: false, Configurable: true }));
     V.DefineOwnProperty('length', PropertyDescriptor({ Value: length, Writable: false, Enumerable: false, Configurable: true }));
@@ -671,6 +672,9 @@ function CreateIntrinsics(realmRec) {
     thrower.SetPrototypeOf(funcProto);
     AddRestrictedFunctionProperties(funcProto, realmRec);
 
+    thrower.DefineOwnProperty('length', PropertyDescriptor({ Value: 0, Writable: false, Enumerable: false, Configurable: false })); // 9.2.7.1
+    thrower.Extensible = false; // 9.2.7.1
+
     intrinsics['%ArrayBuffer%'] =
         intrinsics['%ArrayBufferPrototype%'] =
         intrinsics['%Boolean%'] =
@@ -688,19 +692,9 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%eval%'] =
         intrinsics['%EvalError%'] =
         intrinsics['%EvalErrorPrototype%'] =
-        intrinsics['%Float32Array%'] =
-        intrinsics['%Float32ArrayPrototype%'] =
-        intrinsics['%Float64Array%'] =
-        intrinsics['%Float64ArrayPrototype%'] =
         intrinsics['%Function%'] =
         intrinsics['%Generator%'] =
         intrinsics['%GeneratorPrototype%'] =
-        intrinsics['%Int8Array%'] =
-        intrinsics['%Int8ArrayPrototype%'] =
-        intrinsics['%Int16Array%'] =
-        intrinsics['%Int16ArrayPrototype%'] =
-        intrinsics['%Int32Array%'] =
-        intrinsics['%Int32ArrayPrototype%'] =
         intrinsics['%isFinite%'] =
         intrinsics['%isNaN%'] =
         intrinsics['%IteratorPrototype%'] =
@@ -737,28 +731,22 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%SymbolPrototype%'] =
         intrinsics['%SyntaxError%'] =
         intrinsics['%SyntaxErrorPrototype%'] =
-        intrinsics['%TypedArrayPrototype%'] =
         intrinsics['%TypeError%'] =
         intrinsics['%TypeErrorPrototype%'] =
-        intrinsics['%Uint8Array%'] =
-        intrinsics['%Uint8ArrayPrototype%'] =
-        intrinsics['%Uint8ClampedArray%'] =
-        intrinsics['%Uint8ClampedArrayPrototype%'] =
-        intrinsics['%Uint16Array%'] =
-        intrinsics['%Uint16ArrayPrototype%'] =
-        intrinsics['%Uint32Array%'] =
-        intrinsics['%Uint32ArrayPrototype%'] =
         intrinsics['%URIError%'] =
         intrinsics['%URIErrorPrototype%'] =
         intrinsics['%WeakMap%'] =
         intrinsics['%WeakMapPrototype%'] =
         intrinsics['%WeakSet%'] =
         intrinsics['%WeakSetPrototype%'] = ObjectCreate(objProto);
+    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+
 
     intrinsics['%Array%'] = intrinsic_constructor(realmRec, 'Array', $Array, 1); // 22.1.1
     intrinsics['%ArrayPrototype%'] = ArrayCreate(0, intrinsics['%ObjectPrototype%']); // 22.1.3
     intrinsics['%ArrayIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 22.1.5.2
     intrinsics['%TypedArray%'] = intrinsic_constructor(realmRec, 'TypedArray', $TypedArray, 0); // 22.2.1.1
+    intrinsics['%TypedArrayPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 22.2.3
     //TODO
 
     intrinsic_function(realmRec, '%Array%', 'from', Array_from, 1); // 22.1.2.1
@@ -767,7 +755,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%Array%', 'prototype', intrinsics['%ArrayPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.1.2.4
     intrinsic_accessor(realmRec, '%Array%', wellKnownSymbols['@@species'], get_Array_species, undefined, { name: '[Symbol.species]' }); // 22.1.2.5
     intrinsic_function(realmRec, '%ArrayPrototype%', 'concat', Array_prototype_concat, 1); // 22.1.3.1
-    intrinsic_property(realmRec, '%ArrayPrototype%', 'constructor', intrinsics['%Array']); // 22.1.3.2
+    intrinsic_property(realmRec, '%ArrayPrototype%', 'constructor', intrinsics['%Array%']); // 22.1.3.2
     intrinsic_function(realmRec, '%ArrayPrototype%', 'copyWithin', Array_prototype_copyWithin, 2); // 22.1.3.3
     intrinsic_function(realmRec, '%ArrayPrototype%', 'entries', Array_prototype_entries, 0); // 22.1.3.4
     intrinsic_function(realmRec, '%ArrayPrototype%', 'every', Array_prototype_every, 1); // 22.1.3.5
@@ -801,11 +789,53 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%ArrayPrototype%', wellKnownSymbols['@@unscopables'], create_Array_prototype_unscopables(), { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 22.1.3.32
     intrinsic_function(realmRec, '%ArrayIteratorPrototype%', 'next', ArrayIteratorPrototype_next, 0); // 22.1.5.2.1
     intrinsic_property(realmRec, '%ArrayIteratorPrototype%', wellKnownSymbols['@@toStringTag'], "Array Iterator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 22.1.5.2.2
-    intrinsic_function(realmRec, '%TypedArray%', 'from', TypedArray_from, 1); // 22.2.2.1
 
+    intrinsic_function(realmRec, '%TypedArray%', 'from', TypedArray_from, 1); // 22.2.2.1
+    intrinsic_function(realmRec, '%TypedArray%', 'of', TypedArray_of, 0); // 22.2.2.2
+    intrinsic_property(realmRec, '%TypedArray%', 'prototype', intrinsics['%TypedArrayPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.2.3
+    intrinsic_accessor(realmRec, '%TypedArray%', wellKnownSymbols['@@species'], get_TypedArray_species, undefined, { name: '[Symbol.species]' }); // 22.2.2.4
+    intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'buffer', get_TypedArray_prototype_buffer); // 22.2.3.1
+    intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'byteLength', get_TypedArray_prototype_byteLength); // 22.2.3.2
+    intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'byteOffset', get_TypedArray_prototype_byteOffset); // 22.2.3.3
+    intrinsic_property(realmRec, '%TypedArrayPrototype%', 'constructor', intrinsics['%TypedArray%']); // 22.2.3.4
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'copyWithin', TypedArray_prototype_copyWithin, 1); // 22.2.3.5
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'entries', TypedArray_prototype_entries, 0); // 22.2.3.6
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'every', TypedArray_prototype_every, 1); // 22.2.3.7
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'fill', TypedArray_prototype_fill, 1); // 22.2.3.8
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'filter', TypedArray_prototype_filter, 1); // 22.2.3.9
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'find', TypedArray_prototype_find, 1); // 22.2.3.10
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'findIndex', TypedArray_prototype_findIndex, 1); // 22.2.3.11
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'forEach', TypedArray_prototype_forEach, 1); // 22.2.3.12
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'indexOf', TypedArray_prototype_indexOf, 1); // 22.2.3.13
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'includes', TypedArray_prototype_includes, 1); // 22.2.3.14
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'join', TypedArray_prototype_join, 1); // 22.2.3.15
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'keys', TypedArray_prototype_keys, 0); // 22.2.3.16
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'lastIndexOf', TypedArray_prototype_lastIndexOf, 1) // 22.2.3.17
+    intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'length', get_TypedArray_prototype_length); // 22.2.3.18
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'map', TypedArray_prototype_map, 1); // 22.2.3.19
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'reduce', TypedArray_prototype_reduce, 1); // 22.2.3.20
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'reduceRight', TypedArray_prototype_reduceRight, 1); // 22.2.3.21
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'reverse', TypedArray_prototype_reverse, 0); // 22.2.3.22
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'set', TypedArray_prototype_set, 1); // 22.2.3.23
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'slice', TypedArray_prototype_slice, 2); // 22.2.3.24
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'some', TypedArray_prototype_some, 1); // 22.2.3.25
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'sort', TypedArray_prototype_sort, 1); // 22.2.3.26
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'subarray', TypedArray_prototype_subarray, 2); // 22.2.3.27
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'toLocaleString', TypedArray_prototype_toLocaleString, 0); // 22.2.3.28
+    intrinsic_property(realmRec, '%TypedArrayPrototype%', 'toString', Get(intrinsics['%ArrayPrototype%'], 'toString')); // 22.2.3.29
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'values', TypedArray_prototype_values, 0); // 22.2.3.30
+    intrinsic_property(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@iterator'], Get(intrinsics['%TypedArrayPrototype%'], 'values')); // 22.2.3.31
+    intrinsic_accessor(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@toStringTag'], get_TypedArray_prototype_toStringTag, undefined, { name: '[Symbol.toStringTag]' }); // 22.2.3.32
     //TODO
 
-    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+    for (var __TypedArray__ in Table50) {
+        intrinsics['%' + __TypedArray__ + '%'] = intrinsic_constructor(realmRec, __TypedArray__, eval('$' + __TypedArray__), 3, { proto: intrinsics['%TypedArray%'] }); // 22.2.5
+        intrinsics['%' + __TypedArray__ + 'Prototype%'] = ObjectCreate(intrinsics['%TypedArrayPrototype%']); // 22.2.6
+        intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'BYTES_PER_ELEMENT', Table50[__TypedArray__].ElementSize, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.1
+        intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'prototype', intrinsics['%' + __TypedArray__ + 'Prototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.2
+        intrinsic_property(realmRec, '%' + __TypedArray__ + 'Prototype%', 'BYTES_PER_ELEMENT', Table50[__TypedArray__].ElementSize, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.6.1
+        intrinsic_property(realmRec, '%' + __TypedArray__ + 'Prototype%', 'constructor', intrinsics['%' + __TypedArray__ + '%']); // 22.2.6.2
+    }
 
     return intrinsics;
 }

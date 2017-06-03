@@ -42,6 +42,10 @@ function get_symbol_description(sym) {
     return /^Symbol\((.*)\)$/.exec(sym.toString())[1];
 }
 
+function is_positive_zero(x) {
+    return (x === 0 && (1 / x) > 0);
+}
+
 function is_negative_zero(x) {
     return (x === 0 && (1 / x) < 0);
 }

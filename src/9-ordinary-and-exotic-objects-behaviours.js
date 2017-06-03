@@ -545,9 +545,6 @@ function ThrowTypeError() {
     throw $TypeError();
 }
 
-//TODO The value of the Extensible internal slot of a %ThrowTypeError% function === false;
-//TODO The length property of a %ThrowTypeError% function has the attributes { Writable: false, Enumerable: false, Configurable: false };
-
 // 9.2.8
 function MakeConstructor(F, writablePrototype, prototype) {
     Assert(F instanceof ECMAScriptFunctionObject);

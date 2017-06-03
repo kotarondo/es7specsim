@@ -1195,7 +1195,7 @@ Runtime_Semantics('Evaluation', [
                 return PerformEval(evalText, evalRealm, strictCaller, true);
             }
         }
-        if (Type(ref) === Reference) {
+        if (Type(ref) === 'Reference') {
             if (IsPropertyReference(ref) === true) {
                 var thisValue = GetThisValue(ref);
             } else {
