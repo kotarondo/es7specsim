@@ -1240,8 +1240,7 @@ function EvaluateDirectCall(func, thisValue, _arguments, tailPosition) {
     var argList = _arguments.ArgumentListEvaluation();
     if (Type(func) !== 'Object') throw $TypeError();
     if (IsCallable(func) === false) throw $TypeError();
-    if (tailPosition === true) PrepareForTailCall();
-    if (tailPosition === true) throw new PendingTailCall(func, thisValue, argList);
+    if (tailPosition === true) throw new PendingTailCall(func, thisValue, argList); // PrepareForTailCall()
     var result = Call(func, thisValue, argList);
     Assert(tailPosition !== true);
     Assert(Type(result).is_an_element_of(['Undefined', 'Boolean', 'Number', 'String', 'Symbol', 'Null', 'Object']));

@@ -391,14 +391,19 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
     Assert(calleeContext === the_running_execution_context);
     OrdinaryCallBindThis(F, calleeContext, thisArgument);
     try {
-        var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
-    } catch (e) {
-        if (!(e instanceof PendingTailCall)) throw e;
+        OrdinaryCallEvaluateBody(F, argumentsList);
+        remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
-        return Call(e.func, e.thisValue, e.argList); // we assume underlying TailCall works fine.
+        return undefined;
+    } catch (e) {
+        remove_from_the_execution_context_stack(calleeContext);
+        Assert(callerContext === the_running_execution_context);
+        if (e instanceof PendingTailCall) {
+            return Call(e.func, e.thisValue, e.argList);
+        }
+        if (!(e instanceof Completion)) throw e;
+        var result = e;
     }
-    remove_from_the_execution_context_stack(calleeContext);
-    Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') return result.Value;
     ReturnIfAbrupt(result);
     return undefined;
@@ -463,14 +468,24 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
     var constructorEnv = calleeContext.LexicalEnvironment;
     var envRec = constructorEnv.EnvironmentRecord;
     try {
-        var result = concreteCompletion(OrdinaryCallEvaluateBody(F, argumentsList));
-    } catch (e) {
-        if (!(e instanceof PendingTailCall)) throw e;
+        OrdinaryCallEvaluateBody(F, argumentsList);
+        remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
-        return Call(e.func, e.thisValue, e.argList); // we assume underlying TailCall works fine.
+        return envRec.GetThisBinding();
+    } catch (e) {
+        remove_from_the_execution_context_stack(calleeContext);
+        Assert(callerContext === the_running_execution_context);
+        if (e instanceof PendingTailCall) {
+            var value = Call(e.func, e.thisValue, e.argList);
+            // clarify the specification
+            if (Type(value) === 'Object') return value;
+            if (kind === "base") return thisArgument;
+            if (value !== undefined) throw $TypeError();
+            return envRec.GetThisBinding();
+        }
+        if (!(e instanceof Completion)) throw e;
+        var result = e;
     }
-    remove_from_the_execution_context_stack(calleeContext);
-    Assert(callerContext === the_running_execution_context);
     if (result.Type === 'return') {
         if (Type(result.Value) === 'Object') return result.Value;
         if (kind === "base") return thisArgument;
@@ -488,7 +503,7 @@ function FunctionAllocate(functionPrototype, strict, functionKind) {
     if (functionKind === "non-constructor") var functionKind = "normal";
     var F = new ECMAScriptFunctionObject;
     if (needsConstruct === true) {
-        F.Construct = ECMAScriptFunctionObject_Construct;
+        define_method_direct(F, 'Construct', ECMAScriptFunctionObject_Construct);
         F.ConstructorKind = "base";
     }
     F.Strict = strict;
@@ -722,12 +737,21 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
     Assert(calleeContext === the_running_execution_context);
     try {
         NewTarget = undefined;
-        var result = F.steps.apply(thisArgument, argumentsList);
-    } finally {
+        var value = F.steps.apply(thisArgument, argumentsList);
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
+        return value;
+    } catch (e) {
+        remove_from_the_execution_context_stack(calleeContext);
+        Assert(callerContext === the_running_execution_context);
+        if (e instanceof PendingTailCall) {
+            return Call(e.func, e.thisValue, e.argList);
+        }
+        if (e instanceof OrdinaryObject || is_primitive_value(e)) {
+            throw Completion({ Type: 'throw', Value: e, Target: empty });
+        }
+        throw e;
     }
-    return result;
 });
 
 // 9.3.2
@@ -743,12 +767,21 @@ function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
     Assert(calleeContext === the_running_execution_context);
     try {
         NewTarget = newTarget;
-        var result = F.steps.apply(null, argumentsList);
-    } finally {
+        var value = F.steps.apply(null, argumentsList);
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
+        return value;
+    } catch (e) {
+        remove_from_the_execution_context_stack(calleeContext);
+        Assert(callerContext === the_running_execution_context);
+        if (e instanceof PendingTailCall) {
+            return Call(e.func, e.thisValue, e.argList);
+        }
+        if (e instanceof OrdinaryObject || is_primitive_value(e)) {
+            throw Completion({ Type: 'throw', Value: e, Target: empty });
+        }
+        throw e;
     }
-    return result;
 }
 
 // 9.3.3
@@ -801,7 +834,7 @@ function BoundFunctionCreate(targetFunction, boundThis, boundArgs) {
     var proto = targetFunction.GetPrototypeOf();
     var obj = new BoundFunctionExoticObject;
     if ('Construct' in targetFunction) {
-        obj.Construct = BoundFunctionExoticObject_Construct;
+        define_method_direct(obj, 'Construct', BoundFunctionExoticObject_Construct);
     }
     obj.Prototype = proto;
     obj.Extensible = true;
@@ -1428,16 +1461,14 @@ function ModuleNamespaceCreate(module, exports) {
 
 // 9.4.7 Immutable Prototype Exotic Objects
 
-class ImmutablePrototypeObject extends OrdinaryObject {}
-
 // 9.4.7.1
-define_method(ImmutablePrototypeObject, 'SetPrototypeOf', function(V) {
+function ImmutablePrototypeObject_SetPrototypeOf(V) {
     var O = this;
     Assert(Type(V) === 'Object' || Type(V) === 'Null');
     var current = O.Prototype;
     if (SameValue(V, current) === true) return true;
     return false;
-});
+}
 
 // 9.5 Proxy Object Internal Methods and Internal Slots
 
@@ -1765,9 +1796,9 @@ function ProxyCreate(target, handler) {
     if (handler instanceof ProxyExoticObject && handler.ProxyHandler === null) throw $TypeError();
     var P = new ProxyExoticObject;
     if (IsCallable(target) === true) {
-        P.Call = ProxyExoticObject_Call;
+        define_method_direct(P, 'Call', ProxyExoticObject_Call);
         if ('Construct' in target) {
-            P.Construct = ProxyExoticObject_Construct;
+            define_method_direct(P, 'Construct', ProxyExoticObject_Construct);
         }
     }
     P.ProxyTarget = target;

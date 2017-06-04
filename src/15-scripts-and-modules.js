@@ -75,7 +75,7 @@ Static_Semantics('LexicallyDeclaredNames', [
 
     'Script: [empty]',
     function() {
-        return []; // TODO clarify the specification
+        return []; // clarify the specification
     },
 
     'ScriptBody: StatementList',
@@ -89,7 +89,7 @@ Static_Semantics('LexicallyScopedDeclarations', [
 
     'Script: [empty]',
     function() {
-        return []; // TODO clarify the specification
+        return []; // clarify the specification
     },
 
     'ScriptBody: StatementList',
@@ -103,7 +103,7 @@ Static_Semantics('VarDeclaredNames', [
 
     'Script: [empty]',
     function() {
-        return []; // TODO clarify the specification
+        return []; // clarify the specification
     },
 
     'ScriptBody: StatementList',
@@ -117,7 +117,7 @@ Static_Semantics('VarScopedDeclarations', [
 
     'Script: [empty]',
     function() {
-        return []; // TODO clarify the specification
+        return []; // clarify the specification
     },
 
     'ScriptBody: StatementList',

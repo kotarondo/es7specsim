@@ -515,6 +515,7 @@ Runtime_Semantics('Evaluation', [
 
     'Block: { StatementList }',
     function() {
+        var currentContext = the_running_execution_context;
         var oldEnv = the_running_execution_context.LexicalEnvironment;
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
         BlockDeclarationInstantiation(this.StatementList, blockEnv);
@@ -522,6 +523,7 @@ Runtime_Semantics('Evaluation', [
         try {
             var blockValue = this.StatementList.Evaluation();
         } finally {
+            Assert(currentContext === the_running_execution_context);
             the_running_execution_context.LexicalEnvironment = oldEnv;
         }
         return blockValue;
@@ -1996,6 +1998,7 @@ Runtime_Semantics('LabelledEvaluation', [
 
 // 13.7.5.12
 function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
+    var currentContext = the_running_execution_context;
     var oldEnv = the_running_execution_context.LexicalEnvironment;
     if (TDZnames.length > 0) {
         Assert(!TDZnames.contains_any_duplicate_entries());
@@ -2009,6 +2012,7 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
     try {
         var exprRef = expr.Evaluation();
     } finally {
+        Assert(currentContext === the_running_execution_context);
         the_running_execution_context.LexicalEnvironment = oldEnv;
     }
     var exprValue = GetValue(exprRef);

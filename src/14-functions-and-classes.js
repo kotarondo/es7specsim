@@ -127,7 +127,7 @@ Static_Semantics('ContainsDuplicateLabels', [
 
     'FunctionStatementList: [empty]',
     function(labelSet) {
-        return false; // TODO clarify the specification
+        return false; // clarify the specification
     },
 ]);
 
@@ -135,7 +135,7 @@ Static_Semantics('ContainsUndefinedBreakTarget', [
 
     'FunctionStatementList: [empty]',
     function(labelSet) {
-        return false; // TODO clarify the specification
+        return false; // clarify the specification
     },
 ]);
 
@@ -143,7 +143,7 @@ Static_Semantics('ContainsUndefinedContinueTarget', [
 
     'FunctionStatementList: [empty]',
     function(iterationSet, labelSet) {
-        return false; // TODO clarify the specification
+        return false; // clarify the specification
     },
 ]);
 
@@ -439,6 +439,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         try {
             var result = this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
         } finally {
+            Assert(currentContext === the_running_execution_context);
             currentContext.VariableEnvironment = originalEnv;
             currentContext.LexicalEnvironment = originalEnv;
         }
@@ -458,6 +459,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         try {
             var result = this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
         } finally {
+            Assert(currentContext === the_running_execution_context);
             currentContext.VariableEnvironment = originalEnv;
             currentContext.LexicalEnvironment = originalEnv;
         }
@@ -1454,11 +1456,13 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
             var protoParent = currentRealm.Intrinsics['%ObjectPrototype%'];
             var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];
         } else {
+            var currentContext = the_running_execution_context;
             the_running_execution_context.LexicalEnvironment = classScope;
             try {
                 var superclassRef = this.ClassHeritage.Evaluation();
-                var superclass = GetValue(superclassRef); //TODO clarify the specification
+                var superclass = GetValue(superclassRef); // clarify the specification
             } finally {
+                Assert(currentContext === the_running_execution_context);
                 the_running_execution_context.LexicalEnvironment = lex;
             }
             if (superclass === null) {
@@ -1790,8 +1794,4 @@ Static_Semantics('HasProductionInTailPosition', [
     },
 ]);
 
-// 14.6.3
-function PrepareForTailCall() {
-    var leafContext = the_running_execution_context;
-    remove_from_the_execution_context_stack(leafContext);
-}
+// 14.6.3 Runtime Semantics: PrepareForTailCall ( )

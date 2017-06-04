@@ -42,6 +42,19 @@ function get_symbol_description(sym) {
     return /^Symbol\((.*)\)$/.exec(sym.toString())[1];
 }
 
+function is_primitive_value(x) {
+    switch (typeof x) {
+        case 'undefined':
+        case 'boolean':
+        case 'string':
+        case 'symbol':
+        case 'number':
+            return true;
+    }
+    if (x === null) return true;
+    return false;
+}
+
 function is_positive_zero(x) {
     return (x === 0 && (1 / x) > 0);
 }

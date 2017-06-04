@@ -58,6 +58,7 @@ var filenames = [
     'parser-14.js',
     'parser-15.js',
     '18-the-global-object.js',
+    '19-fundamental-objects.js',
     '22-indexed-collections.js',
 ];
 

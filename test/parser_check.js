@@ -59,6 +59,7 @@ InitializeHostDefinedRealm([
     { sourceText: "'use\\x20strict';function a(a,a){}" },
     { sourceText: ";'use strict';function a(a,a){}" },
     { sourceText: "'use strict';(function tailc(a){if(a<0)return;return tailc(a-1)})(1000)" },
+    { sourceText: "'use strict';function tailc(){return isNaN(1)} if(typeof (new tailc)!=='object')throw 'error';" },
     { sourceText: "switch(1){case 1:break; default:case 2:}" },
     { sourceText: "switch(1){case 1:case 2:case 3: break; case 4+4:5+6;\n7+7\n}" },
     { sourceText: "switch(1){case 1: switch(2){default:case '7':}case 2:}" },
