@@ -682,20 +682,14 @@ function CreateIntrinsics(realmRec) {
 
     thrower.DefineOwnProperty('length', PropertyDescriptor({ Value: 0, Writable: false, Enumerable: false, Configurable: false })); // 9.2.7.1
     thrower.Extensible = false; // 9.2.7.1
-    define_method_direct(objProto, 'SetPrototypeOf', ImmutablePrototypeObject_SetPrototypeOf); // 19.1.3
 
     intrinsics['%ArrayBuffer%'] =
         intrinsics['%ArrayBufferPrototype%'] =
-        intrinsics['%Boolean%'] =
         intrinsics['%BooleanPrototype%'] =
         intrinsics['%DataView%'] =
         intrinsics['%DataViewPrototype%'] =
         intrinsics['%Date%'] =
         intrinsics['%DatePrototype%'] =
-        intrinsics['%Error%'] =
-        intrinsics['%ErrorPrototype%'] =
-        intrinsics['%EvalError%'] =
-        intrinsics['%EvalErrorPrototype%'] =
         intrinsics['%Generator%'] =
         intrinsics['%GeneratorPrototype%'] =
         intrinsics['%IteratorPrototype%'] =
@@ -707,15 +701,9 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%Number%'] =
         intrinsics['%NumberPrototype%'] =
         intrinsics['%ObjectPrototype%'] =
-        intrinsics['%ObjProto_toString%'] =
-        intrinsics['%ObjProto_valueOf%'] =
         intrinsics['%Promise%'] =
         intrinsics['%PromisePrototype%'] =
         intrinsics['%Proxy%'] =
-        intrinsics['%RangeError%'] =
-        intrinsics['%RangeErrorPrototype%'] =
-        intrinsics['%ReferenceError%'] =
-        intrinsics['%ReferenceErrorPrototype%'] =
         intrinsics['%Reflect%'] =
         intrinsics['%RegExp%'] =
         intrinsics['%RegExpPrototype%'] =
@@ -725,14 +713,6 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%String%'] =
         intrinsics['%StringIteratorPrototype%'] =
         intrinsics['%StringPrototype%'] =
-        intrinsics['%Symbol%'] =
-        intrinsics['%SymbolPrototype%'] =
-        intrinsics['%SyntaxError%'] =
-        intrinsics['%SyntaxErrorPrototype%'] =
-        intrinsics['%TypeError%'] =
-        intrinsics['%TypeErrorPrototype%'] =
-        intrinsics['%URIError%'] =
-        intrinsics['%URIErrorPrototype%'] =
         intrinsics['%WeakMap%'] =
         intrinsics['%WeakMapPrototype%'] =
         intrinsics['%WeakSet%'] =
@@ -749,21 +729,8 @@ function CreateIntrinsics(realmRec) {
     intrinsics['%decodeURIComponent%'] = intrinsic_function(realmRec, null, 'decodeURIComponent', global_decodeURIComponent, 1); // 18.2.6.3
     intrinsics['%encodeURI%'] = intrinsic_function(realmRec, null, 'encodeURI', global_encodeURI, 1); // 18.2.6.4
     intrinsics['%encodeURIComponent%'] = intrinsic_function(realmRec, null, 'encodeURIComponent', global_encodeURIComponent, 1); // 18.2.6.5
-    intrinsics['%Object%'] = intrinsic_constructor(realmRec, 'Object', $Object, 1); // 19.1.1
-    intrinsics['%Function%'] = intrinsic_constructor(realmRec, 'Function', $Function, 1); // 19.2.1.1
-    //TODO
 
-    intrinsics['%Array%'] = intrinsic_constructor(realmRec, 'Array', $Array, 1); // 22.1.1
-    intrinsics['%ArrayPrototype%'] = ArrayCreate(0, intrinsics['%ObjectPrototype%']); // 22.1.3
-    intrinsics['%ArrayIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 22.1.5.2
-    intrinsics['%TypedArray%'] = intrinsic_constructor(realmRec, 'TypedArray', $TypedArray, 0); // 22.2.1.1
-    intrinsics['%TypedArrayPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 22.2.3
-    for (var __TypedArray__ in Table50) {
-        intrinsics['%' + __TypedArray__ + '%'] = intrinsic_constructor(realmRec, __TypedArray__, eval('$' + __TypedArray__), 3, { proto: intrinsics['%TypedArray%'] }); // 22.2.5
-        intrinsics['%' + __TypedArray__ + 'Prototype%'] = ObjectCreate(intrinsics['%TypedArrayPrototype%']); // 22.2.6
-    }
-    //TODO
-
+    intrinsics['%Object%'] = intrinsic_constructor(realmRec, 'Object', $Object, 1); // 19.1.1.1
     intrinsic_function(realmRec, '%Object%', 'assign', Object_assign, 2); // 19.1.2.1
     intrinsic_function(realmRec, '%Object%', 'create', Object_create, 2); // 19.1.2.2
     intrinsic_function(realmRec, '%Object%', 'defineProperties', Object_defineProperties, 2); // 19.1.2.3
@@ -782,27 +749,74 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%Object%', 'prototype', intrinsics['%ObjectPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.1.2.16
     intrinsic_function(realmRec, '%Object%', 'seal', Object_seal, 1); // 19.1.2.17
     intrinsic_function(realmRec, '%Object%', 'setPrototypeOf', Object_setPrototypeOf, 2); // 19.1.2.18
+    define_method_direct(intrinsics['%ObjectPrototype%'], 'SetPrototypeOf', ImmutablePrototypeObject_SetPrototypeOf); // 19.1.3
     intrinsic_property(realmRec, '%ObjectPrototype%', 'constructor', intrinsics['%Object%']); // 19.1.3.1
     intrinsic_function(realmRec, '%ObjectPrototype%', 'hasOwnProperty', Object_prototype_hasOwnProperty, 1); // 19.1.3.2
     intrinsic_function(realmRec, '%ObjectPrototype%', 'isPrototypeOf', Object_prototype_isPrototypeOf, 1); // 19.1.3.3
     intrinsic_function(realmRec, '%ObjectPrototype%', 'propertyIsEnumerable', Object_prototype_propertyIsEnumerable, 1); // 19.1.3.4
     intrinsic_function(realmRec, '%ObjectPrototype%', 'toLocaleString', Object_prototype_toLocaleString, 0); // 19.1.3.5
     intrinsic_function(realmRec, '%ObjectPrototype%', 'toString', Object_prototype_toString, 0); // 19.1.3.6
+    intrinsics['%ObjProto_toString%'] = Get(intrinsics['%ObjectPrototype%'], 'toString'); // 19.1.3.6
     intrinsic_function(realmRec, '%ObjectPrototype%', 'valueOf', Object_prototype_valueOf, 1); // 19.1.3.7
+    intrinsics['%ObjProto_valueOf%'] = Get(intrinsics['%ObjectPrototype%'], 'valueOf'); // 19.1.3.7
 
+    intrinsics['%Function%'] = intrinsic_constructor(realmRec, 'Function', $Function, 1); // 19.2.1.1
     intrinsic_property(realmRec, '%Function%', 'prototype', intrinsics['%FunctionPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.2.2.2
     intrinsic_property(realmRec, '%FunctionPrototype%', 'length', 0, { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 19.2.3
     intrinsic_property(realmRec, '%FunctionPrototype%', 'name', '', { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 19.2.3
     intrinsic_property(realmRec, '%FunctionPrototype%', 'constructor', intrinsics['%Function%']); // 19.2.3.4
     intrinsic_function(realmRec, '%FunctionPrototype%', wellKnownSymbols['@@hasInstance'], Function_prototype_hasInstance, 1, { name: '[Symbol.hasInstance]', attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.2.3.6
 
+    intrinsics['%Boolean%'] = intrinsic_constructor(realmRec, 'Boolean', $Boolean, 1); // 19.3.1.1
+    intrinsics['%BooleanPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%'], ['BooleanData']); // 19.3.3
+    intrinsics['%BooleanPrototype%'].BooleanData = false; // 19.3.3
+    intrinsic_property(realmRec, '%Boolean%', 'prototype', intrinsics['%BooleanPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.3.2.1
+    intrinsic_property(realmRec, '%BooleanPrototype%', 'constructor', intrinsics['%Boolean%']); // 19.3.3.2
+    intrinsic_function(realmRec, '%BooleanPrototype%', 'toString', Boolean_prototype_toString, 0); // 19.3.3.3
+    intrinsic_function(realmRec, '%BooleanPrototype%', 'valueOf', Boolean_prototype_valueOf, 0); // 19.3.3.4
+
+    intrinsics['%Symbol%'] = intrinsic_constructor(realmRec, 'Symbol', $Symbol, 1); // 19.4.1.1
+    intrinsics['%SymbolPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 19.4.3
+    intrinsic_function(realmRec, '%Symbol%', 'for', Symbol_for, 1); // 19.4.2.1
+    intrinsic_property(realmRec, '%Symbol%', 'hasInstance', wellKnownSymbols['@@hasInstance'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.2
+    intrinsic_property(realmRec, '%Symbol%', 'isConcatSpreadable', wellKnownSymbols['@@isConcatSpreadable'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.3
+    intrinsic_property(realmRec, '%Symbol%', 'iterator', wellKnownSymbols['@@iterator'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.4
+    intrinsic_function(realmRec, '%Symbol%', 'keyFor', Symbol_keyFor, 1); // 19.4.2.5
+    intrinsic_property(realmRec, '%Symbol%', 'match', wellKnownSymbols['@@match'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.6
+    intrinsic_property(realmRec, '%Symbol%', 'prototype', intrinsics['%SymbolPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.7
+    intrinsic_property(realmRec, '%Symbol%', 'replace', wellKnownSymbols['@@replace'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.8
+    intrinsic_property(realmRec, '%Symbol%', 'search', wellKnownSymbols['@@search'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.9
+    intrinsic_property(realmRec, '%Symbol%', 'species', wellKnownSymbols['@@species'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.10
+    intrinsic_property(realmRec, '%Symbol%', 'split', wellKnownSymbols['@@split'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.11
+    intrinsic_property(realmRec, '%Symbol%', 'toPrimitive', wellKnownSymbols['@@toPrimitive'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.12
+    intrinsic_property(realmRec, '%Symbol%', 'toStringTag', wellKnownSymbols['@@toStringTag'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.13
+    intrinsic_property(realmRec, '%Symbol%', 'unscopables', wellKnownSymbols['@@unscopables'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.14
+    intrinsic_property(realmRec, '%SymbolPrototype%', 'constructor', intrinsics['%Symbol%']); // 19.4.3.1
+    intrinsic_function(realmRec, '%SymbolPrototype%', 'toString', Symbol_prototype_toString, 0); // 19.4.3.2
+    intrinsic_function(realmRec, '%SymbolPrototype%', 'valueOf', Symbol_prototype_valueOf, 0); // 19.4.3.3
+    intrinsic_function(realmRec, '%SymbolPrototype%', wellKnownSymbols['@@toPrimitive'], Symbol_prototype_toPrimitive, 1, { name: '[Symbol.toPrimitive]', attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 19.4.3.4
+    intrinsic_property(realmRec, '%SymbolPrototype%', wellKnownSymbols['@@toStringTag'], "Symbol", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 19.4.3.4
+
+    intrinsics['%Error%'] = intrinsic_constructor(realmRec, 'Error', $Error, 1); // 19.5.1.1
+    intrinsics['%ErrorPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 19.5.3
+    intrinsic_property(realmRec, '%Error%', 'prototype', intrinsics['%ErrorPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.5.2.1
+    intrinsic_property(realmRec, '%ErrorPrototype%', 'constructor', intrinsics['%Error%']); // 19.5.3.1
+    intrinsic_property(realmRec, '%ErrorPrototype%', 'message', ''); // 19.5.3.2
+    intrinsic_property(realmRec, '%ErrorPrototype%', 'name', "Error"); // 19.5.3.3
+    for (var __NativeError__ of ['EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError']) {
+        intrinsics['%' + __NativeError__ + '%'] = intrinsic_constructor(realmRec, __NativeError__, $NativeError.bind(null, __NativeError__), 1, { proto: intrinsics['%Error%'] }); // 19.5.6.1.1
+        intrinsics['%' + __NativeError__ + 'Prototype%'] = ObjectCreate(intrinsics['%ErrorPrototype%']); // 19.5.6.3
+        intrinsic_property(realmRec, '%' + __NativeError__ + '%', 'prototype', intrinsics['%' + __NativeError__ + 'Prototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.5.6.2.1
+        intrinsic_property(realmRec, '%' + __NativeError__ + 'Prototype%', 'constructor', intrinsics['%' + __NativeError__ + '%']); // 19.5.6.3.1
+        intrinsic_property(realmRec, '%' + __NativeError__ + 'Prototype%', 'message', ''); // 19.5.6.3.2
+        intrinsic_property(realmRec, '%' + __NativeError__ + 'Prototype%', 'name', __NativeError__); // 19.5.6.3.3
+    }
+
     //TODO
 
-
-
-
-
-
+    intrinsics['%Array%'] = intrinsic_constructor(realmRec, 'Array', $Array, 1); // 22.1.1
+    intrinsics['%ArrayPrototype%'] = ArrayCreate(0, intrinsics['%ObjectPrototype%']); // 22.1.3
+    intrinsics['%ArrayIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 22.1.5.2
     intrinsic_function(realmRec, '%Array%', 'from', Array_from, 1); // 22.1.2.1
     intrinsic_function(realmRec, '%Array%', 'isArray', Array_isArray, 1); // 22.1.2.2
     intrinsic_function(realmRec, '%Array%', 'of', Array_of, 0); // 22.1.2.3
@@ -844,6 +858,8 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%ArrayIteratorPrototype%', 'next', ArrayIteratorPrototype_next, 0); // 22.1.5.2.1
     intrinsic_property(realmRec, '%ArrayIteratorPrototype%', wellKnownSymbols['@@toStringTag'], "Array Iterator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 22.1.5.2.2
 
+    intrinsics['%TypedArray%'] = intrinsic_constructor(realmRec, 'TypedArray', $TypedArray, 0); // 22.2.1.1
+    intrinsics['%TypedArrayPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 22.2.3
     intrinsic_function(realmRec, '%TypedArray%', 'from', TypedArray_from, 1); // 22.2.2.1
     intrinsic_function(realmRec, '%TypedArray%', 'of', TypedArray_of, 0); // 22.2.2.2
     intrinsic_property(realmRec, '%TypedArray%', 'prototype', intrinsics['%TypedArrayPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.2.3
@@ -881,15 +897,15 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@iterator'], Get(intrinsics['%TypedArrayPrototype%'], 'values')); // 22.2.3.31
     intrinsic_accessor(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@toStringTag'], get_TypedArray_prototype_toStringTag, undefined, { name: '[Symbol.toStringTag]' }); // 22.2.3.32
     for (var __TypedArray__ in Table50) {
+        intrinsics['%' + __TypedArray__ + '%'] = intrinsic_constructor(realmRec, __TypedArray__, eval('$' + __TypedArray__), 3, { proto: intrinsics['%TypedArray%'] }); // 22.2.5
+        intrinsics['%' + __TypedArray__ + 'Prototype%'] = ObjectCreate(intrinsics['%TypedArrayPrototype%']); // 22.2.6
         intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'BYTES_PER_ELEMENT', Table50[__TypedArray__].ElementSize, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.1
         intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'prototype', intrinsics['%' + __TypedArray__ + 'Prototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.2
         intrinsic_property(realmRec, '%' + __TypedArray__ + 'Prototype%', 'BYTES_PER_ELEMENT', Table50[__TypedArray__].ElementSize, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.6.1
         intrinsic_property(realmRec, '%' + __TypedArray__ + 'Prototype%', 'constructor', intrinsics['%' + __TypedArray__ + '%']); // 22.2.6.2
     }
 
-
-
-
+    //TODO
 
     return intrinsics;
 }
