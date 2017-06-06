@@ -308,14 +308,14 @@ function createProductionPrototype(name, refs) {
         return this.nested.is_contained_within(...arguments);
     });
 
-    define_method_direct(proto, 'most_closely_contains', function() {
+    define_method_direct(proto, 'most_close_container', function() {
         for (var i = 0; i < arguments.length; i++) {
             var a = arguments[i];
             if (a === goal) return this;
             if (a === name) return this;
         }
         if (!this.nested) return null;
-        return this.nested.most_closely_contains(...arguments);
+        return this.nested.most_close_container(...arguments);
     });
 
     ProductionPrototype[name] = proto;

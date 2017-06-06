@@ -35,6 +35,6 @@
 // 16 Error Handling and Language Extensions
 
 // 16.1
-function HostReportErrors(errorList) {
+var HostReportErrors = function(errorList) {
     console.log(errorList);
 }

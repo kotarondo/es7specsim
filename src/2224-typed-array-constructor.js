@@ -35,6 +35,7 @@
 // 22.2.4 The TypedArray Constructors
 
 Assert(Table50.__TypedArray__);
+TypedArray_constructors.__TypedArray__ = $__TypedArray__;
 
 function $__TypedArray__(first) {
     if (arguments.length === 0) return $__TypedArray__$1.apply(this, arguments);

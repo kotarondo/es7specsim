@@ -96,7 +96,7 @@ function parseStrictFormalParameters(Yield) {
 }
 
 function parseFormalParameters(Yield) {
-    if (peekToken() === ')') {
+    if (peekToken() === ')' || peekToken() === '') {
         return Production['FormalParameters: [empty]']();
     }
     var nt = parseFormalParameterList(Yield);

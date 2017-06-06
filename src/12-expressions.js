@@ -674,7 +674,7 @@ Static_Semantics('Early Errors', [
         var pattern = this.RegularExpressionLiteral.BodyText();
         var flags = this.RegularExpressionLiteral.FlagText();
         try {
-            RegExp(pattern); //TODO independent RegExp parser
+            RegExp(pattern, flags); //TODO independent RegExp parser
         } catch (e) {
             throw EarlySyntaxError();
         }
@@ -1337,7 +1337,7 @@ Runtime_Semantics('ArgumentListEvaluation', [
 
     'ArgumentList: ArgumentList , AssignmentExpression',
     function() {
-        var precedingArgs = this.ArgumentList.Evaluation();
+        var precedingArgs = this.ArgumentList.ArgumentListEvaluation();
         var ref = this.AssignmentExpression.Evaluation();
         var arg = GetValue(ref);
         precedingArgs.push(arg);
@@ -1346,7 +1346,7 @@ Runtime_Semantics('ArgumentListEvaluation', [
 
     'ArgumentList: ArgumentList , ... AssignmentExpression',
     function() {
-        var precedingArgs = this.ArgumentList.Evaluation();
+        var precedingArgs = this.ArgumentList.ArgumentListEvaluation();
         var spreadRef = this.AssignmentExpression.Evaluation();
         var iterator = GetIterator(GetValue(spreadRef));
         while (true) {
@@ -2398,78 +2398,67 @@ Runtime_Semantics('Evaluation', [
         var lval = GetValue(lref);
         var rref = this.AssignmentExpression.Evaluation();
         var rval = GetValue(rref);
-        switch (this.AssignmentOperator) {
-            case '*=':
-                var lnum = ToNumber(lval);
-                var rnum = ToNumber(rval);
-                var r = lnum * rnum;
-                break;
-            case '/=':
-                var lnum = ToNumber(lval);
-                var rnum = ToNumber(rval);
-                var r = lnum / rnum;
-                break;
-            case '%=':
-                var lnum = ToNumber(lval);
-                var rnum = ToNumber(rval);
-                var r = lnum % rnum;
-                break;
-            case '+=':
-                var lprim = ToPrimitive(lval);
-                var rprim = ToPrimitive(rval);
-                if (Type(lprim) === 'String' || Type(rprim) === 'String') {
-                    var lstr = ToString(lprim);
-                    var rstr = ToString(rprim);
-                    var r = lstr + rstr;
-                    break;
-                }
+        if (this.AssignmentOperator.is('AssignmentOperator: *=')) {
+            var lnum = ToNumber(lval);
+            var rnum = ToNumber(rval);
+            var r = lnum * rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: /=')) {
+            var lnum = ToNumber(lval);
+            var rnum = ToNumber(rval);
+            var r = lnum / rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: %=')) {
+            var lnum = ToNumber(lval);
+            var rnum = ToNumber(rval);
+            var r = lnum % rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: +=')) {
+            var lprim = ToPrimitive(lval);
+            var rprim = ToPrimitive(rval);
+            if (Type(lprim) === 'String' || Type(rprim) === 'String') {
+                var lstr = ToString(lprim);
+                var rstr = ToString(rprim);
+                var r = lstr + rstr;
+            } else {
                 var lnum = ToNumber(lprim);
                 var rnum = ToNumber(rprim);
                 var r = lnum + rnum;
-                break;
-            case '-=':
-                var lnum = ToNumber(lval);
-                var rnum = ToNumber(rval);
-                var r = lnum - rnum;
-                break;
-            case '<<=':
-                var lnum = ToInt32(lval);
-                var rnum = ToUint32(rval);
-                var shiftCount = rnum & 0x1F;
-                var r = lnum << shiftCount;
-                break;
-            case '>>=':
-                var lnum = ToInt32(lval);
-                var rnum = ToUint32(rval);
-                var shiftCount = rnum & 0x1F;
-                var r = lnum >> shiftCount;
-                break;
-            case '>>>=':
-                var lnum = ToUint32(lval);
-                var rnum = ToUint32(rval);
-                var shiftCount = rnum & 0x1F;
-                var r = lnum >>> shiftCount;
-                break;
-            case '&=':
-                var lnum = ToInt32(lval);
-                var rnum = ToInt32(rval);
-                var r = lnum & rnum;
-                break;
-            case '|=':
-                var lnum = ToInt32(lval);
-                var rnum = ToInt32(rval);
-                var r = lnum | rnum;
-                break;
-            case '^=':
-                var lnum = ToInt32(lval);
-                var rnum = ToInt32(rval);
-                var r = lnum ^ rnum;
-                break;
-            case '**=':
-                var base = ToNumber(lval);
-                var exponent = ToNumber(rval);
-                var r = Math.pow(base, exponent);
-                break;
+            }
+        } else if (this.AssignmentOperator.is('AssignmentOperator: -=')) {
+            var lnum = ToNumber(lval);
+            var rnum = ToNumber(rval);
+            var r = lnum - rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: <<=')) {
+            var lnum = ToInt32(lval);
+            var rnum = ToUint32(rval);
+            var shiftCount = rnum & 0x1F;
+            var r = lnum << shiftCount;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: >>=')) {
+            var lnum = ToInt32(lval);
+            var rnum = ToUint32(rval);
+            var shiftCount = rnum & 0x1F;
+            var r = lnum >> shiftCount;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: >>>=')) {
+            var lnum = ToUint32(lval);
+            var rnum = ToUint32(rval);
+            var shiftCount = rnum & 0x1F;
+            var r = lnum >>> shiftCount;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: &=')) {
+            var lnum = ToInt32(lval);
+            var rnum = ToInt32(rval);
+            var r = lnum & rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: |=')) {
+            var lnum = ToInt32(lval);
+            var rnum = ToInt32(rval);
+            var r = lnum | rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: ^=')) {
+            var lnum = ToInt32(lval);
+            var rnum = ToInt32(rval);
+            var r = lnum ^ rnum;
+        } else if (this.AssignmentOperator.is('AssignmentOperator: **=')) {
+            var base = ToNumber(lval);
+            var exponent = ToNumber(rval);
+            var r = Math.pow(base, exponent);
+        } else {
+            Assert(false);
         }
         PutValue(lref, r);
         return r;

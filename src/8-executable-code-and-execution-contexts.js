@@ -149,6 +149,7 @@ class ObjectEnvironmentRecord extends EnvironmentRecord {
     constructor(O) {
         super();
         this.binding_object = O;
+        this.withEnvironment = false;
     }
 
     // 8.1.1.2.1
@@ -804,7 +805,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%ErrorPrototype%', 'message', ''); // 19.5.3.2
     intrinsic_property(realmRec, '%ErrorPrototype%', 'name', "Error"); // 19.5.3.3
     for (var __NativeError__ of ['EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError']) {
-        intrinsics['%' + __NativeError__ + '%'] = intrinsic_constructor(realmRec, __NativeError__, $NativeError.bind(null, __NativeError__), 1, { proto: intrinsics['%Error%'] }); // 19.5.6.1.1
+        intrinsics['%' + __NativeError__ + '%'] = intrinsic_constructor(realmRec, __NativeError__, NativeError_constructors[__NativeError__], 1, { proto: intrinsics['%Error%'] }); // 19.5.6.1.1
         intrinsics['%' + __NativeError__ + 'Prototype%'] = ObjectCreate(intrinsics['%ErrorPrototype%']); // 19.5.6.3
         intrinsic_property(realmRec, '%' + __NativeError__ + '%', 'prototype', intrinsics['%' + __NativeError__ + 'Prototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.5.6.2.1
         intrinsic_property(realmRec, '%' + __NativeError__ + 'Prototype%', 'constructor', intrinsics['%' + __NativeError__ + '%']); // 19.5.6.3.1
@@ -897,7 +898,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@iterator'], Get(intrinsics['%TypedArrayPrototype%'], 'values')); // 22.2.3.31
     intrinsic_accessor(realmRec, '%TypedArrayPrototype%', wellKnownSymbols['@@toStringTag'], get_TypedArray_prototype_toStringTag, undefined, { name: '[Symbol.toStringTag]' }); // 22.2.3.32
     for (var __TypedArray__ in Table50) {
-        intrinsics['%' + __TypedArray__ + '%'] = intrinsic_constructor(realmRec, __TypedArray__, eval('$' + __TypedArray__), 3, { proto: intrinsics['%TypedArray%'] }); // 22.2.5
+        intrinsics['%' + __TypedArray__ + '%'] = intrinsic_constructor(realmRec, __TypedArray__, TypedArray_constructors[__TypedArray__], 3, { proto: intrinsics['%TypedArray%'] }); // 22.2.5
         intrinsics['%' + __TypedArray__ + 'Prototype%'] = ObjectCreate(intrinsics['%TypedArrayPrototype%']); // 22.2.6
         intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'BYTES_PER_ELEMENT', Table50[__TypedArray__].ElementSize, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.1
         intrinsic_property(realmRec, '%' + __TypedArray__ + '%', 'prototype', intrinsics['%' + __TypedArray__ + 'Prototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 22.2.5.2
@@ -992,11 +993,15 @@ function GetActiveScriptOrModule() {
     if (the_execution_context_stack.length === 0) return null;
     for (var i = the_execution_context_stack.length - 1; i >= 0; i--) {
         var ec = the_execution_context_stack[i];
-        if (ec.Function && ec.Function.ScriptOrModule !== null) return ec.Function.ScriptOrModule;
+        // clarify the specification
+        // if (ec.Function && ec.Function.ScriptOrModule !== null) return ec.Function.ScriptOrModule;
+        if (ec.ScriptOrModule !== null) return ec.ScriptOrModule;
     }
-    var ec = the_running_execution_context;
-    Assert(ec.ScriptOrModule !== null);
-    return ec.ScriptOrModule;
+    return null;
+    // clarify the specification
+    // var ec = the_running_execution_context;
+    // Assert(ec.ScriptOrModule !== null);
+    // return ec.ScriptOrModule;
 }
 
 // 8.3.2
@@ -1084,18 +1089,18 @@ function NextJob(result) {
 }
 
 // 8.5
-function InitializeHostDefinedRealm(entries) {
+function InitializeHostDefinedRealm(entries, customize_global_object) { // MODIFIED: callback function added
     var realm = CreateRealm();
     var newContext = new ExecutionContext;
     newContext.Function = null;
     newContext.Realm = realm;
     newContext.ScriptOrModule = null;
     push_onto_the_execution_context_stack(newContext);
-    var global = undefined; // TODO implementation defined
-    var thisValue = undefined; // TODO implementation defined
+    var global = undefined; // implementation defined
+    var thisValue = undefined; // implementation defined
     SetRealmGlobalObject(realm, global, thisValue);
     var globalObj = SetDefaultGlobalBindings(realm);
-    // TODO Create any implementation defined global object properties on globalObj.
+    if (customize_global_object) customize_global_object(realm, globalObj);
     for (var e of entries) {
         var sourceText = e.sourceText;
         var hostDefined = e.hostDefined;

@@ -583,7 +583,7 @@ Static_Semantics('Early Errors', [
 
     'LexicalBinding: BindingIdentifier Initializer[opt]',
     function() {
-        if (!this.Initializer && this.resolve_nested('LexicalDeclaration').IsConstantDeclaration() === true) throw EarlySyntaxError();
+        if (!this.Initializer && this.most_close_container('LexicalDeclaration').IsConstantDeclaration() === true) throw EarlySyntaxError();
     },
 ]);
 
@@ -1006,7 +1006,7 @@ Runtime_Semantics('BindingInitialization', [
         var iterator = GetIterator(value);
         var iteratorRecord = Record({ Iterator: iterator, Done: false });
         var result = concreteCompletion(this.ArrayBindingPattern.IteratorBindingInitialization(iteratorRecord, environment));
-        if (iteratorRecord.Done === false) return resolveCompletion(IteratorClose(iterator, result));
+        if (iteratorRecord.Done === false) return IteratorClose(iterator, result);
         return resolveCompletion(result);
     },
 
@@ -1177,7 +1177,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
                 if (environment === undefined) return PutValue(lhs, A);
                 return InitializeReferencedBinding(lhs, A);
             }
-            var nextValue = IteratorValue(next);
+            var nextValue = concreteCompletion(IteratorValue(next));
             if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(nextValue);
             nextValue = resolveCompletion(nextValue);
@@ -2017,7 +2017,7 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
     }
     var exprValue = GetValue(exprRef);
     if (iterationKind === 'enumerate') {
-        if (exprValue.Value === null || exprValue.Value === undefined) {
+        if (exprValue === null || exprValue === undefined) {
             throw Completion({ Type: 'break', Value: empty, Target: empty });
         }
         var obj = ToObject(exprValue);
@@ -2072,7 +2072,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
                 Assert(lhs.is('ForBinding'));
                 var status = concreteCompletion(lhs.BindingInitialization(nextValue, undefined));
             } else {
-                Assert(lhsKind.is('lexicalBinding'));
+                Assert(lhsKind === 'lexicalBinding');
                 Assert(lhs.is('ForDeclaration'));
                 var status = concreteCompletion(lhs.BindingInitialization(nextValue, iterationEnv));
             }

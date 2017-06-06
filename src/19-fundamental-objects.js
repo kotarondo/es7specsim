@@ -128,7 +128,7 @@ function Object_freeze(O) {
 function Object_getOwnPropertyDescriptor(O, P) {
     var obj = ToObject(O);
     var key = ToPropertyKey(P);
-    var desc = obj.GetOwnPropertykey();
+    var desc = obj.GetOwnProperty(key);
     return FromPropertyDescriptor(desc);
 }
 
@@ -263,7 +263,7 @@ function Object_prototype_toString() {
     var O = ToObject(this);
     var isArray = IsArray(O);
     if (isArray === true) var builtinTag = "Array";
-    else if (O instanceof ExoticStringObject) var builtinTag = "String";
+    else if (O instanceof StringExoticObject) var builtinTag = "String";
     else if ('ParameterMap' in O) var builtinTag = "Arguments";
     else if ('Call' in O) var builtinTag = "Function";
     else if ('ErrorData' in O) var builtinTag = "Error";
@@ -339,9 +339,9 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
             Assert(goal === 'GeneratorBody');
             var body = parseGeneratorBody();
         }
-        determineStrictModeCode(body, false);
-        if (body.strict) var strict = true;
+        if (body.ContainsUseStrict()) var strict = true;
         else var strict = false;
+        determineStrictModeCode(body, strict);
         body.apply_early_error_rules();
         if (strict === true) {
             var nt = Production['StrictFormalParameters: FormalParameters'](parameters);
@@ -371,7 +371,7 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
     var F = FunctionAllocate(proto, strict, kind);
     var realmF = F.Realm;
     var scope = realmF.GlobalEnv;
-    FunctionInitialize(F, Normal, parameters, body, scope);
+    FunctionInitialize(F, 'Normal', parameters, body, scope);
     if (kind === "generator") {
         var prototype = ObjectCreate(currentRealm.Intrinsics['%GeneratorPrototype%']);
         DefinePropertyOrThrow(F, "prototype", PropertyDescriptor({ Value: prototype, Writable: true, Enumerable: false, Configurable: false }));
@@ -684,6 +684,26 @@ function $NativeError(name, message) {
     }
     return O;
 }
+
+const NativeError_constructors = {
+    EvalError: $NativeError.bind(null, 'EvalError'),
+    RangeError: $NativeError.bind(null, 'RangeError'),
+    ReferenceError: $NativeError.bind(null, 'ReferenceError'),
+    SyntaxError: $NativeError.bind(null, 'SyntaxError'),
+    TypeError: $NativeError.bind(null, 'TypeError'),
+    URIError: $NativeError.bind(null, 'URIError'),
+};
+
+function create_NativeError(name, message) {
+    return currentRealm.Intrinsics['%' + name + '%'].Call(null, [message]);
+}
+
+const $EvalError = create_NativeError.bind(null, 'EvalError');
+const $RangeError = create_NativeError.bind(null, 'RangeError');
+const $ReferenceError = create_NativeError.bind(null, 'ReferenceError');
+const $SyntaxError = create_NativeError.bind(null, 'SyntaxError');
+const $TypeError = create_NativeError.bind(null, 'TypeError');
+const $URIError = create_NativeError.bind(null, 'URIError');
 
 // 19.5.6.2 Properties of the NativeError Constructors
 

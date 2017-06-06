@@ -93,6 +93,8 @@ Static_Semantics('Early Errors', [
             var nt = Production['StrictFormalParameters: FormalParameters'](this.FormalParameters);
             nt.strict = true;
             nt.apply_early_error_rules();
+        }
+        if (this.FunctionBody.strict && this.BindingIdentifier) {
             if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.FunctionBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
@@ -930,7 +932,7 @@ Static_Semantics('Early Errors', [
 
     'GeneratorMethod: * PropertyName ( StrictFormalParameters ) { GeneratorBody }',
     function() {
-        if (this.GeneratorMethod.HasDirectSuper() === true) throw EarlySyntaxError();
+        if (this.HasDirectSuper() === true) throw EarlySyntaxError();
         if (this.StrictFormalParameters.Contains('YieldExpression') === true) throw EarlySyntaxError();
         if (this.GeneratorBody.ContainsUseStrict() === true && this.StrictFormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
         if (this.StrictFormalParameters.BoundNames().also_occurs_in(this.GeneratorBody.LexicallyDeclaredNames())) throw EarlySyntaxError();
@@ -944,6 +946,8 @@ Static_Semantics('Early Errors', [
             var nt = Production['StrictFormalParameters: FormalParameters'](this.FormalParameters);
             nt.strict = true;
             nt.apply_early_error_rules();
+        }
+        if (this.GeneratorBody.strict && this.BindingIdentifier) {
             if (this.BindingIdentifier.StringValue() === 'eval' || this.BindingIdentifier.StringValue() === 'arguments') throw EarlySyntaxError();
         }
         if (this.GeneratorBody.ContainsUseStrict() === true && this.FormalParameters.IsSimpleParameterList() === false) throw EarlySyntaxError();
@@ -1217,7 +1221,7 @@ Static_Semantics('Early Errors', [
 
     'ClassTail: ClassHeritage[opt] { ClassBody }',
     function() {
-        if (this.ClassHeritage) {
+        if (!this.ClassHeritage) {
             var constructor = this.ClassBody.ConstructorMethod();
             if (constructor === empty) return;
             if (constructor.HasDirectSuper() === true) throw EarlySyntaxError();
@@ -1288,8 +1292,10 @@ Static_Semantics('Contains', [
             if (this.ClassHeritage) return true;
             else return false;
         }
-        var inHeritage = this.ClassHeritage.Contains(symbol);
-        if (inHeritage === true) return true;
+        if (this.ClassHeritage) {
+            var inHeritage = this.ClassHeritage.Contains(symbol);
+            if (inHeritage === true) return true;
+        }
         return this.ClassBody.ComputedPropertyContains(symbol);
     },
 ]);
@@ -1538,13 +1544,13 @@ Runtime_Semantics('BindingClassDeclarationEvaluation', [
 // 14.5.16
 Runtime_Semantics('Evaluation', [
 
-    'ClassDeclaration: class BindingIdentifier[opt] ClassTail',
+    'ClassDeclaration: class BindingIdentifier ClassTail',
     function() {
         var status = this.BindingClassDeclarationEvaluation();
         return empty;
     },
 
-    'ClassExpression: class BindingIdentifier ClassTail',
+    'ClassExpression: class BindingIdentifier[opt] ClassTail',
     function() {
         if (!this.BindingIdentifier) var className = undefined;
         else var className = this.BindingIdentifier.StringValue();
@@ -1566,7 +1572,7 @@ function IsInTailPosition(nonterminal) {
     Assert(nonterminal instanceof ParsedGrammarProduction);
     if (!nonterminal.strict) return false;
     if (!nonterminal.is_contained_within('FunctionBody', 'ConciseBody')) return false;
-    var body = nonterminal.most_closely_contains('FunctionBody', 'ConciseBody');
+    var body = nonterminal.most_close_container('FunctionBody', 'ConciseBody');
     if (body.nested.is('GeneratorBody')) return false;
     return body.HasProductionInTailPosition(nonterminal);
 }

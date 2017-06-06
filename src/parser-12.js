@@ -156,9 +156,11 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(Yield) {
         consumeToken('...');
         if (peekToken() === '{' || peekToken() === '[') {
             var nt = parseBindingPattern(Yield);
+            consumeToken(')');
             return Production['CoverParenthesizedExpressionAndArrowParameterList: ( ... BindingPattern )'](nt);
         }
         var nt = parseBindingIdentifier(Yield);
+        consumeToken(')');
         return Production['CoverParenthesizedExpressionAndArrowParameterList: ( ... BindingIdentifier )'](nt);
     }
     var expr = parseExpression('In', Yield);
@@ -173,9 +175,11 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(Yield) {
     consumeToken('...');
     if (peekToken() === '{' || peekToken() === '[') {
         var nt = parseBindingPattern(Yield);
+        consumeToken(')');
         return Production['CoverParenthesizedExpressionAndArrowParameterList: ( Expression , ... BindingPattern )'](expr, nt);
     }
     var nt = parseBindingIdentifier(Yield);
+    consumeToken(')');
     return Production['CoverParenthesizedExpressionAndArrowParameterList: ( Expression , ... BindingIdentifier )'](expr, nt);
 }
 
@@ -1043,9 +1047,14 @@ function parseAssignmentExpression(In, Yield) {
     var pos = parsingPosition;
     var nt = parseConditionalExpression(In, Yield);
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
-        if (nt.is('Identifier')) {
-            var nt = nt.resolve('Identifier');
-            var nt = Production['BindingIdentifier: Identifier'](nt);
+        if (nt.is('IdentifierReference')) {
+            if (nt.is('Identifier')) {
+                var nt = nt.resolve('Identifier');
+                var nt = Production['BindingIdentifier: Identifier'](nt);
+            } else {
+                Assert(nt.is('IdentifierReference: yield'));
+                var nt = Production['BindingIdentifier: yield']();
+            }
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
             return Production['AssignmentExpression: ArrowFunction'](nt);
@@ -1160,6 +1169,7 @@ function parseArrayAssignmentPattern(Yield) {
     }
     if (peekToken() === '...') {
         var nt = parseAssignmentRestElement(Yield);
+        consumeToken(']');
         return Production['ArrayAssignmentPattern: [ Elision[opt] AssignmentRestElement[opt] ]'](elis, nt);
     }
     var nt = parseAssignmentElement(Yield);
@@ -1178,6 +1188,7 @@ function parseArrayAssignmentPattern(Yield) {
         }
         if (peekToken() === '...') {
             var nt = parseAssignmentRestElement(Yield);
+            consumeToken(']');
             return Production['ArrayAssignmentPattern: [ AssignmentElementList , Elision[opt] AssignmentRestElement[opt] ]'](list, elis, nt);
         }
         var nt = parseAssignmentElement(Yield);
@@ -1233,6 +1244,7 @@ function parseDestructuringAssignmentTarget(Yield) {
 function parseExpression_opt(In, Yield) {
     if (peekToken() === ';') return null;
     if (peekToken() === '}') return null;
+    if (peekToken() === ')') return null;
     return parseExpression(In, Yield);
 }
 

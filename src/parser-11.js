@@ -214,6 +214,11 @@ function peekTokenIsIdentifierName(ahead) {
     try {
         var pos = parsingPosition;
         skipSeparators();
+        if (ahead) {
+            var skipped = (skipIfIdentifierName() || skipIfPunctuator());
+            Assert(skipped);
+            return peekTokenIsIdentifierName(ahead - 1);
+        }
         return skipIfIdentifierStart();
     } finally {
         parsingPosition = pos;
@@ -643,7 +648,7 @@ function parseNonZeroDigit() {
 
 function parseExponentPart_opt() {
     var c = peekChar();
-    if (c !== 'e' || c !== 'E') return null;
+    if (c !== 'e' && c !== 'E') return null;
     consumeChar(c);
     var ei = Production['ExponentIndicator:: one_of_eE']();
     var nt = parseSignedInteger();
@@ -924,6 +929,7 @@ function parseCharacterEscapeSequence() {
         case 'r':
         case 't':
         case 'v':
+            consumeChar(c);
             var nt = Production['SingleEscapeCharacter:: one_of_\'"\\bfnrtv']();
             nt.char = c;
             return Production['CharacterEscapeSequence:: SingleEscapeCharacter'](nt);

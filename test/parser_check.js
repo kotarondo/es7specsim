@@ -47,6 +47,7 @@ InitializeHostDefinedRealm([
     { sourceText: "try{a=1}catch(e){a=e}finally{a=3}" },
     { sourceText: "try{a=1}catch(e){a=e}" },
     { sourceText: "try{a=1}finally{a=3}" },
+    { sourceText: "try{throw 4}catch(e){a=e}" },
     { sourceText: "try{throw 1}catch(e){while(e!=1);}" },
     { sourceText: "try{throw {a:1,b:2,c:null}}catch({a,b=5,c=3,d=4}){while(a!=1||b!=2||c!==null||d!=4);}" },
     { sourceText: "function f(a,b,...c){}" },
@@ -68,4 +69,5 @@ InitializeHostDefinedRealm([
     { sourceText: "[b]=[2];if(b!==2)throw Error();" },
     { sourceText: "[5,3,6,,7,].sort();" },
     { sourceText: "eval('x=100;for(var i=0;i<10;i++)x++;')" },
+    { sourceText: "try{eval('syntax error')}catch(e){a=e}" },
 ]);

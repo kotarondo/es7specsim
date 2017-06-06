@@ -1931,3 +1931,5 @@ function TypedArraySpeciesCreate(exemplar, argumentList) {
 // 22.2.6.2 TypedArray.prototype.constructor
 
 // 22.2.7 Properties of TypedArray Instances
+
+const TypedArray_constructors = {};

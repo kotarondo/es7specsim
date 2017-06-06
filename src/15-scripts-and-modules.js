@@ -52,8 +52,11 @@ Static_Semantics('Early Errors', [
 
     'ScriptBody: StatementList',
     function() {
-        //TODO if( this.StatementList.Contains ('super') unless the source code containing super === eval code that === being processed by a direct eval that === contained in function code that !== the function code of an ArrowFunction;) throw EarlySyntaxError();
-        //TODO if( this.StatementList.Contains('NewTarget') unless the source code containing NewTarget === eval code that === being processed by a direct eval that === contained in function code that !== the function code of an ArrowFunction;) throw EarlySyntaxError();
+        if (this.StatementList.Contains('super') || this.StatementList.Contains('NewTarget')) {
+            // TODO implements as sspecified
+            // clarify the specification: "the source code containing super is eval code" means "this ScriptBody is eval code" or "super is in eval code"? ex. eval("(()=>super())()")
+            if (!(GetThisEnvironment() instanceof FunctionEnvironmentRecord)) throw EarlySyntaxError();
+        }
         if (this.StatementList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
         if (this.StatementList.ContainsUndefinedBreakTarget([]) === true) throw EarlySyntaxError();
         if (this.StatementList.ContainsUndefinedContinueTarget([], []) === true) throw EarlySyntaxError();
@@ -155,7 +158,9 @@ function ParseScript(sourceText, realm, hostDefined) {
         determineStrictModeCode(body, false);
         body.apply_early_error_rules();
     } catch (e) {
-        var body = [e];
+        if (e instanceof EarlySyntaxError) var body = [$SyntaxError()];
+        else if (e instanceof EarlyReferenceError) var body = [$ReferenceError()];
+        else throw e;
     }
     if (Type(body) === 'List') return body;
     return Script_Record({ Realm: realm, Environment: undefined, ECMAScriptCode: body, HostDefined: hostDefined });
@@ -590,7 +595,9 @@ function ParseModule(sourceText, realm, hostDefined) {
         determineStrictModeCode(body, true);
         body.apply_early_error_rules();
     } catch (e) {
-        var body = [e];
+        if (e instanceof EarlySyntaxError) var body = [$SyntaxError()];
+        else if (e instanceof EarlyReferenceError) var body = [$ReferenceError()];
+        else throw e;
     }
     if (Type(body) === 'List') return body;
     var requestedModules = body.ModuleRequests();

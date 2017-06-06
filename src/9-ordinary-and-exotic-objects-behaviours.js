@@ -38,7 +38,7 @@
 
 class OrdinaryObject {
     constructor() {
-        this.property = Object.create(null);
+        this.properties = Object.create(null);
     }
 }
 
@@ -112,9 +112,9 @@ define_method(OrdinaryObject, 'GetOwnProperty', function(P) {
 // 9.1.5.1
 function OrdinaryGetOwnProperty(O, P) {
     Assert(IsPropertyKey(P) === true);
-    if (O.property[P] === undefined) return undefined;
+    if (O.properties[P] === undefined) return undefined;
     var D = PropertyDescriptor({});
-    var X = O.property[P];
+    var X = O.properties[P];
     if ('Value' in X) {
         D.Value = X.Value;
         D.Writable = X.Writable;
@@ -152,7 +152,7 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
         if (extensible === false) return false;
         Assert(extensible === true);
         if (IsGenericDescriptor(Desc) === true || IsDataDescriptor(Desc) === true) {
-            if (O !== undefined) O.property[P] = {
+            if (O !== undefined) O.properties[P] = {
                 Value: 'Value' in Desc ? Desc.Value : undefined,
                 Writable: 'Writable' in Desc ? Desc.Writable : false,
                 Enumerable: 'Enumerable' in Desc ? Desc.Enumerable : false,
@@ -160,7 +160,7 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
             };
         } else {
             Assert(IsAccessorDescriptor(Desc) === true);
-            if (O !== undefined) O.property[P] = {
+            if (O !== undefined) O.properties[P] = {
                 Get: 'Get' in Desc ? Desc.Get : undefined,
                 Set: 'Set' in Desc ? Desc.Set : undefined,
                 Enumerable: 'Enumerable' in Desc ? Desc.Enumerable : false,
@@ -187,8 +187,8 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
         if (current.Configurable === false) return false;
         if (IsDataDescriptor(current) === true) {
             if (O !== undefined) {
-                var prop = O.property[P];
-                O.property[P] = {
+                var prop = O.properties[P];
+                O.properties[P] = {
                     Get: undefined,
                     Set: undefined,
                     Enumerable: prop.Enumerable,
@@ -197,8 +197,8 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
             }
         } else {
             if (O !== undefined) {
-                var prop = O.property[P];
-                O.property[P] = {
+                var prop = O.properties[P];
+                O.properties[P] = {
                     Value: undefined,
                     Writable: false,
                     Enumerable: prop.Enumerable,
@@ -221,7 +221,7 @@ function ValidateAndApplyPropertyDescriptor(O, P, extensible, Desc, current) {
         }
     }
     if (O !== undefined) {
-        var prop = O.property[P];
+        var prop = O.properties[P];
         if ('Value' in Desc) prop.Value = Desc.Value;
         if ('Writable' in Desc) prop.Writable = Desc.Writable;
         if ('Get' in Desc) prop.Get = Desc.Get;
@@ -322,7 +322,7 @@ function OrdinaryDelete(O, P) {
     var desc = O.GetOwnProperty(P);
     if (desc === undefined) return true;
     if (desc.Configurable === true) {
-        delete O.property[P];
+        delete O.properties[P];
         return true;
     }
     return false;
@@ -338,7 +338,7 @@ define_method(OrdinaryObject, 'OwnPropertyKeys', function() {
 function OrdinaryOwnPropertyKeys(O) {
     // Here we rely on underlying virtual machine.
     // NOTICE: Non integer index keys are in ascending chronological order of property creation.
-    var keys = Reflect.ownKeys(O.property);
+    var keys = Reflect.ownKeys(O.properties);
     return keys;
 }
 
@@ -471,7 +471,7 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
         OrdinaryCallEvaluateBody(F, argumentsList);
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
-        return envRec.GetThisBinding();
+        var result = NormalCompletion(undefined);
     } catch (e) {
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
@@ -747,9 +747,6 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
         if (e instanceof PendingTailCall) {
             return Call(e.func, e.thisValue, e.argList);
         }
-        if (e instanceof OrdinaryObject || is_primitive_value(e)) {
-            throw Completion({ Type: 'throw', Value: e, Target: empty });
-        }
         throw e;
     }
 });
@@ -776,9 +773,6 @@ function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
         Assert(callerContext === the_running_execution_context);
         if (e instanceof PendingTailCall) {
             return Call(e.func, e.thisValue, e.argList);
-        }
-        if (e instanceof OrdinaryObject || is_primitive_value(e)) {
-            throw Completion({ Type: 'throw', Value: e, Target: empty });
         }
         throw e;
     }
@@ -986,7 +980,7 @@ define_method(StringExoticObject, 'OwnPropertyKeys', function() {
         keys.push(ToString(i));
     }
     // Here we rely on underlying virtual machine.
-    var otherKeys = Reflect.ownKeys(O.property).filter(function(P) {
+    var otherKeys = Reflect.ownKeys(O.properties).filter(function(P) {
         return !keys.includes(P);
     });
     return keys.concat(otherKeys);
@@ -1292,7 +1286,7 @@ define_method(IntegerIndexedExoticObject, 'OwnPropertyKeys', function() {
         keys.push(ToString(i));
     }
     // Here we rely on underlying virtual machine.
-    var otherKeys = Reflect.ownKeys(O.property).filter(function(P) {
+    var otherKeys = Reflect.ownKeys(O.properties).filter(function(P) {
         return !keys.includes(P);
     });
     return keys;

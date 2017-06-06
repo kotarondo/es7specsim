@@ -43,7 +43,7 @@ Syntax([
 // 10.1.1
 function UTF16Encoding(cp) {
     Assert(0 <= cp && cp <= 0x10FFFF);
-    if (cp <= 65535) return cp;
+    if (cp <= 65535) return String.fromCharCode(cp);
     var cu1 = Math.floor((cp - 65536) / 1024) + 0xD800;
     var cu2 = modulo((cp - 65536), 1024) + 0xDC00;
     return String.fromCharCode(cu1, cu2);

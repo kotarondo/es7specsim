@@ -67,10 +67,16 @@ function expand_concreteCompletion(raw) {
         'try{var $1=$2;$1=NormalCompletion($1)}catch(_e){if(!(_e instanceof Completion))throw _e;$1=_e}');
 }
 
+function expand_throw(raw) {
+    return raw.replace(/throw (\$.*);/g,
+        'throw Completion({Type:"throw",Value:$1,Target:empty});');
+}
+
 for (var filename of filenames) {
     var text = fs.readFileSync(path.join(__dirname, 'src', filename), 'utf8');
-    var code = expand_concreteCompletion(text);
-    vm.runInThisContext(code, {
+    var text = expand_concreteCompletion(text);
+    var text = expand_throw(text);
+    vm.runInThisContext(text, {
         filename: filename,
         displayErrors: true,
     });
@@ -80,14 +86,16 @@ function expand_TypedArray(raw, __TypedArray__) {
     return raw.replace(/__TypedArray__/g, __TypedArray__);
 }
 
-var text = fs.readFileSync(path.join(__dirname, 'src', '2224-typed-array-constructor.js'), 'utf8');
+var template = fs.readFileSync(path.join(__dirname, 'src', '2224-typed-array-constructor.js'), 'utf8');
 for (var __TypedArray__ in Table50) {
-    var code = expand_TypedArray(text, __TypedArray__);
-    vm.runInThisContext(code, {
+    var text = expand_TypedArray(template, __TypedArray__);
+    var text = expand_concreteCompletion(text);
+    var text = expand_throw(text);
+    vm.runInThisContext(text, {
         filename: __TypedArray__ + '.js',
         displayErrors: true,
     });
 }
 
-create_implicit_definitions_on_chain_productions();
 create_implicit_static_semantic_rule_Contains();
+create_implicit_definitions_on_chain_productions();
