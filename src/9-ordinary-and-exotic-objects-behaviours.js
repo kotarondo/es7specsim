@@ -475,9 +475,8 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
     } catch (e) {
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
-        if (e instanceof PendingTailCall) {
+        if (e instanceof PendingTailCall) { // clarify the specification
             var value = Call(e.func, e.thisValue, e.argList);
-            // clarify the specification
             if (Type(value) === 'Object') return value;
             if (kind === "base") return thisArgument;
             if (value !== undefined) throw $TypeError();

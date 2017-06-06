@@ -54,7 +54,6 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.StatementList.Contains('super') || this.StatementList.Contains('NewTarget')) {
             // TODO implements as sspecified
-            // clarify the specification: "the source code containing super is eval code" means "this ScriptBody is eval code" or "super is in eval code"? ex. eval("(()=>super())()")
             if (!(GetThisEnvironment() instanceof FunctionEnvironmentRecord)) throw EarlySyntaxError();
         }
         if (this.StatementList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
@@ -76,9 +75,9 @@ Static_Semantics('IsStrict', [
 // 15.1.3
 Static_Semantics('LexicallyDeclaredNames', [
 
-    'Script: [empty]',
+    'Script: [empty]', // clarify the specification
     function() {
-        return []; // clarify the specification
+        return [];
     },
 
     'ScriptBody: StatementList',
@@ -90,9 +89,9 @@ Static_Semantics('LexicallyDeclaredNames', [
 // 15.1.4
 Static_Semantics('LexicallyScopedDeclarations', [
 
-    'Script: [empty]',
+    'Script: [empty]', // clarify the specification
     function() {
-        return []; // clarify the specification
+        return [];
     },
 
     'ScriptBody: StatementList',
@@ -104,9 +103,9 @@ Static_Semantics('LexicallyScopedDeclarations', [
 // 15.1.5
 Static_Semantics('VarDeclaredNames', [
 
-    'Script: [empty]',
+    'Script: [empty]', // clarify the specification
     function() {
-        return []; // clarify the specification
+        return [];
     },
 
     'ScriptBody: StatementList',
@@ -118,9 +117,9 @@ Static_Semantics('VarDeclaredNames', [
 // 15.1.6
 Static_Semantics('VarScopedDeclarations', [
 
-    'Script: [empty]',
+    'Script: [empty]', // clarify the specification
     function() {
-        return []; // clarify the specification
+        return [];
     },
 
     'ScriptBody: StatementList',

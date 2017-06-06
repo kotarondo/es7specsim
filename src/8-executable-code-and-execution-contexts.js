@@ -989,19 +989,13 @@ function remove_from_the_execution_context_stack(ctx) {
 }
 
 // 8.3.1
-function GetActiveScriptOrModule() {
+function GetActiveScriptOrModule() { // clarify the specification
     if (the_execution_context_stack.length === 0) return null;
     for (var i = the_execution_context_stack.length - 1; i >= 0; i--) {
         var ec = the_execution_context_stack[i];
-        // clarify the specification
-        // if (ec.Function && ec.Function.ScriptOrModule !== null) return ec.Function.ScriptOrModule;
         if (ec.ScriptOrModule !== null) return ec.ScriptOrModule;
     }
     return null;
-    // clarify the specification
-    // var ec = the_running_execution_context;
-    // Assert(ec.ScriptOrModule !== null);
-    // return ec.ScriptOrModule;
 }
 
 // 8.3.2

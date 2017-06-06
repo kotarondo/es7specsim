@@ -127,25 +127,25 @@ Static_Semantics('Early Errors', [
 
 Static_Semantics('ContainsDuplicateLabels', [
 
-    'FunctionStatementList: [empty]',
+    'FunctionStatementList: [empty]', // clarify the specification
     function(labelSet) {
-        return false; // clarify the specification
+        return false;
     },
 ]);
 
 Static_Semantics('ContainsUndefinedBreakTarget', [
 
-    'FunctionStatementList: [empty]',
+    'FunctionStatementList: [empty]', // clarify the specification
     function(labelSet) {
-        return false; // clarify the specification
+        return false;
     },
 ]);
 
 Static_Semantics('ContainsUndefinedContinueTarget', [
 
-    'FunctionStatementList: [empty]',
+    'FunctionStatementList: [empty]', // clarify the specification
     function(iterationSet, labelSet) {
-        return false; // clarify the specification
+        return false;
     },
 ]);
 
