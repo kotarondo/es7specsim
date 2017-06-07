@@ -198,29 +198,27 @@ function EvalDeclarationInstantiation(body, varEnv, lexEnv, strict) {
 // 18.2.2
 function global_isFinite(number) {
     var num = ToNumber(number);
-    // Here we rely on underlying virtual machine.
-    return isFinite(num);
+    return Number.isFinite(num);
 }
 
 // 18.2.3
 function global_isNaN(number) {
     var num = ToNumber(number);
-    // Here we rely on underlying virtual machine.
-    return isNaN(num);
+    return Number.isNaN(num);
 }
 
 // 18.2.4
 function global_parseFloat(string) {
     var inputString = ToString(string);
     // Here we rely on underlying virtual machine.
-    return parseFloat(inputString);
+    return Number.parseFloat(inputString);
 }
 
 // 18.2.5
 function global_parseInt(string, radix) {
     var inputString = ToString(string);
     // Here we rely on underlying virtual machine.
-    return parseInt(inputString);
+    return Number.parseInt(inputString);
 }
 
 // 18.2.6 URI Handling Functions

@@ -1653,7 +1653,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var expr = this.UnaryExpression.Evaluation();
         var oldValue = ToNumber(GetValue(expr));
-        if (isNaN(oldValue)) return NaN;
+        if (Number.isNaN(oldValue)) return NaN;
         return -oldValue;
     },
 ]);

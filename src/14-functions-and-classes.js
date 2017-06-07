@@ -1573,7 +1573,7 @@ function IsInTailPosition(nonterminal) {
     if (!nonterminal.strict) return false;
     if (!nonterminal.is_contained_within('FunctionBody', 'ConciseBody')) return false;
     var body = nonterminal.most_close_container('FunctionBody', 'ConciseBody');
-    if (body.nested.is('GeneratorBody')) return false;
+    if (body.nested && body.nested.goal === 'GeneratorBody') return false;
     return body.HasProductionInTailPosition(nonterminal);
 }
 

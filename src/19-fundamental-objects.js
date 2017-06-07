@@ -425,6 +425,7 @@ function Function_prototype_bind(thisArg, ...args) {
 
 // 19.2.3.3
 function Function_prototype_call(thisArg, ...args) {
+    var func = this;
     if (IsCallable(func) === false) throw $TypeError();
     var argList = args;
     throw new PendingTailCall(func, thisArg, argList); // PrepareForTailCall()
@@ -434,6 +435,7 @@ function Function_prototype_call(thisArg, ...args) {
 
 // 19.2.3.5
 function Function_prototype_toString() {
+    var func = this;
     if (func instanceof BoundFunctionExoticObject) {
         return "function anonymous(){ ... }"; //TODO
     }
@@ -443,7 +445,7 @@ function Function_prototype_toString() {
     throw $TypeError();
 }
 
-// 19.2.3.6
+// 19.2.3.6 Function.prototype [ @@hasInstance ] ( V )
 function Function_prototype_hasInstance(V) {
     var F = this;
     return OrdinaryHasInstance(F, V);
@@ -596,7 +598,7 @@ function Symbol_prototype_valueOf() {
     return s.SymbolData;
 }
 
-// 19.4.3.4
+// 19.4.3.4 Symbol.prototype [ @@toPrimitive ] ( hint )
 function Symbol_prototype_toPrimitive(hint) {
     var s = this;
     if (Type(s) === 'Symbol') return s;

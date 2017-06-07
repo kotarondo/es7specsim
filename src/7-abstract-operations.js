@@ -85,7 +85,7 @@ function ToBoolean(argument) {
         case 'Boolean':
             return argument;
         case 'Number':
-            if (argument === 0 || isNaN(argument)) return false;
+            if (argument === 0 || Number.isNaN(argument)) return false;
             return true;
         case 'String':
             if (argument === "") return false;
@@ -128,7 +128,7 @@ function ToNumber_Applied_to_the_String_Type(argument) {
 // 7.1.4
 function ToInteger(argument) {
     var number = ToNumber(argument);
-    if (isNaN(number)) return +0;
+    if (Number.isNaN(number)) return +0;
     if (number === 0) return number;
     if (number < 0) return -Math.floor(-number);
     return Math.floor(number);
@@ -185,7 +185,7 @@ function ToUint8(argument) {
 // 7.1.11
 function ToUint8Clamp(argument) {
     var number = ToNumber(argument);
-    if (isNaN(number)) return +0;
+    if (Number.isNaN(number)) return +0;
     if (number <= 0) return +0;
     if (number >= 255) return 255;
     var f = Math.floor(number);
@@ -330,7 +330,7 @@ function IsExtensible(O) {
 // 7.2.6
 function IsInteger(argument) {
     if (Type(argument) !== 'Number') return false;
-    if (isNaN(argument) || argument === +Infinity || argument === -Infinity) return false;
+    if (Number.isNaN(argument) || argument === +Infinity || argument === -Infinity) return false;
     if (Math.floor(Math.abs(argument)) !== Math.abs(argument)) return false;
     return true;
 }
@@ -355,7 +355,7 @@ function IsRegExp(argument) {
 function SameValue(x, y) {
     if (Type(x) !== Type(y)) return false;
     if (Type(x) === 'Number') {
-        if (isNaN(x) && isNaN(y)) return true;
+        if (Number.isNaN(x) && Number.isNaN(y)) return true;
         if (x === 0 && y === 0 && 1 / (x * y) === -Infinity) return false;
         if (x === y) return true;
         return false;
@@ -367,7 +367,7 @@ function SameValue(x, y) {
 function SameValueZero(x, y) {
     if (Type(x) !== Type(y)) return false;
     if (Type(x) === 'Number') {
-        if (isNaN(x) && isNaN(y)) return true;
+        if (Number.isNaN(x) && Number.isNaN(y)) return true;
         if (x === y) return true;
         return false;
     }

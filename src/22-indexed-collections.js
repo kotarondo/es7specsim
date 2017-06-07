@@ -793,7 +793,7 @@ function Array_prototype_sort(comparefn) {
         if (y === undefined) return -1;
         if (comparefn !== undefined) {
             var v = ToNumber(Call(comparefn, undefined, [x, y]));
-            if (isNaN(v)) return +0;
+            if (Number.isNaN(v)) return +0;
             return v;
         }
         var xString = ToString(x);
@@ -1781,12 +1781,12 @@ function TypedArray_prototype_sort(comparefn) {
         if (comparefn !== undefined) {
             var v = Call(comparefn, undefined, [x, y]);
             if (IsDetachedBuffer(buffer) === true) throw $TypeError();
-            if (isNaN(v)) return +0;
+            if (Number.isNaN(v)) return +0;
             return v;
         }
-        if (isNaN(x) && isNaN(y)) return +0;
-        if (isNaN(x)) return 1;
-        if (isNaN(y)) return -1;
+        if (Number.isNaN(x) && Number.isNaN(y)) return +0;
+        if (Number.isNaN(x)) return 1;
+        if (Number.isNaN(y)) return -1;
         if (x < y) return -1;
         if (x > y) return 1;
         if (is_negative_zero(x) && is_positive_zero(y)) return -1;
