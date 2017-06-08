@@ -347,7 +347,7 @@ function IsRegExp(argument) {
     if (Type(argument) !== 'Object') return false;
     var isRegExp = Get(argument, wellKnownSymbols['@@match']);
     if (isRegExp !== undefined) return ToBoolean(isRegExp);
-    if (argument.RegExpMatcher) return true;
+    if ('RegExpMatcher' in argument) return true;
     return false;
 }
 
@@ -612,7 +612,7 @@ function Invoke(V, P, argumentsList) {
 // 7.3.19
 function OrdinaryHasInstance(C, O) {
     if (IsCallable(C) === false) return false;
-    if (C.BoundTargetFunction !== undefined) {
+    if ('BoundTargetFunction' in C) {
         var BC = C.BoundTargetFunction;
         return InstanceofOperator(O, BC);
     }
@@ -658,7 +658,7 @@ function EnumerableOwnNames(O) {
 // 7.3.22
 function GetFunctionRealm(obj) {
     Assert(IsCallable(obj) === true);
-    if (obj.Realm !== undefined) {
+    if ('Realm' in obj) {
         return obj.Realm;
     }
     if (obj instanceof BoundFunctionExoticObject) {
@@ -753,10 +753,10 @@ function CreateListIterator(list) {
 function ListIterator_next() {
     var O = this;
     var f = active_function_object;
-    if (O.IteratorNext === undefined) throw $TypeError();
+    if (!('IteratorNext' in O)) throw $TypeError();
     var next = O.IteratorNext;
     if (SameValue(f, next) === false) throw $TypeError();
-    if (O.IteratedList === undefined) throw $TypeError();
+    if (!('IteratedList' in O)) throw $TypeError();
     var list = O.IteratedList;
     var index = O.ListIteratorNextIndex;
     var len = list.length;

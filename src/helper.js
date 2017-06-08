@@ -67,6 +67,18 @@ function modulo(x, y) {
     return x - y * Math.floor(x / y);
 }
 
+function is_digit_char(c) {
+    if (c.length !== 1) return false;
+    return ('0123456789'.indexOf(c) >= 0);
+}
+
+function mv_of_digit_char(c) {
+    Assert(c.length === 1);
+    var x = '0123456789'.indexOf(c);
+    Assert(x >= 0);
+    return x;
+}
+
 function is_hexdigit_char(c) {
     if (c.length !== 1) return false;
     return ('0123456789ABCDEFabcdef'.indexOf(c) >= 0);
@@ -103,11 +115,13 @@ function define_method(c, n, v) {
     });
 }
 
-define_method(String, 'is_an_element_of', function(a) {
-    return a.includes(this.valueOf());
-});
-
 define_method(Array, 'contains', Array.prototype.includes);
+
+define_method(String, 'contains', String.prototype.includes);
+
+define_method(String, 'is_an_element_of', function(a) {
+    return a.contains(this.valueOf());
+});
 
 define_method(Array, 'contains_any_duplicate_entries', function() {
     return (this.length !== new Set(this).size);

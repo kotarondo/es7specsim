@@ -37,19 +37,19 @@
 // 22.1 Array Objects
 
 // 22.1.1
-function $Array() {
+function Array$() {
     switch (arguments.length) {
         case 0:
-            return $Array$1.apply(this, arguments);
+            return Array$1.apply(this, arguments);
         case 1:
-            return $Array$2.apply(this, arguments);
+            return Array$2.apply(this, arguments);
         default:
-            return $Array$3.apply(this, arguments);
+            return Array$3.apply(this, arguments);
     }
 }
 
 // 22.1.1.1
-function $Array$1() {
+function Array$1() {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs === 0);
     if (NewTarget === undefined) var newTarget = active_function_object
@@ -59,7 +59,7 @@ function $Array$1() {
 }
 
 // 22.1.1.2
-function $Array$2(len) {
+function Array$2(len) {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs === 1);
     if (NewTarget === undefined) var newTarget = active_function_object
@@ -79,7 +79,7 @@ function $Array$2(len) {
 }
 
 // 22.1.1.3
-function $Array$3(...items) {
+function Array$3(...items) {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs >= 2);
     if (NewTarget === undefined) var newTarget = active_function_object
@@ -192,7 +192,7 @@ function Array_of(...items) {
 
 // 22.1.2.4 Array.prototype
 
-// 22.1.2.5
+// 22.1.2.5 get Array [ @@species ]
 function get_Array_species() {
     return this;
 }
@@ -498,7 +498,7 @@ function Array_prototype_lastIndexOf(searchElement, fromIndex) {
             var same = StrictEqualityComparison(searchElement, elementK);
             if (same === true) return k;
         }
-        k++;
+        k--;
     }
     return -1;
 }
@@ -988,7 +988,7 @@ function CreateArrayIterator(array, kind) {
 
 // 22.1.5.2 The %ArrayIteratorPrototype% Object
 
-// 22.1.5.2.1
+// 22.1.5.2.1 %ArrayIteratorPrototype%.next( )
 function ArrayIteratorPrototype_next() {
     var O = this;
     if (Type(O) !== 'Object') throw $TypeError();
@@ -1040,7 +1040,7 @@ const Table50 = {
 
 // 22.2.1.1 %TypedArray%()
 
-function $TypedArray() {
+function TypedArray$() {
     throw $TypeError();
 }
 
@@ -1108,7 +1108,7 @@ function TypedArray_of(...items) {
 
 // 22.2.2.3 %TypedArray%.prototype
 
-// 22.2.2.4
+// 22.2.2.4 get %TypedArray% [ @@species ]
 function get_TypedArray_species() {
     return this;
 }

@@ -40,7 +40,7 @@
 
 // 20.1.1.1
 
-function $Number(value) {
+function Number$(value) {
     if (arguments.length === 0) var n = +0;
     else var n = ToNumber(value);
     if (NewTarget === undefined) return n;
@@ -145,7 +145,7 @@ function Number_prototype_toFixed(fractionDigits) {
 // 20.1.3.4
 function Number_prototype_toLocaleString(reserved1, reserved2) {
     var x = thisNumberValue(this);
-    return x.toLocaleString(reserved1, reserved2); // implementation-dependent
+    return x.toLocaleString(); // implementation-dependent
 }
 
 // 20.1.3.5
@@ -614,19 +614,19 @@ function TimeClip(time) {
 
 // 20.3.2 The Date Constructor
 
-function $Date() {
+function Date$() {
     switch (arguments.length) {
         case 0:
-            return $Date$3.apply(this, arguments);
+            return Date$3.apply(this, arguments);
         case 1:
-            return $Date$2.apply(this, arguments);
+            return Date$2.apply(this, arguments);
         default:
-            return $Date$1.apply(this, arguments);
+            return Date$1.apply(this, arguments);
     }
 }
 
 // 20.3.2.1
-function $Date$1(year, month, date, hours, minutes, seconds, ms) {
+function Date$1(year, month, date, hours, minutes, seconds, ms) {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs >= 2);
     if (NewTarget !== undefined) {
@@ -655,7 +655,7 @@ function $Date$1(year, month, date, hours, minutes, seconds, ms) {
 }
 
 // 20.3.2.2
-function $Date$2(value) {
+function Date$2(value) {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs === 1);
     if (NewTarget !== undefined) {
@@ -679,7 +679,7 @@ function $Date$2(value) {
 }
 
 // 20.3.2.3
-function $Date$3() {
+function Date$3() {
     var numberOfArgs = arguments.length;
     Assert(numberOfArgs === 0);
     if (NewTarget !== undefined) {
@@ -1086,7 +1086,7 @@ function Date_prototype_toJSON(key) {
 function Date_prototype_toLocaleDateString(reserved1, reserved2) {
     var t = thisTimeValue(this);
     try {
-        return (new Date(t)).toLocaleDateString(reserved1, reserved2); // implementation-dependent
+        return (new Date(t)).toLocaleDateString(); // implementation-dependent
     } catch (e) {
         throw $RangeError();
     }
@@ -1096,7 +1096,7 @@ function Date_prototype_toLocaleDateString(reserved1, reserved2) {
 function Date_prototype_toLocaleString(reserved1, reserved2) {
     var t = thisTimeValue(this);
     try {
-        return (new Date(t)).toLocaleString(reserved1, reserved2); // implementation-dependent
+        return (new Date(t)).toLocaleString(); // implementation-dependent
     } catch (e) {
         throw $RangeError();
     }
@@ -1106,7 +1106,7 @@ function Date_prototype_toLocaleString(reserved1, reserved2) {
 function Date_prototype_toLocaleTimeString(reserved1, reserved2) {
     var t = thisTimeValue(this);
     try {
-        return (new Date(t)).toLocaleString(reserved1, reserved2); // implementation-dependent
+        return (new Date(t)).toLocaleString(); // implementation-dependent
     } catch (e) {
         throw $RangeError();
     }
@@ -1138,7 +1138,7 @@ function ToDateString(tv) {
 function Date_prototype_toTimeString() {
     var t = thisTimeValue(this);
     try {
-        return (new Date(t)).toTimeString(reserved1, reserved2); // implementation-dependent
+        return (new Date(t)).toTimeString(); // implementation-dependent
     } catch (e) {
         throw $RangeError();
     }
@@ -1148,7 +1148,7 @@ function Date_prototype_toTimeString() {
 function Date_prototype_toUTCString() {
     var t = thisTimeValue(this);
     try {
-        return (new Date(t)).toUTCString(reserved1, reserved2); // implementation-dependent
+        return (new Date(t)).toUTCString(); // implementation-dependent
     } catch (e) {
         throw $RangeError();
     }

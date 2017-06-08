@@ -39,7 +39,7 @@
 // 19.1.1 The Object Constructor
 
 // 19.1.1.1
-function $Object(value) {
+function Object$(value) {
     if (!(NewTarget === undefined || NewTarget === active_function_object)) {
         return OrdinaryCreateFromConstructor(NewTarget, "%ObjectPrototype%");
     }
@@ -289,7 +289,7 @@ function Object_prototype_valueOf() {
 // 19.2.1 The Function Constructor
 
 // 19.2.1.1
-function $Function() {
+function Function$() {
     var C = active_function_object;
     var args = arguments;
     return CreateDynamicFunction(C, NewTarget, "normal", args);
@@ -464,7 +464,7 @@ function Function_prototype_hasInstance(V) {
 // 19.3.1 The Boolean Constructor
 
 // 19.3.1.1
-function $Boolean(value) {
+function Boolean$(value) {
     var b = ToBoolean(value);
     if (NewTarget === undefined) return b;
     var O = OrdinaryCreateFromConstructor(NewTarget, "%BooleanPrototype%", ['BooleanData']);
@@ -509,7 +509,7 @@ function Boolean_prototype_valueOf() {
 // 19.4.1 The Symbol Constructor
 
 // 19.4.1.1
-function $Symbol(description) {
+function Symbol$(description) {
     if (NewTarget !== undefined) throw $TypeError();
     if (description === undefined) var descString = undefined;
     else var descString = ToString(description);
@@ -616,7 +616,7 @@ function Symbol_prototype_toPrimitive(hint) {
 // 19.5.1 The Error Constructor
 
 // 19.5.1.1
-function $Error(message) {
+function Error$(message) {
     if (NewTarget === undefined) var newTarget = active_function_object;
     else var newTarget = NewTarget;
     var O = OrdinaryCreateFromConstructor(newTarget, "%ErrorPrototype%", ['ErrorData']);
@@ -676,7 +676,7 @@ function Error_prototype_toString() {
 // 19.5.6.1 NativeError Constructors
 
 // 19.5.6.1.1
-function $NativeError(name, message) {
+function NativeError$(name, message) {
     if (NewTarget === undefined) var newTarget = active_function_object;
     else var newTarget = NewTarget;
     var O = OrdinaryCreateFromConstructor(newTarget, "%" + name + "Prototype%", ['ErrorData']);
@@ -689,24 +689,24 @@ function $NativeError(name, message) {
 }
 
 const NativeError_constructors = {
-    EvalError: $NativeError.bind(null, 'EvalError'),
-    RangeError: $NativeError.bind(null, 'RangeError'),
-    ReferenceError: $NativeError.bind(null, 'ReferenceError'),
-    SyntaxError: $NativeError.bind(null, 'SyntaxError'),
-    TypeError: $NativeError.bind(null, 'TypeError'),
-    URIError: $NativeError.bind(null, 'URIError'),
+    EvalError: NativeError$.bind(null, 'EvalError'),
+    RangeError: NativeError$.bind(null, 'RangeError'),
+    ReferenceError: NativeError$.bind(null, 'ReferenceError'),
+    SyntaxError: NativeError$.bind(null, 'SyntaxError'),
+    TypeError: NativeError$.bind(null, 'TypeError'),
+    URIError: NativeError$.bind(null, 'URIError'),
 };
 
-function create_NativeError(name, message) {
+function call_NativeError(name, message) {
     return currentRealm.Intrinsics['%' + name + '%'].Call(null, [message]);
 }
 
-const $EvalError = create_NativeError.bind(null, 'EvalError');
-const $RangeError = create_NativeError.bind(null, 'RangeError');
-const $ReferenceError = create_NativeError.bind(null, 'ReferenceError');
-const $SyntaxError = create_NativeError.bind(null, 'SyntaxError');
-const $TypeError = create_NativeError.bind(null, 'TypeError');
-const $URIError = create_NativeError.bind(null, 'URIError');
+const $EvalError = call_NativeError.bind(null, 'EvalError');
+const $RangeError = call_NativeError.bind(null, 'RangeError');
+const $ReferenceError = call_NativeError.bind(null, 'ReferenceError');
+const $SyntaxError = call_NativeError.bind(null, 'SyntaxError');
+const $TypeError = call_NativeError.bind(null, 'TypeError');
+const $URIError = call_NativeError.bind(null, 'URIError');
 
 // 19.5.6.2 Properties of the NativeError Constructors
 

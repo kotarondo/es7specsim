@@ -935,8 +935,8 @@ function parseCharacterEscapeSequence() {
             return Production['CharacterEscapeSequence:: SingleEscapeCharacter'](nt);
     }
     if (isDecimalDigit(c)) throw EarlySyntaxError();
-    var nt = Production['NonEscapeCharacter:: SourceCharacter but_not_one_of_EscapeCharacter_or_LineTerminator']();
-    nt.char = c;
+    var nt = parseSourceCharacter();
+    var nt = Production['NonEscapeCharacter:: SourceCharacter but_not_one_of_EscapeCharacter_or_LineTerminator'](nt);
     return Production['CharacterEscapeSequence:: NonEscapeCharacter'](nt);
 }
 
