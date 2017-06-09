@@ -189,10 +189,7 @@ function Static_Semantics(method, arr) {
         }
         for (var name of prods) {
             var proto = ProductionPrototype[name];
-            if (!proto) {
-                console.log('unknown production', name);
-                continue;
-            }
+            Assert(proto);
             Object.defineProperty(e, 'name', {
                 value: name + '.' + method
             });
@@ -202,10 +199,7 @@ function Static_Semantics(method, arr) {
                 }
                 proto[method].push(e);
             } else {
-                if (method in proto) {
-                    console.log('duplicate method', method, name);
-                    continue;
-                }
+                Assert(!(method in proto));
                 proto[method] = e;
             }
         }

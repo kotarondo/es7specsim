@@ -566,7 +566,7 @@ const msPerHour = 3600000;
 
 // 20.3.1.12
 function MakeTime(hour, min, sec, ms) {
-    if (!(isFinite(hour) && isFinite(min) && isFinite(sec) && isFinite(ms))) return NaN;
+    if (!(Number.isFinite(hour) && Number.isFinite(min) && Number.isFinite(sec) && Number.isFinite(ms))) return NaN;
     var h = ToInteger(hour);
     var m = ToInteger(min);
     var s = ToInteger(sec);
@@ -577,7 +577,7 @@ function MakeTime(hour, min, sec, ms) {
 
 // 20.3.1.13
 function MakeDay(year, month, date) {
-    if (!(isFinite(year) && isFinite(month) && isFinite(date))) return NaN;
+    if (!(Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(date))) return NaN;
     var y = ToInteger(year);
     var m = ToInteger(month);
     var dt = ToInteger(date);
@@ -601,13 +601,13 @@ function MakeDay(year, month, date) {
 
 // 20.3.1.14
 function MakeDate(day, time) {
-    if (!(isFinite(day) && isFinite(time))) return NaN;
+    if (!(Number.isFinite(day) && Number.isFinite(time))) return NaN;
     return day * msPerDay + time;
 }
 
 // 20.3.1.15
 function TimeClip(time) {
-    if (!isFinite(time)) return NaN;
+    if (!Number.isFinite(time)) return NaN;
     if (Math.abs(time) > 8.64e15) return NaN;
     var clippedTime = ToInteger(time);
     if (is_negative_zero(clippedTime)) var clippedTime = +0;
@@ -727,7 +727,7 @@ function Date_UTC(year, month, date, hours, minutes, seconds, ms) {
     else var s = 0;
     if (arguments.length >= 7) var milli = ToNumber(ms);
     else var milli = 0;
-    if (y !== NaN && 0 <= ToInteger(y) && ToInteger(y) <= 99) var yr = 1900 + ToInteger(y);
+    if (!Number.isNaN(y) && 0 <= ToInteger(y) && ToInteger(y) <= 99) var yr = 1900 + ToInteger(y);
     else var yr = y;
     return TimeClip(MakeDate(MakeDay(yr, m, dt), MakeTime(h, min, s, milli)));
 }
