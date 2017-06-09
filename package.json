@@ -1,0 +1,32 @@
+{
+    "name": "es7specsim",
+    "version": "0.0.1",
+    "description": "JavaScript Specification Simulator (ECMAScript 2016)",
+    "author": "Kotaro Endo <kotarondo@gmail.com>",
+    "license": "BSD-3-Clause",
+    "keywords": [
+        "javascript"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/kotarondo/es7specsim.git"
+    },
+    "bugs": {
+        "url": "https://github.com/kotarondo/es7specsim/issues"
+    },
+    "engines": {
+        "node": ">=6.5"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "test262-parser": ">=2.0.0"
+    },
+    "files": [
+        "src",
+        "loader.js",
+        "index.js"
+    ],
+    "scripts": {
+        "test": "./test/run-tests"
+    }
+}
