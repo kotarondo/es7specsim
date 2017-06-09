@@ -974,7 +974,6 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%RegExp%', 'prototype', intrinsics['%RegExpPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 21.2.4.1
     intrinsic_accessor(realmRec, '%RegExp%', wellKnownSymbols['@@species'], get_RegExp_species, undefined, { name: '[Symbol.species]' }); // 21.2.4.2
     intrinsic_property(realmRec, '%RegExpPrototype%', 'constructor', intrinsics['%RegExp%']); // 21.2.5.1
-
     intrinsic_function(realmRec, '%RegExpPrototype%', 'exec', RegExp_prototype_exec, 1); // 21.2.5.2
     intrinsic_accessor(realmRec, '%RegExpPrototype%', 'flags', get_RegExp_prototype_flags); // 21.2.5.3
     intrinsic_accessor(realmRec, '%RegExpPrototype%', 'global', get_RegExp_prototype_global); // 21.2.5.4
@@ -989,11 +988,6 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%RegExpPrototype%', 'test', RegExp_prototype_test, 1); // 21.2.5.13
     intrinsic_function(realmRec, '%RegExpPrototype%', 'toString', RegExp_prototype_toString, 0); // 21.2.5.14
     intrinsic_accessor(realmRec, '%RegExpPrototype%', 'unicode', get_RegExp_prototype_unicode); // 21.2.5.15
-
-
-
-
-    //TODO
 
     intrinsics['%Array%'] = intrinsic_constructor(realmRec, 'Array', Array$, 1); // 22.1.1
     intrinsics['%ArrayPrototype%'] = ArrayCreate(0, intrinsics['%ObjectPrototype%']); // 22.1.3
@@ -1086,8 +1080,70 @@ function CreateIntrinsics(realmRec) {
         intrinsic_property(realmRec, '%' + __TypedArray__ + 'Prototype%', 'constructor', intrinsics['%' + __TypedArray__ + '%']); // 22.2.6.2
     }
 
-    //TODO
+    intrinsics['%Map%'] = intrinsic_constructor(realmRec, 'Map', Map$, 0); // 23.1.1
+    intrinsics['%MapPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 23.1.3
+    intrinsics['%MapIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 23.1.5.2
+    intrinsic_property(realmRec, '%Map%', 'prototype', intrinsics['%MapPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 23.1.2.1
+    intrinsic_accessor(realmRec, '%Map%', wellKnownSymbols['@@species'], get_Map_species, undefined, { name: '[Symbol.species]' }); // 23.1.2.2
+    intrinsic_function(realmRec, '%MapPrototype%', 'clear', Map_prototype_clear, 0); // 23.1.3.1
+    intrinsic_property(realmRec, '%MapPrototype%', 'constructor', intrinsics['%Map%']); // 23.1.3.2
+    intrinsic_function(realmRec, '%MapPrototype%', 'delete', Map_prototype_delete, 1); // 23.1.3.3
+    intrinsic_function(realmRec, '%MapPrototype%', 'entries', Map_prototype_entries, 0); // 23.1.3.4
+    intrinsic_function(realmRec, '%MapPrototype%', 'forEach', Map_prototype_forEach, 1); // 23.1.3.5
+    intrinsic_function(realmRec, '%MapPrototype%', 'get', Map_prototype_get, 1); // 23.1.3.6
+    intrinsic_function(realmRec, '%MapPrototype%', 'has', Map_prototype_has, 1); // 23.1.3.7
+    intrinsic_function(realmRec, '%MapPrototype%', 'keys', Map_prototype_keys, 0); // 23.1.3.8
+    intrinsic_function(realmRec, '%MapPrototype%', 'set', Map_prototype_set, 2); // 23.1.3.9
+    intrinsic_accessor(realmRec, '%MapPrototype%', 'size', get_Map_prototype_size); // 23.1.3.10
+    intrinsic_function(realmRec, '%MapPrototype%', 'values', Map_prototype_values, 0); // 23.1.3.11
+    intrinsic_property(realmRec, '%MapPrototype%', wellKnownSymbols['@@iterator'], Get(intrinsics['%MapPrototype%'], 'entries')); // 23.1.3.12
+    intrinsic_property(realmRec, '%MapPrototype%', wellKnownSymbols['@@toStringTag'], "Map", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.1.3.13
+    intrinsic_function(realmRec, '%MapIteratorPrototype%', 'next', MapIteratorPrototype_next, 0); // 23.1.5.2.1
+    intrinsic_property(realmRec, '%MapIteratorPrototype%', wellKnownSymbols['@@toStringTag'], "Map Iterator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.1.5.2.2
 
+    intrinsics['%Set%'] = intrinsic_constructor(realmRec, 'Set', Set$, 0); // 23.2.1
+    intrinsics['%SetPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 23.2.3
+    intrinsics['%SetIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 23.2.5.2
+    intrinsic_property(realmRec, '%Set%', 'prototype', intrinsics['%SetPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 23.2.2.1
+    intrinsic_accessor(realmRec, '%Set%', wellKnownSymbols['@@species'], get_Set_species, undefined, { name: '[Symbol.species]' }); // 23.2.2.2
+    intrinsic_function(realmRec, '%SetPrototype%', 'add', Set_prototype_add, 1); // 23.2.3.1
+    intrinsic_function(realmRec, '%SetPrototype%', 'clear', Set_prototype_clear, 0); // 23.2.3.2
+    intrinsic_property(realmRec, '%SetPrototype%', 'constructor', intrinsics['%Set%']); // 23.2.3.3
+    intrinsic_function(realmRec, '%SetPrototype%', 'delete', Set_prototype_delete, 1); // 23.2.3.4
+    intrinsic_function(realmRec, '%SetPrototype%', 'entries', Set_prototype_entries, 0); // 23.2.3.5
+    intrinsic_function(realmRec, '%SetPrototype%', 'forEach', Set_prototype_forEach, 1); // 23.2.3.6
+    intrinsic_function(realmRec, '%SetPrototype%', 'has', Set_prototype_has, 1); // 23.2.3.7
+    intrinsic_accessor(realmRec, '%SetPrototype%', 'size', get_Set_prototype_size); // 23.2.3.9
+    intrinsic_function(realmRec, '%SetPrototype%', 'values', Set_prototype_values, 0); // 23.2.3.10
+    intrinsic_property(realmRec, '%SetPrototype%', 'keys', Get(intrinsics['%SetPrototype%'], 'values')); // 23.2.3.8
+    intrinsic_property(realmRec, '%SetPrototype%', wellKnownSymbols['@@iterator'], Get(intrinsics['%SetPrototype%'], 'values')); // 23.2.3.11
+    intrinsic_property(realmRec, '%SetPrototype%', wellKnownSymbols['@@toStringTag'], "Set", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.2.3.12
+    intrinsic_function(realmRec, '%SetIteratorPrototype%', 'next', SetIteratorPrototype_next, 0); // 23.2.5.2.1
+    intrinsic_property(realmRec, '%SetIteratorPrototype%', wellKnownSymbols['@@toStringTag'], "Set Iterator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.2.5.2.2
+
+    intrinsics['%WeakMap%'] = intrinsic_constructor(realmRec, 'WeakMap', WeakMap$, 0); // 23.3.1
+    intrinsics['%WeakMapPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 23.3.3
+    intrinsic_property(realmRec, '%WeakMap%', 'prototype', intrinsics['%WeakMapPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 23.3.2.1
+    intrinsic_property(realmRec, '%WeakMapPrototype%', 'constructor', intrinsics['%WeakMap%']); // 23.3.3.1
+    intrinsic_function(realmRec, '%WeakMapPrototype%', 'delete', WeakMap_prototype_delete, 1); // 23.3.3.2
+    intrinsic_function(realmRec, '%WeakMapPrototype%', 'get', WeakMap_prototype_get, 1); // 23.3.3.3
+    intrinsic_function(realmRec, '%WeakMapPrototype%', 'has', WeakMap_prototype_has, 1); // 23.3.3.4
+    intrinsic_function(realmRec, '%WeakMapPrototype%', 'set', WeakMap_prototype_set, 2); // 23.3.3.5
+    intrinsic_property(realmRec, '%WeakMapPrototype%', wellKnownSymbols['@@toStringTag'], "WeakMap", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.3.3.6
+
+
+    intrinsics['%WeakSet%'] = intrinsic_constructor(realmRec, 'WeakSet', WeakSet$, 0); // 23.4.1
+    intrinsics['%WeakSetPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 23.4.3
+    intrinsic_property(realmRec, '%WeakSet%', 'prototype', intrinsics['%WeakSetPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 23.4.2.1
+    intrinsic_function(realmRec, '%WeakSetPrototype%', 'add', WeakSet_prototype_add, 1); // 23.4.3.1
+    intrinsic_property(realmRec, '%WeakSetPrototype%', 'constructor', intrinsics['%WeakSet%']); // 23.4.3.2
+    intrinsic_function(realmRec, '%WeakSetPrototype%', 'delete', WeakSet_prototype_delete, 1); // 23.4.3.3
+    intrinsic_function(realmRec, '%WeakSetPrototype%', 'has', WeakSet_prototype_has, 1); // 23.4.3.4
+    intrinsic_property(realmRec, '%WeakSetPrototype%', wellKnownSymbols['@@toStringTag'], "WeakSet", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.4.3.5
+
+
+
+    //TODO
     return intrinsics;
 }
 

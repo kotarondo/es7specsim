@@ -62,6 +62,7 @@ var filenames = [
     '20-numbers-and-dates.js',
     '21-text-processing.js',
     '22-indexed-collections.js',
+    '23-keyed-collection.js',
 ];
 
 function expand_concreteCompletion(raw) {
