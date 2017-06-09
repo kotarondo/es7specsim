@@ -134,12 +134,10 @@ function Array_from(items, mapfn, thisArg) {
                 var mappedValue = concreteCompletion(Call(mapfn, T, [nextValue, k]));
                 if (mappedValue.is_an_abrupt_completion()) return IteratorClose(iterator, mappedValue);
                 var mappedValue = mappedValue.Value;
-            } else {
-                var mappedValue = nextValue;
-                var defineStatus = concreteCompletion(CreateDataPropertyOrThrow(A, Pk, mappedValue));
-                if (defineStatus.is_an_abrupt_completion()) return IteratorClose(iterator, defineStatus);
-                k++;
-            }
+            } else var mappedValue = nextValue;
+            var defineStatus = concreteCompletion(CreateDataPropertyOrThrow(A, Pk, mappedValue));
+            if (defineStatus.is_an_abrupt_completion()) return IteratorClose(iterator, defineStatus);
+            k++;
         }
     }
     var arrayLike = ToObject(items);
@@ -301,10 +299,10 @@ function Array_prototype_every(callbackfn, thisArg) {
             var kValue = Get(O, Pk);
             var testResult = ToBoolean(Call(callbackfn, T, [kValue, k, O]));
             if (testResult === false) return false;
-            k++;
         }
-        return true;
+        k++;
     }
+    return true;
 }
 
 // 22.1.3.6
@@ -345,10 +343,10 @@ function Array_prototype_filter(callbackfn, thisArg) {
                 CreateDataPropertyOrThrow(A, ToString(to), kValue);
                 to++;
             }
-            k++;
         }
-        return A;
+        k++;
     }
+    return A;
 }
 
 // 22.1.3.8

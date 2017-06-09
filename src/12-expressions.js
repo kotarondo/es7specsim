@@ -351,7 +351,7 @@ Static_Semantics('ElisionWidth', [
 
     'Elision: Elision ,',
     function() {
-        var preceding = this.Elision.ElisionWidth;
+        var preceding = this.Elision.ElisionWidth();
         return preceding + 1;
     },
 ]);
@@ -788,6 +788,7 @@ Runtime_Semantics('ArgumentListEvaluation', [
         var templateLiteral = this;
         var siteObj = GetTemplateObject(templateLiteral);
         var firstSub = this.Expression.Evaluation();
+        var firstSub = GetValue(firstSub); // EcmaScript8
         var restSub = this.TemplateSpans.SubstitutionEvaluation();
         Assert(Type(restSub) === 'List');
         return [siteObj, firstSub].concat(restSub);
@@ -840,6 +841,7 @@ Runtime_Semantics('SubstitutionEvaluation', [
     'TemplateMiddleList: TemplateMiddle Expression',
     function() {
         var sub = this.Expression.Evaluation();
+        var sub = GetValue(sub); // EcmaScript8
         return [sub];
     },
 
@@ -847,6 +849,7 @@ Runtime_Semantics('SubstitutionEvaluation', [
     function() {
         var preceding = this.TemplateMiddleList.SubstitutionEvaluation();
         var next = this.Expression.Evaluation();
+        var next = GetValue(next); // EcmaScript8
         preceding.push(next);
         return preceding;
     },
@@ -864,6 +867,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var head = this.TemplateHead.TV();
         var sub = this.Expression.Evaluation();
+        var sub = GetValue(sub); // clarify the specification
         var middle = ToString(sub);
         var tail = this.TemplateSpans.Evaluation();
         return head + middle + tail;
@@ -886,6 +890,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var head = this.TemplateMiddle.TV();
         var sub = this.Expression.Evaluation();
+        var sub = GetValue(sub); // clarify the specification
         var middle = ToString(sub);
         return head + middle;
     },
@@ -895,6 +900,7 @@ Runtime_Semantics('Evaluation', [
         var rest = this.TemplateMiddleList.Evaluation();
         var middle = this.TemplateMiddle.TV();
         var sub = this.Expression.Evaluation();
+        var sub = GetValue(sub); // clarify the specification
         var last = ToString(sub);
         return rest + middle + last;
     },
@@ -2000,7 +2006,7 @@ Runtime_Semantics('Evaluation', [
         var lval = GetValue(lref);
         var rref = this.ShiftExpression.Evaluation();
         var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(rval, lval, { LeftFirst: false });
+        var r = AbstractRelationalComparison(rval, lval, false);
         if (r === undefined) return false;
         else return r;
     },
@@ -2011,7 +2017,7 @@ Runtime_Semantics('Evaluation', [
         var lval = GetValue(lref);
         var rref = this.ShiftExpression.Evaluation();
         var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(rval, lval, { LeftFirst: false });
+        var r = AbstractRelationalComparison(rval, lval, false);
         if (r === true || r === undefined) return false;
         else return true;
     },

@@ -66,6 +66,7 @@ function parseLineTerminatorSequence() {
             if (peekChar() !== '\u000A') {
                 return Production['LineTerminatorSequence:: <CR>']();
             } else {
+                consumeChar('\u000A');
                 return Production['LineTerminatorSequence:: <CR><LF>']();
             }
         case '\u2028':
@@ -903,6 +904,7 @@ function parseEscapeSequence() {
     switch (peekChar()) {
         case '0':
             if (!isDecimalDigit(peekChar(1))) {
+                consumeChar('0');
                 return Production['EscapeSequence:: 0']();
             }
             throw EarlySyntaxError();

@@ -515,7 +515,7 @@ function FunctionAllocate(functionPrototype, strict, functionKind) {
 
 // 9.2.4
 function FunctionInitialize(F, kind, ParameterList, Body, Scope) {
-    var len = ParameterList.ExpectedArgumentCount;
+    var len = ParameterList.ExpectedArgumentCount();
     DefinePropertyOrThrow(F, "length", PropertyDescriptor({ Value: len, Writable: false, Enumerable: false, Configurable: true }));
     var Strict = F.Strict;
     F.Environment = Scope;
@@ -735,12 +735,15 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
     push_onto_the_execution_context_stack(calleeContext);
     Assert(calleeContext === the_running_execution_context);
     try {
+        var savedNewTarget = NewTarget;
         NewTarget = undefined;
         var value = F.steps.apply(thisArgument, argumentsList);
+        NewTarget = savedNewTarget;
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
         return value;
     } catch (e) {
+        NewTarget = savedNewTarget;
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
         if (e instanceof PendingTailCall) {
@@ -762,12 +765,15 @@ function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
     push_onto_the_execution_context_stack(calleeContext);
     Assert(calleeContext === the_running_execution_context);
     try {
+        var savedNewTarget = NewTarget;
         NewTarget = newTarget;
         var value = F.steps.apply(null, argumentsList);
+        NewTarget = savedNewTarget;
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
         return value;
     } catch (e) {
+        NewTarget = savedNewTarget;
         remove_from_the_execution_context_stack(calleeContext);
         Assert(callerContext === the_running_execution_context);
         if (e instanceof PendingTailCall) {

@@ -713,7 +713,7 @@ function CreateIntrinsics(realmRec) {
     intrinsics['%isFinite%'] = intrinsic_function(realmRec, null, 'isFinite', global_isFinite, 1); // 18.2.2
     intrinsics['%isNaN%'] = intrinsic_function(realmRec, null, 'isNaN', global_isNaN, 1); // 18.2.3
     intrinsics['%parseFloat%'] = intrinsic_function(realmRec, null, 'parseFloat', global_parseFloat, 1); // 18.2.4
-    intrinsics['%parseInt%'] = intrinsic_function(realmRec, null, 'parseInt', global_parseInt, 1); // 18.2.5
+    intrinsics['%parseInt%'] = intrinsic_function(realmRec, null, 'parseInt', global_parseInt, 2); // 18.2.5
     intrinsics['%decodeURI%'] = intrinsic_function(realmRec, null, 'decodeURI', global_decodeURI, 1); // 18.2.6.2
     intrinsics['%decodeURIComponent%'] = intrinsic_function(realmRec, null, 'decodeURIComponent', global_decodeURIComponent, 1); // 18.2.6.3
     intrinsics['%encodeURI%'] = intrinsic_function(realmRec, null, 'encodeURI', global_encodeURI, 1); // 18.2.6.4
@@ -746,7 +746,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%ObjectPrototype%', 'toLocaleString', Object_prototype_toLocaleString, 0); // 19.1.3.5
     intrinsic_function(realmRec, '%ObjectPrototype%', 'toString', Object_prototype_toString, 0); // 19.1.3.6
     intrinsics['%ObjProto_toString%'] = Get(intrinsics['%ObjectPrototype%'], 'toString'); // 19.1.3.6
-    intrinsic_function(realmRec, '%ObjectPrototype%', 'valueOf', Object_prototype_valueOf, 1); // 19.1.3.7
+    intrinsic_function(realmRec, '%ObjectPrototype%', 'valueOf', Object_prototype_valueOf, 0); // 19.1.3.7
     intrinsics['%ObjProto_valueOf%'] = Get(intrinsics['%ObjectPrototype%'], 'valueOf'); // 19.1.3.7
 
     intrinsics['%Function%'] = intrinsic_constructor(realmRec, 'Function', Function$, 1); // 19.2.1.1
@@ -796,6 +796,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%ErrorPrototype%', 'constructor', intrinsics['%Error%']); // 19.5.3.1
     intrinsic_property(realmRec, '%ErrorPrototype%', 'message', ''); // 19.5.3.2
     intrinsic_property(realmRec, '%ErrorPrototype%', 'name', "Error"); // 19.5.3.3
+    intrinsic_function(realmRec, '%ErrorPrototype%', 'toString', Error_prototype_toString, 0); // 19.5.3.4
     for (var __NativeError__ of ['EvalError', 'RangeError', 'ReferenceError', 'SyntaxError', 'TypeError', 'URIError']) {
         intrinsics['%' + __NativeError__ + '%'] = intrinsic_constructor(realmRec, __NativeError__, NativeError_constructors[__NativeError__], 1, { proto: intrinsics['%Error%'] }); // 19.5.6.1.1
         intrinsics['%' + __NativeError__ + 'Prototype%'] = ObjectCreate(intrinsics['%ErrorPrototype%']); // 19.5.6.3
@@ -824,12 +825,12 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%Number%', 'POSITIVE_INFINITY', +Infinity, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.1.2.14
     intrinsic_property(realmRec, '%Number%', 'prototype', intrinsics['%NumberPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.1.2.15
     intrinsic_property(realmRec, '%NumberPrototype%', 'constructor', intrinsics['%Number%']); // 20.1.3.1
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_toExponential', Number_prototype_toExponential, 1); // 20.1.3.2
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_toFixed', Number_prototype_toFixed, 1); // 20.1.3.3
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_toLocaleString', Number_prototype_toLocaleString, 0); // 20.1.3.4
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_toPrecision', Number_prototype_toPrecision, 1); // 20.1.3.5
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_toString', Number_prototype_toString, 1); // 20.1.3.6
-    intrinsic_function(realmRec, '%NumberPrototype%', 'Number_prototype_valueOf', Number_prototype_valueOf, 0); // 20.1.3.7
+    intrinsic_function(realmRec, '%NumberPrototype%', 'toExponential', Number_prototype_toExponential, 1); // 20.1.3.2
+    intrinsic_function(realmRec, '%NumberPrototype%', 'toFixed', Number_prototype_toFixed, 1); // 20.1.3.3
+    intrinsic_function(realmRec, '%NumberPrototype%', 'toLocaleString', Number_prototype_toLocaleString, 0); // 20.1.3.4
+    intrinsic_function(realmRec, '%NumberPrototype%', 'toPrecision', Number_prototype_toPrecision, 1); // 20.1.3.5
+    intrinsic_function(realmRec, '%NumberPrototype%', 'toString', Number_prototype_toString, 1); // 20.1.3.6
+    intrinsic_function(realmRec, '%NumberPrototype%', 'valueOf', Number_prototype_valueOf, 0); // 20.1.3.7
 
     intrinsics['%Math%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 20.2
     intrinsic_property(realmRec, '%Math%', 'E', 2.7182818284590452354, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.1
@@ -838,44 +839,44 @@ function CreateIntrinsics(realmRec) {
     intrinsic_property(realmRec, '%Math%', 'LOG10E', 0.4342944819032518, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.4
     intrinsic_property(realmRec, '%Math%', 'LOG2E', 1.4426950408889634, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.5
     intrinsic_property(realmRec, '%Math%', 'PI', 3.1415926535897932, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.6
-    intrinsic_property(realmRec, '%Math%', 'SQRT1_2 ', 0.7071067811865476, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.7
-    intrinsic_property(realmRec, '%Math%', 'SQRT2 ', 1.4142135623730951, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.8
+    intrinsic_property(realmRec, '%Math%', 'SQRT1_2', 0.7071067811865476, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.7
+    intrinsic_property(realmRec, '%Math%', 'SQRT2', 1.4142135623730951, { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 20.2.1.8
     intrinsic_property(realmRec, '%Math%', wellKnownSymbols['@@toStringTag'], "Math", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 20.2.1.9
-    intrinsic_function(realmRec, '%Math%', 'Math_abs', Math_abs, 1); // 20.2.2.1
-    intrinsic_function(realmRec, '%Math%', 'Math_acos', Math_acos, 1); // 20.2.2.2
-    intrinsic_function(realmRec, '%Math%', 'Math_acosh', Math_acosh, 1); // 20.2.2.3
-    intrinsic_function(realmRec, '%Math%', 'Math_asin', Math_asin, 1); // 20.2.2.4
-    intrinsic_function(realmRec, '%Math%', 'Math_asinh', Math_asinh, 1); // 20.2.2.5
-    intrinsic_function(realmRec, '%Math%', 'Math_atan', Math_atan, 1); // 20.2.2.6
-    intrinsic_function(realmRec, '%Math%', 'Math_atanh', Math_atanh, 1); // 20.2.2.7
-    intrinsic_function(realmRec, '%Math%', 'Math_atan2', Math_atan2, 1); // 20.2.2.8
-    intrinsic_function(realmRec, '%Math%', 'Math_cbrt', Math_cbrt, 1); // 20.2.2.9
-    intrinsic_function(realmRec, '%Math%', 'Math_ceil', Math_ceil, 1); // 20.2.2.10
-    intrinsic_function(realmRec, '%Math%', 'Math_clz32', Math_clz32, 1); // 20.2.2.11
-    intrinsic_function(realmRec, '%Math%', 'Math_cos', Math_cos, 1); // 20.2.2.12
-    intrinsic_function(realmRec, '%Math%', 'Math_cosh', Math_cosh, 1); // 20.2.2.13
-    intrinsic_function(realmRec, '%Math%', 'Math_exp', Math_exp, 1); // 20.2.2.14
-    intrinsic_function(realmRec, '%Math%', 'Math_expm1', Math_expm1, 1); // 20.2.2.15
-    intrinsic_function(realmRec, '%Math%', 'Math_floor', Math_floor, 1); // 20.2.2.16
-    intrinsic_function(realmRec, '%Math%', 'Math_fround', Math_fround, 1); // 20.2.2.17
-    intrinsic_function(realmRec, '%Math%', 'Math_hypot', Math_hypot, 2); // 20.2.2.18
-    intrinsic_function(realmRec, '%Math%', 'Math_imul', Math_imul, 1); // 20.2.2.19
-    intrinsic_function(realmRec, '%Math%', 'Math_log', Math_log, 1); // 20.2.2.20
-    intrinsic_function(realmRec, '%Math%', 'Math_log1p', Math_log1p, 1); // 20.2.2.21
-    intrinsic_function(realmRec, '%Math%', 'Math_log10', Math_log10, 1); // 20.2.2.22
-    intrinsic_function(realmRec, '%Math%', 'Math_log2', Math_log2, 1); // 20.2.2.23
-    intrinsic_function(realmRec, '%Math%', 'Math_max', Math_max, 2); // 20.2.2.24
-    intrinsic_function(realmRec, '%Math%', 'Math_min', Math_min, 2); // 20.2.2.25
-    intrinsic_function(realmRec, '%Math%', 'Math_pow', Math_pow, 2); // 20.2.2.26
-    intrinsic_function(realmRec, '%Math%', 'Math_random', Math_random, 0); // 20.2.2.27
-    intrinsic_function(realmRec, '%Math%', 'Math_round', Math_round, 1); // 20.2.2.28
-    intrinsic_function(realmRec, '%Math%', 'Math_sign', Math_sign, 1); // 20.2.2.29
-    intrinsic_function(realmRec, '%Math%', 'Math_sin', Math_sin, 1); // 20.2.2.30
-    intrinsic_function(realmRec, '%Math%', 'Math_sinh', Math_sinh, 1); // 20.2.2.31
-    intrinsic_function(realmRec, '%Math%', 'Math_sqrt', Math_sqrt, 1); // 20.2.2.32
-    intrinsic_function(realmRec, '%Math%', 'Math_tan', Math_tan, 1); // 20.2.2.33
-    intrinsic_function(realmRec, '%Math%', 'Math_tanh', Math_tanh, 1); // 20.2.2.34
-    intrinsic_function(realmRec, '%Math%', 'Math_trunc', Math_trunc, 1); // 20.2.2.35
+    intrinsic_function(realmRec, '%Math%', 'abs', Math_abs, 1); // 20.2.2.1
+    intrinsic_function(realmRec, '%Math%', 'acos', Math_acos, 1); // 20.2.2.2
+    intrinsic_function(realmRec, '%Math%', 'acosh', Math_acosh, 1); // 20.2.2.3
+    intrinsic_function(realmRec, '%Math%', 'asin', Math_asin, 1); // 20.2.2.4
+    intrinsic_function(realmRec, '%Math%', 'asinh', Math_asinh, 1); // 20.2.2.5
+    intrinsic_function(realmRec, '%Math%', 'atan', Math_atan, 1); // 20.2.2.6
+    intrinsic_function(realmRec, '%Math%', 'atanh', Math_atanh, 1); // 20.2.2.7
+    intrinsic_function(realmRec, '%Math%', 'atan2', Math_atan2, 2); // 20.2.2.8
+    intrinsic_function(realmRec, '%Math%', 'cbrt', Math_cbrt, 1); // 20.2.2.9
+    intrinsic_function(realmRec, '%Math%', 'ceil', Math_ceil, 1); // 20.2.2.10
+    intrinsic_function(realmRec, '%Math%', 'clz32', Math_clz32, 1); // 20.2.2.11
+    intrinsic_function(realmRec, '%Math%', 'cos', Math_cos, 1); // 20.2.2.12
+    intrinsic_function(realmRec, '%Math%', 'cosh', Math_cosh, 1); // 20.2.2.13
+    intrinsic_function(realmRec, '%Math%', 'exp', Math_exp, 1); // 20.2.2.14
+    intrinsic_function(realmRec, '%Math%', 'expm1', Math_expm1, 1); // 20.2.2.15
+    intrinsic_function(realmRec, '%Math%', 'floor', Math_floor, 1); // 20.2.2.16
+    intrinsic_function(realmRec, '%Math%', 'fround', Math_fround, 1); // 20.2.2.17
+    intrinsic_function(realmRec, '%Math%', 'hypot', Math_hypot, 2); // 20.2.2.18
+    intrinsic_function(realmRec, '%Math%', 'imul', Math_imul, 2); // 20.2.2.19
+    intrinsic_function(realmRec, '%Math%', 'log', Math_log, 1); // 20.2.2.20
+    intrinsic_function(realmRec, '%Math%', 'log1p', Math_log1p, 1); // 20.2.2.21
+    intrinsic_function(realmRec, '%Math%', 'log10', Math_log10, 1); // 20.2.2.22
+    intrinsic_function(realmRec, '%Math%', 'log2', Math_log2, 1); // 20.2.2.23
+    intrinsic_function(realmRec, '%Math%', 'max', Math_max, 2); // 20.2.2.24
+    intrinsic_function(realmRec, '%Math%', 'min', Math_min, 2); // 20.2.2.25
+    intrinsic_function(realmRec, '%Math%', 'pow', Math_pow, 2); // 20.2.2.26
+    intrinsic_function(realmRec, '%Math%', 'random', Math_random, 0); // 20.2.2.27
+    intrinsic_function(realmRec, '%Math%', 'round', Math_round, 1); // 20.2.2.28
+    intrinsic_function(realmRec, '%Math%', 'sign', Math_sign, 1); // 20.2.2.29
+    intrinsic_function(realmRec, '%Math%', 'sin', Math_sin, 1); // 20.2.2.30
+    intrinsic_function(realmRec, '%Math%', 'sinh', Math_sinh, 1); // 20.2.2.31
+    intrinsic_function(realmRec, '%Math%', 'sqrt', Math_sqrt, 1); // 20.2.2.32
+    intrinsic_function(realmRec, '%Math%', 'tan', Math_tan, 1); // 20.2.2.33
+    intrinsic_function(realmRec, '%Math%', 'tanh', Math_tanh, 1); // 20.2.2.34
+    intrinsic_function(realmRec, '%Math%', 'trunc', Math_trunc, 1); // 20.2.2.35
 
     intrinsics['%Date%'] = intrinsic_constructor(realmRec, 'Date', Date$, 7); // 20.3.2
     intrinsics['%DatePrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 20.3.4
@@ -902,7 +903,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%DatePrototype%', 'getUTCMinutes', Date_prototype_getUTCMinutes, 0); // 20.3.4.17
     intrinsic_function(realmRec, '%DatePrototype%', 'getUTCMonth', Date_prototype_getUTCMonth, 0); // 20.3.4.18
     intrinsic_function(realmRec, '%DatePrototype%', 'getUTCSeconds', Date_prototype_getUTCSeconds, 0); // 20.3.4.19
-    intrinsic_function(realmRec, '%DatePrototype%', 'setDate', Date_prototype_setDate, 0); // 20.3.4.20
+    intrinsic_function(realmRec, '%DatePrototype%', 'setDate', Date_prototype_setDate, 1); // 20.3.4.20
     intrinsic_function(realmRec, '%DatePrototype%', 'setFullYear', Date_prototype_setFullYear, 3); // 20.3.4.21
     intrinsic_function(realmRec, '%DatePrototype%', 'setHours', Date_prototype_setHours, 4); // 20.3.4.22
     intrinsic_function(realmRec, '%DatePrototype%', 'setMilliseconds', Date_prototype_setMilliseconds, 1); // 20.3.4.23
@@ -930,44 +931,45 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%DatePrototype%', wellKnownSymbols['@@toPrimitive'], Date_prototype_toPrimitive, 1, { name: '[Symbol.toPrimitive]', attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 20.3.4.45
 
     intrinsics['%String%'] = intrinsic_constructor(realmRec, 'String', String$, 1); // 21.1.1
-    intrinsics['%StringPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.1.3 // clarify the specification; StringCreate?
-    intrinsics['%StringPrototype%'].StringData = ""; // 21.1.3
+    // intrinsics['%StringPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.1.3
+    // intrinsics['%StringPrototype%'].StringData = ""; // 21.1.3
+    intrinsics['%StringPrototype%'] = StringCreate("", intrinsics['%ObjectPrototype%']); // EcmaScript8
     intrinsics['%StringIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 21.1.5.2
-    intrinsic_function(realmRec, '%String%', 'String_fromCharCode', String_fromCharCode, 1); // 21.1.2.1
-    intrinsic_function(realmRec, '%String%', 'String_fromCodePoint', String_fromCodePoint, 1); // 21.1.2.2
+    intrinsic_function(realmRec, '%String%', 'fromCharCode', String_fromCharCode, 1); // 21.1.2.1
+    intrinsic_function(realmRec, '%String%', 'fromCodePoint', String_fromCodePoint, 1); // 21.1.2.2
     intrinsic_property(realmRec, '%String%', 'prototype', intrinsics['%StringPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 21.1.2.3
-    intrinsic_function(realmRec, '%String%', 'String_raw', String_raw, 1); // 21.1.2.4
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_charAt', String_prototype_charAt, 1); // 21.1.3.1
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_charCodeAt', String_prototype_charCodeAt, 1); // 21.1.3.2
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_codePointAt', String_prototype_codePointAt, 1); // 21.1.3.3
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_concat', String_prototype_concat, 1); // 21.1.3.4
+    intrinsic_function(realmRec, '%String%', 'raw', String_raw, 1); // 21.1.2.4
+    intrinsic_function(realmRec, '%StringPrototype%', 'charAt', String_prototype_charAt, 1); // 21.1.3.1
+    intrinsic_function(realmRec, '%StringPrototype%', 'charCodeAt', String_prototype_charCodeAt, 1); // 21.1.3.2
+    intrinsic_function(realmRec, '%StringPrototype%', 'codePointAt', String_prototype_codePointAt, 1); // 21.1.3.3
+    intrinsic_function(realmRec, '%StringPrototype%', 'concat', String_prototype_concat, 1); // 21.1.3.4
     intrinsic_property(realmRec, '%StringPrototype%', 'constructor', intrinsics['%String%']); // 21.1.3.5
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_endsWith', String_prototype_endsWith, 1); // 21.1.3.6
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_includes', String_prototype_includes, 1); // 21.1.3.7
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_indexOf', String_prototype_indexOf, 1); // 21.1.3.8
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_lastIndexOf', String_prototype_lastIndexOf, 1); // 21.1.3.9
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_localeCompare', String_prototype_localeCompare, 1); // 21.1.3.10
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_match', String_prototype_match, 1); // 21.1.3.11
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_normalize', String_prototype_normalize, 0); // 21.1.3.12
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_repeat', String_prototype_repeat, 1); // 21.1.3.13
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_replace', String_prototype_replace, 2); // 21.1.3.14
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_search', String_prototype_search, 1); // 21.1.3.15
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_slice', String_prototype_slice, 2); // 21.1.3.16
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_split', String_prototype_split, 1); // 21.1.3.17
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_startsWith', String_prototype_startsWith, 1); // 21.1.3.18
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_substring', String_prototype_substring, 1); // 21.1.3.19
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_toLocaleLowerCase', String_prototype_toLocaleLowerCase, 0); // 21.1.3.20
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_toLocaleUpperCase', String_prototype_toLocaleUpperCase, 0); // 21.1.3.21
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_toLowerCase', String_prototype_toLowerCase, 0); // 21.1.3.22
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_toString', String_prototype_toString, 0); // 21.1.3.23
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_toUpperCase', String_prototype_toUpperCase, 0); // 21.1.3.24
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_trim', String_prototype_trim, 0); // 21.1.3.25
-    intrinsic_function(realmRec, '%StringPrototype%', 'String_prototype_valueOf', String_prototype_valueOf, 1); // 21.1.3.26
+    intrinsic_function(realmRec, '%StringPrototype%', 'endsWith', String_prototype_endsWith, 1); // 21.1.3.6
+    intrinsic_function(realmRec, '%StringPrototype%', 'includes', String_prototype_includes, 1); // 21.1.3.7
+    intrinsic_function(realmRec, '%StringPrototype%', 'indexOf', String_prototype_indexOf, 1); // 21.1.3.8
+    intrinsic_function(realmRec, '%StringPrototype%', 'lastIndexOf', String_prototype_lastIndexOf, 1); // 21.1.3.9
+    intrinsic_function(realmRec, '%StringPrototype%', 'localeCompare', String_prototype_localeCompare, 1); // 21.1.3.10
+    intrinsic_function(realmRec, '%StringPrototype%', 'match', String_prototype_match, 1); // 21.1.3.11
+    intrinsic_function(realmRec, '%StringPrototype%', 'normalize', String_prototype_normalize, 0); // 21.1.3.12
+    intrinsic_function(realmRec, '%StringPrototype%', 'repeat', String_prototype_repeat, 1); // 21.1.3.13
+    intrinsic_function(realmRec, '%StringPrototype%', 'replace', String_prototype_replace, 2); // 21.1.3.14
+    intrinsic_function(realmRec, '%StringPrototype%', 'search', String_prototype_search, 1); // 21.1.3.15
+    intrinsic_function(realmRec, '%StringPrototype%', 'slice', String_prototype_slice, 2); // 21.1.3.16
+    intrinsic_function(realmRec, '%StringPrototype%', 'split', String_prototype_split, 2); // 21.1.3.17
+    intrinsic_function(realmRec, '%StringPrototype%', 'startsWith', String_prototype_startsWith, 1); // 21.1.3.18
+    intrinsic_function(realmRec, '%StringPrototype%', 'substring', String_prototype_substring, 2); // 21.1.3.19
+    intrinsic_function(realmRec, '%StringPrototype%', 'toLocaleLowerCase', String_prototype_toLocaleLowerCase, 0); // 21.1.3.20
+    intrinsic_function(realmRec, '%StringPrototype%', 'toLocaleUpperCase', String_prototype_toLocaleUpperCase, 0); // 21.1.3.21
+    intrinsic_function(realmRec, '%StringPrototype%', 'toLowerCase', String_prototype_toLowerCase, 0); // 21.1.3.22
+    intrinsic_function(realmRec, '%StringPrototype%', 'toString', String_prototype_toString, 0); // 21.1.3.23
+    intrinsic_function(realmRec, '%StringPrototype%', 'toUpperCase', String_prototype_toUpperCase, 0); // 21.1.3.24
+    intrinsic_function(realmRec, '%StringPrototype%', 'trim', String_prototype_trim, 0); // 21.1.3.25
+    intrinsic_function(realmRec, '%StringPrototype%', 'valueOf', String_prototype_valueOf, 0); // 21.1.3.26
     intrinsic_function(realmRec, '%StringPrototype%', wellKnownSymbols['@@iterator'], String_prototype_iterator, 0, { name: '[Symbol.iterator]' }); // 21.1.3.27
     intrinsic_function(realmRec, '%StringIteratorPrototype%', 'next', StringIteratorPrototype_next, 0); // 21.1.5.2.1
     intrinsic_property(realmRec, '%StringIteratorPrototype%', wellKnownSymbols['@@toStringTag'], "String Iterator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 21.1.5.2.2
 
-    intrinsics['%RegExp%'] = intrinsic_constructor(realmRec, 'RegExp', RegExp$, 1); // 21.2.3.1
+    intrinsics['%RegExp%'] = intrinsic_constructor(realmRec, 'RegExp', RegExp$, 2); // 21.2.3.1
     intrinsics['%RegExpPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.2.5
     intrinsic_property(realmRec, '%RegExp%', 'prototype', intrinsics['%RegExpPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 21.2.4.1
     intrinsic_accessor(realmRec, '%RegExp%', wellKnownSymbols['@@species'], get_RegExp_species, undefined, { name: '[Symbol.species]' }); // 21.2.4.2
@@ -1167,7 +1169,7 @@ function remove_from_the_execution_context_stack(ctx) {
 }
 
 // 8.3.1
-function GetActiveScriptOrModule() { // clarify the specification
+function GetActiveScriptOrModule() { // EcmaScript8
     if (the_execution_context_stack.length === 0) return null;
     for (var i = the_execution_context_stack.length - 1; i >= 0; i--) {
         var ec = the_execution_context_stack[i];

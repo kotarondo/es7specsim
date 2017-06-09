@@ -9,8 +9,6 @@ vm.runInThisContext(text, {
     displayErrors: true,
 });
 
-assert(get_symbol_description(Symbol('test desc')) === 'test desc');
-
 assert(is_negative_zero(-0) === true);
 assert(is_negative_zero(+0) === false);
 

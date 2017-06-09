@@ -70,20 +70,32 @@ function Type(x) {
 // 6.1.4 The String Type
 // 6.1.5 The Symbol Type
 
+function new_unique_symbol(desc) {
+    if (desc === undefined) return Symbol();
+    Assert(typeof desc === 'string');
+    return Symbol('#' + desc);
+}
+
+function get_symbol_description(sym) {
+    var m = /^Symbol\(#(.*)\)$/.exec(sym.toString());
+    if (m === null) return undefined;
+    return m[1];
+}
+
 // 6.1.5.1 Well-Known Symbols
 
 const wellKnownSymbols = {
-    '@@hasInstance': Symbol("Symbol.hasInstance"),
-    '@@isConcatSpreadable': Symbol("Symbol.isConcatSpreadable"),
-    '@@iterator': Symbol("Symbol.iterator"),
-    '@@match': Symbol("Symbol.match"),
-    '@@replace': Symbol("Symbol.replace"),
-    '@@search': Symbol("Symbol.search"),
-    '@@species': Symbol("Symbol.species"),
-    '@@split': Symbol("Symbol.split"),
-    '@@toPrimitive': Symbol("Symbol.toPrimitive"),
-    '@@toStringTag': Symbol("Symbol.toStringTag"),
-    '@@unscopables': Symbol("Symbol.unscopables"),
+    '@@hasInstance': new_unique_symbol("Symbol.hasInstance"),
+    '@@isConcatSpreadable': new_unique_symbol("Symbol.isConcatSpreadable"),
+    '@@iterator': new_unique_symbol("Symbol.iterator"),
+    '@@match': new_unique_symbol("Symbol.match"),
+    '@@replace': new_unique_symbol("Symbol.replace"),
+    '@@search': new_unique_symbol("Symbol.search"),
+    '@@species': new_unique_symbol("Symbol.species"),
+    '@@split': new_unique_symbol("Symbol.split"),
+    '@@toPrimitive': new_unique_symbol("Symbol.toPrimitive"),
+    '@@toStringTag': new_unique_symbol("Symbol.toStringTag"),
+    '@@unscopables': new_unique_symbol("Symbol.unscopables"),
 };
 
 // 6.1.6 The Number Type

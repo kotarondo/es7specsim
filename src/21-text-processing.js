@@ -59,12 +59,11 @@ function String_fromCharCode(...codeUnits) {
     while (nextIndex < length) {
         var next = codeUnits[nextIndex];
         var nextCU = ToUint16(next);
-        elemets.push(nextCU);
+        elements.push(nextCU);
         var nextIndex = nextIndex + 1;
     }
-    return String.fromCharCode(elements);
+    return String.fromCharCode(...elements);
 }
-//The length property of the fromCharCode function === 1;
 
 // 21.1.2.2
 function String_fromCodePoint(...codePoints) {
@@ -81,7 +80,6 @@ function String_fromCodePoint(...codePoints) {
     }
     return elements.join('');
 }
-//The length property of the fromCodePoint function === 1;
 
 // 21.1.2.3 String.prototype
 
@@ -110,8 +108,6 @@ function String_raw(template, ...substitutions) {
 }
 
 // 21.1.3 Properties of the String Prototype Object
-
-// clarify the specification: "The String prototype object is an ordinary object"; not an exotic object?
 
 function thisStringValue(value) {
     if (Type(value) === 'String') return value;
@@ -168,7 +164,6 @@ function String_prototype_concat(...args) {
     }
     return R;
 }
-//The length property of the concat method === 1;
 
 // 21.1.3.5 String.prototype.constructor
 
@@ -186,10 +181,9 @@ function String_prototype_endsWith(searchString, endPosition) {
     var searchLength = searchStr.length;
     var start = end - searchLength;
     if (start < 0) return false;
-    if (S.substring(start) === searchStr) return true;
+    if (S.substring(start, start + searchLength) === searchStr) return true;
     else return false;
 }
-//length === 1;
 
 // 21.1.3.7
 function String_prototype_includes(searchString, position) {
@@ -200,12 +194,11 @@ function String_prototype_includes(searchString, position) {
     var searchStr = ToString(searchString);
     var pos = ToInteger(position);
     var len = S.length;
-    var start = min(max(pos, 0), len);
+    var start = Math.min(Math.max(pos, 0), len);
     var searchLen = searchStr.length;
     // Here we rely on underlying virtual machine.
     return S.includes(searchStr, start);
 }
-//length === 1;
 
 // 21.1.3.8
 function String_prototype_indexOf(searchString, position) {
@@ -214,12 +207,11 @@ function String_prototype_indexOf(searchString, position) {
     var searchStr = ToString(searchString);
     var pos = ToInteger(position);
     var len = S.length;
-    var start = min(max(pos, 0), len);
+    var start = Math.min(Math.max(pos, 0), len);
     var searchLen = searchStr.length;
     // Here we rely on underlying virtual machine.
     return S.indexOf(searchStr, start);
 }
-//length === 1;
 
 // 21.1.3.9
 function String_prototype_lastIndexOf(searchString, position) {
@@ -230,12 +222,11 @@ function String_prototype_lastIndexOf(searchString, position) {
     if (Number.isNaN(numPos)) var pos = +Infinity;
     else var pos = ToInteger(numPos);
     var len = S.length;
-    var start = min(max(pos, 0), len);
+    var start = Math.min(Math.max(pos, 0), len);
     var searchLen = searchStr.length;
     // Here we rely on underlying virtual machine.
     return S.lastIndexOf(searchStr, start);
 }
-//length === 1;
 
 // 21.1.3.10
 function String_prototype_localeCompare(that, reserved1, reserved2) {
@@ -348,9 +339,9 @@ function GetSubstitution(matched, str, position, captures, replacement) {
                 i++;
                 continue;
             }
-            if (is_digit_char(a)) {
+            if (a !== undefined && is_digit_char(a)) {
                 var x = mv_of_digit_char(a);
-                if (is_digit_char(b)) {
+                if (b !== undefined && is_digit_char(b)) {
                     var y = mv_of_digit_char(b);
                     var nn = x * 10 + y;
                     if (1 <= nn && nn <= m) {
@@ -360,7 +351,6 @@ function GetSubstitution(matched, str, position, captures, replacement) {
                         i += 2;
                         continue;
                     }
-                    // implementation-defined
                 }
                 if (1 <= x && x <= m) {
                     var c = captures[x - 1];
@@ -475,13 +465,12 @@ function String_prototype_startsWith(searchString, position) {
     var searchStr = ToString(searchString);
     var pos = ToInteger(position);
     var len = S.length;
-    var start = min(max(pos, 0), len);
+    var start = Math.min(Math.max(pos, 0), len);
     var searchLength = searchStr.length;
     if (searchLength + start > len) return false;
-    if (S.substring(0, searchLength) === searchStr) return true;
+    if (S.substring(start, start + searchLength) === searchStr) return true;
     else return false;
 }
-//length 1
 
 // 21.1.3.19
 function String_prototype_substring(start, end) {
@@ -559,7 +548,7 @@ function String_prototype_iterator() {
 // 21.1.5 String Iterator Objects
 
 // 21.1.5.1
-function CreateStringIterator() {
+function CreateStringIterator(string) {
     Assert(Type(string) === 'String');
     var iterator = ObjectCreate(currentRealm.Intrinsics['%StringIteratorPrototype%'], ['IteratedString', 'StringIteratorNextIndex']);
     iterator.IteratedString = string;
@@ -585,7 +574,7 @@ function StringIteratorPrototype_next() {
     var first = s.charCodeAt(position);
     if (first < 0xD800 || first > 0xDBFF || position + 1 === len) var resultString = String.fromCharCode(first);
     else {
-        var second = S.charCodeAt(position + 1);
+        var second = s.charCodeAt(position + 1);
         if (second < 0xDC00 || second > 0xDFFF) var resultString = String.fromCharCode(first);
         else var resultString = String.fromCharCode(first, second);
     }
@@ -599,6 +588,8 @@ function StringIteratorPrototype_next() {
 // 21.1.5.3 Properties of String Iterator Instances
 
 // 21.2 RegExp (Regular Expression) Objects
+
+const failure = { failure: true };
 
 // 21.2.3 The RegExp Constructor
 
@@ -778,9 +769,9 @@ function AdvanceStringIndex(S, index, unicode) {
     if (unicode === false) return index + 1;
     var length = S.length;
     if (index + 1 >= length) return index + 1;
-    var first = S[index];
+    var first = S.charCodeAt(index);
     if (first < 0xD800 || first > 0xDBFF) return index + 1;
-    var second = S[index + 1];
+    var second = S.charCodeAt(index + 1);
     if (second < 0xDC00 || second > 0xDFFF) return index + 1;
     return index + 2;
 }
@@ -806,7 +797,7 @@ function get_RegExp_prototype_flags() {
 // 21.2.5.4
 function get_RegExp_prototype_global() {
     var R = this;
-    if (Type(R) !== Object) throw $TypeError();
+    if (Type(R) !== 'Object') throw $TypeError();
     if (!('OriginalFlags' in R)) throw $TypeError();
     var flags = R.OriginalFlags;
     if (flags.contains("g")) return true;

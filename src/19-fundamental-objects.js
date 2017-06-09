@@ -52,7 +52,7 @@ function Object$(value) {
 // 19.1.2.1
 function Object_assign(target, ...sources) {
     var to = ToObject(target);
-    if (argument.length === 1) return to;
+    if (arguments.length === 1) return to;
     for (var nextSource of sources) {
         if (nextSource === undefined || nextSource === null) var keys = [];
         else {
@@ -332,6 +332,7 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
             Assert(parameterGoal === 'FormalParameters[Yield]');
             var parameters = parseFormalParameters('Yield');
         }
+        if (peekToken() !== '') throw EarlySyntaxError();
         setParsingText(bodyText);
         if (goal === 'FunctionBody') {
             var body = parseFunctionBody();
@@ -339,8 +340,10 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
             Assert(goal === 'GeneratorBody');
             var body = parseGeneratorBody();
         }
+        if (peekToken() !== '') throw EarlySyntaxError();
         if (body.ContainsUseStrict()) var strict = true;
         else var strict = false;
+        determineStrictModeCode(parameters, strict);
         determineStrictModeCode(body, strict);
         body.apply_early_error_rules();
         if (strict === true) {
@@ -353,7 +356,6 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
     } catch (e) {
         if (e instanceof EarlySyntaxError) throw $SyntaxError();
         if (e instanceof EarlyReferenceError) throw $ReferenceError(); // TODO: clarify the specification
-        // if (e instanceof EarlyReferenceError) throw $SyntaxError(); // TODO: clarify the specification
         throw e;
     }
     if (body.ContainsUseStrict() === true && parameters.IsSimpleParameterList() === false) throw $SyntaxError();
@@ -513,7 +515,7 @@ function Symbol$(description) {
     if (NewTarget !== undefined) throw $TypeError();
     if (description === undefined) var descString = undefined;
     else var descString = ToString(description);
-    return Symbol(descString);
+    return new_unique_symbol(descString);
 }
 
 // 19.4.2 Properties of the Symbol Constructor
@@ -524,7 +526,7 @@ function Symbol_for(key) {
     for (var e of GlobalSymbolRegistry) {
         if (SameValue(e.Key, stringKey) === true) return e.Symbol;
     }
-    var newSymbol = Symbol(stringKey);
+    var newSymbol = new_unique_symbol(stringKey);
     GlobalSymbolRegistry.push(Record({ Key: stringKey, Symbol: newSymbol }));
     return newSymbol;
 }
@@ -539,7 +541,7 @@ const GlobalSymbolRegistry = [];
 
 // 19.4.2.5
 function Symbol_keyFor(sym) {
-    if (Type(sym) !== Symbol) throw $TypeError();
+    if (Type(sym) !== 'Symbol') throw $TypeError();
     for (var e of GlobalSymbolRegistry) {
         if (SameValue(e.Symbol, sym) === true) return e.Key;
     }

@@ -3280,6 +3280,7 @@ Runtime_Semantics('Evaluation', [
 
     'DebuggerStatement: debugger ;',
     function() {
+        debugger;
         return empty;
     },
 ]);

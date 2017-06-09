@@ -60,7 +60,7 @@ var filenames = [
     '18-the-global-object.js',
     '19-fundamental-objects.js',
     '20-numbers-and-dates.js',
-	'21-text-processing.js',
+    '21-text-processing.js',
     '22-indexed-collections.js',
 ];
 

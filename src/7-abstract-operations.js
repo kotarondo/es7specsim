@@ -381,17 +381,26 @@ function SameValueNonNumber(x, y) {
 }
 
 // 7.2.12
-function AbstractRelationalComparison(x, y, flag) {
-
-    if (flag && flag.LeftFirst === true) {
+function AbstractRelationalComparison(x, y, LeftFirst) {
+    if (LeftFirst === undefined) LeftFirst = true;
+    if (LeftFirst === true) {
         var px = ToPrimitive(x, 'hint Number');
         var py = ToPrimitive(y, 'hint Number');
     } else {
         var py = ToPrimitive(y, 'hint Number');
         var px = ToPrimitive(x, 'hint Number');
     }
-    // Here we rely on underlying virtual machine.
-    return (px < py);
+    if (Type(px) === 'String' && Type(py) === 'String') {
+        // Here we rely on underlying virtual machine.
+        return (px < py);
+    } else {
+        var nx = ToNumber(px);
+        var ny = ToNumber(py);
+        if (Number.isNaN(nx)) return undefined;
+        if (Number.isNaN(ny)) return undefined;
+        // Here we rely on underlying virtual machine.
+        return (px < py);
+    }
 }
 
 // 7.2.13
@@ -405,7 +414,7 @@ function AbstractEqualityComparison(x, y) {
     if (Type(x) === 'String' && Type(y) === 'Number') return AbstractEqualityComparison(ToNumber(x), y);
     if (Type(x) === 'Boolean') return AbstractEqualityComparison(ToNumber(x), y);
     if (Type(y) === 'Boolean') return AbstractEqualityComparison(x, ToNumber(y));
-    if ((Type(x) === 'String' || Type(x) === 'Number' || Type(x) === 'Symbol') && Type(y) === Object) return AbstractEqualityComparison(x, ToPrimitive(y));
+    if ((Type(x) === 'String' || Type(x) === 'Number' || Type(x) === 'Symbol') && Type(y) === 'Object') return AbstractEqualityComparison(x, ToPrimitive(y));
     if (Type(x) === 'Object' && (Type(y) === 'String' || Type(y) === 'Number' || Type(y) === 'Symbol')) return AbstractEqualityComparison(ToPrimitive(x), y);
     return false;
 }

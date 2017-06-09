@@ -64,7 +64,6 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
     } catch (e) {
         if (e instanceof EarlySyntaxError) throw $SyntaxError();
         if (e instanceof EarlyReferenceError) throw $ReferenceError(); // TODO: clarify the specification
-        // if (e instanceof EarlyReferenceError) throw $SyntaxError(); // TODO: clarify the specification
         throw e;
     }
     if (script.Contains('ScriptBody') === false) return undefined;
@@ -217,8 +216,9 @@ function global_parseFloat(string) {
 // 18.2.5
 function global_parseInt(string, radix) {
     var inputString = ToString(string);
+    var R = ToInt32(radix);
     // Here we rely on underlying virtual machine.
-    return Number.parseInt(inputString);
+    return Number.parseInt(inputString, R);
 }
 
 // 18.2.6 URI Handling Functions
@@ -232,7 +232,7 @@ const uriUnescaped = uriAlpha + "0123456789" + uriMark;
 
 // 18.2.6.1.1
 function Encode(string, unescapedSet) {
-    var strLen = string.legnth;
+    var strLen = string.length;
     var R = '';
     var k = 0;
     while (true) {

@@ -129,7 +129,11 @@ function Number_prototype_toExponential(fractionDigits) {
     if (x === -Infinity) return "-Infinity";
     if (f < 0 || f > 20) throw $RangeError();
     // Here we rely on underlying virtual machine.
-    return x.toExponential(f);
+    if (fractionDigits === undefined) {
+        return x.toExponential();
+    } else {
+        return x.toExponential(f);
+    }
 }
 
 // 20.1.3.3
@@ -162,7 +166,7 @@ function Number_prototype_toPrecision(precision) {
 }
 
 // 20.1.3.6
-function Number_prototype_toString([radix]) {
+function Number_prototype_toString(radix) {
     var x = thisNumberValue(this);
     if (arguments.length === 0) var radixNumber = 10;
     else if (radix === undefined) var radixNumber = 10;
@@ -250,7 +254,7 @@ function Math_atanh(x) {
 function Math_atan2(y, x) {
     y = ToNumber(y);
     x = ToNumber(x);
-    return Math.atan2(x);
+    return Math.atan2(y, x);
 }
 
 // 20.2.2.9
@@ -605,7 +609,9 @@ function MakeDate(day, time) {
 function TimeClip(time) {
     if (!isFinite(time)) return NaN;
     if (Math.abs(time) > 8.64e15) return NaN;
-    return ToInteger(time);
+    var clippedTime = ToInteger(time);
+    if (is_negative_zero(clippedTime)) var clippedTime = +0;
+    return clippedTime;
 }
 
 // 20.3.1.16 Date Time String Format
@@ -711,15 +717,15 @@ function Date_parse(string) {
 function Date_UTC(year, month, date, hours, minutes, seconds, ms) {
     var y = ToNumber(year);
     var m = ToNumber(month);
-    if (arguments.length <= 2) var dt = ToNumber(date);
+    if (arguments.length >= 3) var dt = ToNumber(date);
     else var dt = 1;
-    if (arguments.length <= 3) var h = ToNumber(hours);
+    if (arguments.length >= 4) var h = ToNumber(hours);
     else var h = 0;
-    if (arguments.length <= 4) var min = ToNumber(minutes);
+    if (arguments.length >= 5) var min = ToNumber(minutes);
     else var min = 0;
-    if (arguments.length <= 5) var s = ToNumber(seconds);
+    if (arguments.length >= 6) var s = ToNumber(seconds);
     else var s = 0;
-    if (arguments.length <= 6) var milli = ToNumber(ms);
+    if (arguments.length >= 7) var milli = ToNumber(ms);
     else var milli = 0;
     if (y !== NaN && 0 <= ToInteger(y) && ToInteger(y) <= 99) var yr = 1900 + ToInteger(y);
     else var yr = y;
@@ -891,11 +897,11 @@ function Date_prototype_setFullYear(year, month, date) {
 function Date_prototype_setHours(hour, min, sec, ms) {
     var t = LocalTime(thisTimeValue(this));
     var h = ToNumber(hour);
-    if (arguments.legth <= 1) var m = MinFromTime(t);
+    if (arguments.length <= 1) var m = MinFromTime(t);
     else var m = ToNumber(min);
-    if (arguments.legth <= 2) var s = SecFromTime(t);
+    if (arguments.length <= 2) var s = SecFromTime(t);
     else var s = ToNumber(sec);
-    if (arguments.legth <= 3) var milli = msFromTime(t);
+    if (arguments.length <= 3) var milli = msFromTime(t);
     else var milli = ToNumber(ms);
     var date = MakeDate(Day(t), MakeTime(h, m, s, milli));
     var u = TimeClip(UTC(date));
@@ -917,9 +923,9 @@ function Date_prototype_setMilliseconds(ms) {
 function Date_prototype_setMinutes(min, sec, ms) {
     var t = LocalTime(thisTimeValue(this));
     var m = ToNumber(min);
-    if (arguments.legth <= 1) var s = SecFromTime(t);
+    if (arguments.length <= 1) var s = SecFromTime(t);
     else var s = ToNumber(sec);
-    if (arguments.legth <= 2) var milli = msFromTime(t);
+    if (arguments.length <= 2) var milli = msFromTime(t);
     else var milli = ToNumber(ms);
     var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
     var u = TimeClip(UTC(date));
@@ -931,7 +937,7 @@ function Date_prototype_setMinutes(min, sec, ms) {
 function Date_prototype_setMonth(month, date) {
     var t = LocalTime(thisTimeValue(this));
     var m = ToNumber(month);
-    if (arguments.legth <= 1) var dt = DateFromTime(t);
+    if (arguments.length <= 1) var dt = DateFromTime(t);
     else var dt = ToNumber(date);
     var newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
     var u = TimeClip(UTC(newDate));
@@ -943,7 +949,7 @@ function Date_prototype_setMonth(month, date) {
 function Date_prototype_setSeconds(sec, ms) {
     var t = LocalTime(thisTimeValue(this));
     var s = ToNumber(sec);
-    if (arguments.legth <= 1) var milli = msFromTime(t);
+    if (arguments.length <= 1) var milli = msFromTime(t);
     else var milli = ToNumber(ms);
     var date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));
     var u = TimeClip(UTC(date));
@@ -975,9 +981,9 @@ function Date_prototype_setUTCFullYear(year, month, date) {
     var t = thisTimeValue(this);
     if (Number.isNaN(t)) var t = +0;
     var y = ToNumber(year);
-    if (arguments.legth <= 1) var m = MonthFromTime(t);
+    if (arguments.length <= 1) var m = MonthFromTime(t);
     else var m = ToNumber(month);
-    if (arguments.legth <= 2) var dt = DateFromTime(t);
+    if (arguments.length <= 2) var dt = DateFromTime(t);
     else var dt = ToNumber(date);
     var newDate = MakeDate(MakeDay(y, m, dt), TimeWithinDay(t));
     var v = TimeClip(newDate);
@@ -989,11 +995,11 @@ function Date_prototype_setUTCFullYear(year, month, date) {
 function Date_prototype_setUTCHours(hour, min, sec, ms) {
     var t = thisTimeValue(this);
     var h = ToNumber(hour);
-    if (arguments.legth <= 1) var m = MinFromTime(t);
+    if (arguments.length <= 1) var m = MinFromTime(t);
     else var m = ToNumber(min);
-    if (arguments.legth <= 2) var s = SecFromTime(t);
+    if (arguments.length <= 2) var s = SecFromTime(t);
     else var s = ToNumber(sec);
-    if (arguments.legth <= 3) var milli = msFromTime(t);
+    if (arguments.length <= 3) var milli = msFromTime(t);
     else var milli = ToNumber(ms);
     var newDate = MakeDate(Day(t), MakeTime(h, m, s, milli));
     var v = TimeClip(newDate);
@@ -1015,10 +1021,10 @@ function Date_prototype_setUTCMilliseconds(ms) {
 function Date_prototype_setUTCMinutes(min, sec, ms) {
     var t = thisTimeValue(this);
     var m = ToNumber(min);
-    if (arguments.legth <= 1) var s = SecFromTime(t);
+    if (arguments.length <= 1) var s = SecFromTime(t);
     else
         var s = ToNumber(sec);
-    if (arguments.legth <= 2) var milli = msFromTime(t);
+    if (arguments.length <= 2) var milli = msFromTime(t);
     else
         var milli = ToNumber(ms);
     var date = MakeDate(Day(t), MakeTime(HourFromTime(t), m, s, milli));
@@ -1031,7 +1037,7 @@ function Date_prototype_setUTCMinutes(min, sec, ms) {
 function Date_prototype_setUTCMonth(month, date) {
     var t = thisTimeValue(this);
     var m = ToNumber(month);
-    if (arguments.legth <= 1) var dt = DateFromTime(t);
+    if (arguments.length <= 1) var dt = DateFromTime(t);
     else
         var dt = ToNumber(date);
     var newDate = MakeDate(MakeDay(YearFromTime(t), m, dt), TimeWithinDay(t));
@@ -1044,7 +1050,7 @@ function Date_prototype_setUTCMonth(month, date) {
 function Date_prototype_setUTCSeconds(sec, ms) {
     var t = thisTimeValue(this);
     var s = ToNumber(sec);
-    if (arguments.legth <= 1) var milli = msFromTime(t);
+    if (arguments.length <= 1) var milli = msFromTime(t);
     else
         var milli = ToNumber(ms);
     var date = MakeDate(Day(t), MakeTime(HourFromTime(t), MinFromTime(t), s, milli));

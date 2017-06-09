@@ -38,10 +38,6 @@ function Assert(cond) {
     throw new Error("Assertion failed");
 }
 
-function get_symbol_description(sym) {
-    return /^Symbol\((.*)\)$/.exec(sym.toString())[1];
-}
-
 function is_primitive_value(x) {
     switch (typeof x) {
         case 'undefined':
