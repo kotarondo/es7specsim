@@ -388,7 +388,12 @@ function CompletePropertyDescriptor(Desc) {
 // 6.2.6.1
 function CreateByteDataBlock(size) {
     Assert(size >= 0);
-    var db = new Int8Array(size);
+    try {
+        var ab = new ArrayBuffer(size);
+    } catch (e) {
+        throw $RangeError();
+    }
+    var db = new DataView(new ArrayBuffer(size), 0, size);
     return db;
 }
 
@@ -396,15 +401,18 @@ function CreateByteDataBlock(size) {
 function CopyDataBlockBytes(toBlock, toIndex, fromBlock, fromIndex, count) {
     Assert(fromBlock !== toBlock);
     Assert(fromIndex >= 0 && toIndex >= 0 && count >= 0);
-    var fromSize = fromBlock.length;
+    var fromSize = fromBlock.byteLength;
     Assert(fromIndex + count <= fromSize);
-    var toSize = toBlock.length;
+    var toSize = toBlock.byteLength;
     Assert(toIndex + count <= toSize);
+    /*
     while (count > 0) {
         toBlock[toIndex] = fromBlock[fromIndex];
         toIndex++;
         fromIndex++;
         count--;
-        return empty;
     }
+	*/
+    (new Uint8Array(toBlock.buffer)).set(new Uint8Array(fromBlock.buffer, fromIndex, count), toIndex);
+    return empty;
 }

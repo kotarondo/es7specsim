@@ -684,31 +684,6 @@ function CreateIntrinsics(realmRec) {
     thrower.DefineOwnProperty('length', PropertyDescriptor({ Value: 0, Writable: false, Enumerable: false, Configurable: false })); // 9.2.7.1
     thrower.Extensible = false; // 9.2.7.1
 
-    intrinsics['%ArrayBuffer%'] =
-        intrinsics['%ArrayBufferPrototype%'] =
-        intrinsics['%DataView%'] =
-        intrinsics['%DataViewPrototype%'] =
-        intrinsics['%Generator%'] =
-        intrinsics['%GeneratorPrototype%'] =
-        intrinsics['%IteratorPrototype%'] =
-        intrinsics['%JSON%'] =
-        intrinsics['%Map%'] =
-        intrinsics['%MapIteratorPrototype%'] =
-        intrinsics['%MapPrototype%'] =
-        intrinsics['%Promise%'] =
-        intrinsics['%PromisePrototype%'] =
-        intrinsics['%Proxy%'] =
-        intrinsics['%Reflect%'] =
-        intrinsics['%Set%'] =
-        intrinsics['%SetIteratorPrototype%'] =
-        intrinsics['%SetPrototype%'] =
-        intrinsics['%WeakMap%'] =
-        intrinsics['%WeakMapPrototype%'] =
-        intrinsics['%WeakSet%'] =
-        intrinsics['%WeakSetPrototype%'] = ObjectCreate(objProto);
-    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
-
-
     intrinsics['%eval%'] = intrinsic_function(realmRec, null, 'eval', global_eval, 1); // 18.2.1
     intrinsics['%isFinite%'] = intrinsic_function(realmRec, null, 'isFinite', global_isFinite, 1); // 18.2.2
     intrinsics['%isNaN%'] = intrinsic_function(realmRec, null, 'isNaN', global_isNaN, 1); // 18.2.3
@@ -1141,9 +1116,55 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%WeakSetPrototype%', 'has', WeakSet_prototype_has, 1); // 23.4.3.4
     intrinsic_property(realmRec, '%WeakSetPrototype%', wellKnownSymbols['@@toStringTag'], "WeakSet", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 23.4.3.5
 
+    intrinsics['%ArrayBuffer%'] = intrinsic_constructor(realmRec, 'ArrayBuffer', ArrayBuffer$, 1); // 24.1.2
+    intrinsics['%ArrayBufferPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 24.1.4
+    intrinsic_function(realmRec, '%ArrayBuffer%', 'isView', ArrayBuffer_isView, 1); // 24.1.3.1
+    intrinsic_property(realmRec, '%ArrayBuffer%', 'prototype', intrinsics['%ArrayBufferPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 24.1.3.2
+    intrinsic_accessor(realmRec, '%ArrayBuffer%', wellKnownSymbols['@@species'], get_ArrayBuffer_species, undefined, { name: '[Symbol.species]' }); // 24.1.3.3
+    intrinsic_accessor(realmRec, '%ArrayBufferPrototype%', 'byteLength', get_ArrayBuffer_prototype_byteLength); // 24.1.4.1
+    intrinsic_property(realmRec, '%ArrayBufferPrototype%', 'constructor', intrinsics['%ArrayBuffer%']); // 24.1.4.2
+    intrinsic_function(realmRec, '%ArrayBufferPrototype%', 'slice', ArrayBuffer_prototype_slice, 2); // 24.1.4.3
+    intrinsic_property(realmRec, '%ArrayBufferPrototype%', wellKnownSymbols['@@toStringTag'], "ArrayBuffer", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 24.1.4.4
 
+    intrinsics['%DataView%'] = intrinsic_constructor(realmRec, 'DataView', DataView$, 3); // 24.2.2
+    intrinsics['%DataViewPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 24.2.4
+    intrinsic_property(realmRec, '%DataView%', 'prototype', intrinsics['%DataViewPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 24.2.3.1
+    intrinsic_accessor(realmRec, '%DataViewPrototype%', 'buffer', get_DataView_prototype_buffer); // 24.2.4.1
+    intrinsic_accessor(realmRec, '%DataViewPrototype%', 'byteLength', get_DataView_prototype_byteLength); // 24.2.4.2
+    intrinsic_accessor(realmRec, '%DataViewPrototype%', 'byteOffset', get_DataView_prototype_byteOffset); // 24.2.4.3
+    intrinsic_property(realmRec, '%DataViewPrototype%', 'constructor', intrinsics['%DataView%']); // 24.2.4.4
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getFloat32', DataView_prototype_getFloat32, 1); // 24.2.4.5
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getFloat64', DataView_prototype_getFloat64, 1); // 24.2.4.6
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getInt8', DataView_prototype_getInt8, 1); // 24.2.4.7
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getInt16', DataView_prototype_getInt16, 1); // 24.2.4.8
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getInt32', DataView_prototype_getInt32, 1); // 24.2.4.9
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getUint8', DataView_prototype_getUint8, 1); // 24.2.4.10
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getUint16', DataView_prototype_getUint16, 1); // 24.2.4.11
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'getUint32', DataView_prototype_getUint32, 1); // 24.2.4.12
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setFloat32', DataView_prototype_setFloat32, 2); // 24.2.4.13
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setFloat64', DataView_prototype_setFloat64, 2); // 24.2.4.14
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setInt8', DataView_prototype_setInt8, 2); // 24.2.4.15
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setInt16', DataView_prototype_setInt16, 2); // 24.2.4.16
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setInt32', DataView_prototype_setInt32, 2); // 24.2.4.17
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setUint8', DataView_prototype_setUint8, 2); // 24.2.4.18
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setUint16', DataView_prototype_setUint16, 2); // 24.2.4.19
+    intrinsic_function(realmRec, '%DataViewPrototype%', 'setUint32', DataView_prototype_setUint32, 2); // 24.2.4.20
+    intrinsic_property(realmRec, '%DataViewPrototype%', wellKnownSymbols['@@toStringTag'], "DataView", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 24.2.4.21
 
-    //TODO
+    intrinsics['%JSON%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 24.3
+    intrinsic_function(realmRec, '%JSON%', 'parse', JSON_parse, 2); // 24.3.1
+    intrinsic_function(realmRec, '%JSON%', 'stringify', JSON_stringify, 3); // 24.3.2
+    intrinsic_property(realmRec, '%JSON%', wellKnownSymbols['@@toStringTag'], "JSON", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 24.3.3
+
+    intrinsics['%Generator%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%GeneratorPrototype%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%IteratorPrototype%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%Promise%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%PromisePrototype%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%Proxy%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%Reflect%'] = ObjectCreate(objProto); //TODO
+    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+
     return intrinsics;
 }
 

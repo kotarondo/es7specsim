@@ -1032,6 +1032,16 @@ const Table50 = {
     Uint32Array: { ElementType: 'Uint32', ElementSize: 4, ConversionOperation: ToUint32 },
     Float32Array: { ElementType: 'Float32', ElementSize: 4 },
     Float64Array: { ElementType: 'Float64', ElementSize: 8 },
+
+    Int8: { ElementType: 'Int8', ElementSize: 1, ConversionOperation: ToInt8 },
+    Uint8: { ElementType: 'Uint8', ElementSize: 1, ConversionOperation: ToUint8 },
+    Uint8C: { ElementType: 'Uint8C', ElementSize: 1, ConversionOperation: ToUint8Clamp },
+    Int16: { ElementType: 'Int16', ElementSize: 2, ConversionOperation: ToInt16 },
+    Uint16: { ElementType: 'Uint16', ElementSize: 2, ConversionOperation: ToUint16 },
+    Int32: { ElementType: 'Int32', ElementSize: 4, ConversionOperation: ToInt32 },
+    Uint32: { ElementType: 'Uint32', ElementSize: 4, ConversionOperation: ToUint32 },
+    Float32: { ElementType: 'Float32', ElementSize: 4 },
+    Float64: { ElementType: 'Float64', ElementSize: 8 },
 };
 
 // 22.2.1 The %TypedArray% Intrinsic Object

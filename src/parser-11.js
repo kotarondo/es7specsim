@@ -837,9 +837,8 @@ function parseStringLiteral() {
 function parseDoubleStringCharacters_opt() {
     var stack = [];
     while (true) {
-        var c = peekChar();
-        if (c === '"' || isLineTerminator(c)) break;
-        var nt = parseDoubleStringCharacter();
+        var nt = parseDoubleStringCharacter_opt();
+        if (nt === null) break;
         stack.push(nt);
     }
     var str = null;
@@ -853,9 +852,8 @@ function parseDoubleStringCharacters_opt() {
 function parseSingleStringCharacters_opt() {
     var stack = [];
     while (true) {
-        var c = peekChar();
-        if (c === "'" || isLineTerminator(c)) break;
-        var nt = parseSingleStringCharacter();
+        var nt = parseSingleStringCharacter_opt();
+        if (nt === null) break;
         stack.push(nt);
     }
     var str = null;
@@ -866,8 +864,10 @@ function parseSingleStringCharacters_opt() {
     return str;
 }
 
-function parseDoubleStringCharacter() {
-    if (peekChar() === '\\') {
+function parseDoubleStringCharacter_opt() {
+    var c = peekChar();
+    if (c === '"' || isLineTerminator(c)) return null;
+    if (c === '\\') {
         if (isLineTerminator(peekChar(1))) {
             var nt = parseLineContinuation();
             return Production['DoubleStringCharacter:: LineContinuation'](nt);
@@ -880,8 +880,10 @@ function parseDoubleStringCharacter() {
     return Production['DoubleStringCharacter:: SourceCharacter but_not_one_of_"_or_\\_or_LineTerminator'](nt);
 }
 
-function parseSingleStringCharacter() {
-    if (peekChar() === '\\') {
+function parseSingleStringCharacter_opt() {
+    var c = peekChar();
+    if (c === "'" || isLineTerminator(c)) return null;
+    if (c === '\\') {
         if (isLineTerminator(peekChar(1))) {
             var nt = parseLineContinuation();
             return Production['SingleStringCharacter:: LineContinuation'](nt);

@@ -135,6 +135,8 @@ function test_file(pathname) {
     if (!(spec.es7id || spec.es6id || spec.es5id)) return;
     if (spec.features.contains("object-spread")) return; // unsupported
     if (spec.features.contains("object-rest")) return; // unsupported
+    if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
+    if (spec.features.contains("Reflect.construct")) return; // TODO
     if (spec.negative) {
         if (spec.negative.phase === "early" && !spec.flags.raw) {
             src = "throw 'no early error occurred';\n" + src;

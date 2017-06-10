@@ -70,4 +70,5 @@ InitializeHostDefinedRealm([
     { sourceText: "[5,3,6,,7,].sort();" },
     { sourceText: "eval('x=100;for(var i=0;i<10;i++)x++;')" },
     { sourceText: "try{eval('syntax error')}catch(e){a=e}" },
+    { sourceText: "JSON.parse('\"\\u2028\"')" },
 ]);
