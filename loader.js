@@ -64,6 +64,7 @@ var filenames = [
     '22-indexed-collections.js',
     '23-keyed-collection.js',
     '24-structured-data.js',
+    '26-reflection.js',
 ];
 
 function expand_concreteCompletion(raw) {

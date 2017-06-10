@@ -53,6 +53,8 @@ function customize_global_object(realm, global) {
 var test262_dir = path.join(__dirname, "../../test262");
 var assert_src = fs.readFileSync(path.join(test262_dir, "harness/assert.js"), "utf8");
 var sta_src = fs.readFileSync(path.join(test262_dir, "harness/sta.js"), "utf8");
+var total = 0;
+var failure = 0;
 
 function test_do(src, spec) {
     var errors;
@@ -68,6 +70,7 @@ function test_do(src, spec) {
         entries.push({ sourceText: inc_src });
     }
     entries.push({ sourceText: src });
+    total++;
     InitializeHostDefinedRealm(entries, customize_global_object);
     if (!spec.negative && !errors) return true;
     if (spec.negative && errors && Type(errors[0]) === 'Object') {
@@ -76,6 +79,7 @@ function test_do(src, spec) {
     }
     //console.log(src);
     if (errors) console.log(Get(errors[0], "name"), Get(errors[0], "message"));
+    failure++;
     return false;
 }
 
@@ -189,3 +193,5 @@ function test_dir(pathname) {
 for (var i = 2; i < process.argv.length; i++) {
     test_dir(process.argv[i]);
 }
+console.log("total", total);
+console.log("failure", failure);

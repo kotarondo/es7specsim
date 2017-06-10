@@ -1743,14 +1743,14 @@ define_method(ProxyExoticObject, 'OwnPropertyKeys', function() {
     var uncheckedResultKeys = trapResult.slice();
     for (var key of targetNonconfigurableKeys) {
         if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
-        uncheckedResultKeys.remove(key); //TODO clarify whether remove a key || remove every key?
+        while (uncheckedResultKeys.remove(key));
     }
     if (extensibleTarget === true) return trapResult;
     for (var key of targetConfigurableKeys) {
         if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
-        uncheckedResultKeys.remove(key); //TODO clarify whether remove a key || remove every key?
+        while (uncheckedResultKeys.remove(key));
     }
-    if (uncheckedResultKeys !== empty) throw $TypeError();
+    if (uncheckedResultKeys.length > 0) throw $TypeError();
     return trapResult;
 });
 

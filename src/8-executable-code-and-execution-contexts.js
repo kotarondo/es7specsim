@@ -1161,9 +1161,25 @@ function CreateIntrinsics(realmRec) {
     intrinsics['%IteratorPrototype%'] = ObjectCreate(objProto); //TODO
     intrinsics['%Promise%'] = ObjectCreate(objProto); //TODO
     intrinsics['%PromisePrototype%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%Proxy%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%Reflect%'] = ObjectCreate(objProto); //TODO
     intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+
+    intrinsics['%Reflect%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 26.1
+    intrinsic_function(realmRec, '%Reflect%', 'apply', Reflect_apply, 3); // 26.1.1
+    intrinsic_function(realmRec, '%Reflect%', 'construct', Reflect_construct, 2); // 26.1.2
+    intrinsic_function(realmRec, '%Reflect%', 'defineProperty', Reflect_defineProperty, 3); // 26.1.3
+    intrinsic_function(realmRec, '%Reflect%', 'deleteProperty', Reflect_deleteProperty, 2); // 26.1.4
+    intrinsic_function(realmRec, '%Reflect%', 'get', Reflect_get, 2); // 26.1.5
+    intrinsic_function(realmRec, '%Reflect%', 'getOwnPropertyDescriptor', Reflect_getOwnPropertyDescriptor, 2); // 26.1.6
+    intrinsic_function(realmRec, '%Reflect%', 'getPrototypeOf', Reflect_getPrototypeOf, 1); // 26.1.7
+    intrinsic_function(realmRec, '%Reflect%', 'has', Reflect_has, 2); // 26.1.8
+    intrinsic_function(realmRec, '%Reflect%', 'isExtensible', Reflect_isExtensible, 1); // 26.1.9
+    intrinsic_function(realmRec, '%Reflect%', 'ownKeys', Reflect_ownKeys, 1); // 26.1.10
+    intrinsic_function(realmRec, '%Reflect%', 'preventExtensions', Reflect_preventExtensions, 1); // 26.1.11
+    intrinsic_function(realmRec, '%Reflect%', 'set', Reflect_set, 3); // 26.1.12
+    intrinsic_function(realmRec, '%Reflect%', 'setPrototypeOf', Reflect_setPrototypeOf, 2); // 26.1.13
+
+    intrinsics['%Proxy%'] = intrinsic_constructor(realmRec, 'Proxy', Proxy$, 2); // 26.2.1
+    intrinsic_function(realmRec, '%Proxy%', 'revocable', Proxy_revocable, 2); // 26.2.2.1
 
     return intrinsics;
 }

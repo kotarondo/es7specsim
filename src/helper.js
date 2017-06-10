@@ -133,7 +133,9 @@ define_method(Array, 'also_occurs_in', function(a) {
 
 define_method(Array, 'remove', function(e) {
     var i = this.indexOf(e);
-    if (i >= 0) this.splice(i, 1);
+    if (i < 0) return false;
+    this.splice(i, 1);
+    return true;
 });
 
 define_method(Array, 'equals', function(a) {

@@ -50,16 +50,17 @@ function Type(x) {
             return 'Symbol';
     }
     if (x === null) return 'Null';
+    if (Array.isArray(x) === true) return 'List';
     if (x instanceof OrdinaryObject) return 'Object';
+    if (x instanceof ModuleNamespaceExoticObject) return 'Object';
+    if (x instanceof ProxyExoticObject) return 'Object';
     if (x instanceof Completion) return 'Completion Record';
     if (x instanceof Reference) return 'Reference';
     if (x instanceof PropertyDescriptor) return 'Property Descriptor';
     if (x instanceof LexicalEnvironment) return 'Lexical Environment';
     if (x instanceof EnvironmentRecord) return 'Environment Record';
     if (x instanceof RealmRecord) return 'Realm Record';
-    if (Array.isArray(x) === true) return 'List';
-    if ('length' in x) return 'Data Block';
-    return 'Record';
+    Assert(false);
 }
 
 // 6.1 ECMAScript Language Types

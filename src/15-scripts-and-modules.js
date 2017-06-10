@@ -161,7 +161,7 @@ function ParseScript(sourceText, realm, hostDefined) {
         else if (e instanceof EarlyReferenceError) var body = [$ReferenceError()];
         else throw e;
     }
-    if (Type(body) === 'List') return body;
+    if (Array.isArray(body)) return body;
     return Script_Record({ Realm: realm, Environment: undefined, ECMAScriptCode: body, HostDefined: hostDefined });
 }
 
@@ -260,7 +260,7 @@ function ScriptEvaluationJob(sourceText, hostDefined) {
     Assert(typeof sourceText === 'string');
     var realm = currentRealm;
     var s = ParseScript(sourceText, realm, hostDefined);
-    if (Type(s) === 'List') {
+    if (Array.isArray(s)) {
         HostReportErrors(s);
         return NextJob(NormalCompletion(undefined));
     }
@@ -598,7 +598,7 @@ function ParseModule(sourceText, realm, hostDefined) {
         else if (e instanceof EarlyReferenceError) var body = [$ReferenceError()];
         else throw e;
     }
-    if (Type(body) === 'List') return body;
+    if (Array.isArray(body)) return body;
     var requestedModules = body.ModuleRequests();
     var importEntries = body.ImportEntries();
     var importedBoundNames = ImportedLocalNames(importEntries);
@@ -817,7 +817,7 @@ function TopLevelModuleEvaluationJob(sourceText, hostDefined) {
     Assert(typeof sourceText === 'string');
     var realm = currentRealm;
     var m = ParseModule(sourceText, realm, hostDefined);
-    if (Type(m) === 'List') {
+    if (Array.isArray(m)) {
         HostReportErrors(m);
         return NextJob(NormalCompletion(undefined));
     }
