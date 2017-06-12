@@ -655,6 +655,7 @@ function compile_pattern(P, F) {
             rex.lastIndex = index;
             var m = rex.exec(str);
             if (m === null) return failure;
+            if (m.index !== index) return failure; // when 'y' doesn't work
             var captures = m.slice(1);
             var endIndexUTF = rex.lastIndex;
             return { endIndexUTF, captures };
@@ -672,8 +673,23 @@ function RegExpCreate(P, F) {
 
 // 21.2.3.2.4
 function EscapeRegExpPattern(P, F) {
-    // Here we rely on underlying virtual machine.
-    return (new RegExp(P, F)).source;
+    if (P === '') return '(?:)';
+    var buffer = [];
+    var i = 0;
+    while (i < P.length) {
+        var c = P[i++];
+        if (c === '/') {
+            buffer.push('\\/');
+        } else if (isLineTerminator(c)) {
+            buffer.push('\\u' + make_hex4digit(c, '0123456789ABCDEF'));
+        } else if (c === '\\' && i < P.length) {
+            var a = P[i++];
+            buffer.push(c, a);
+        } else {
+            buffer.push(c);
+        }
+    }
+    return buffer.join('');
 }
 
 // 21.2.4 Properties of the RegExp Constructor

@@ -1115,13 +1115,11 @@ Runtime_Semantics('IteratorBindingInitialization', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
             else {
                 var v = concreteCompletion(IteratorValue(next));
                 if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(v);
-                v = resolveCompletion(v);
             }
         }
         if (iteratorRecord.Done === true) var v = undefined;
@@ -1143,13 +1141,11 @@ Runtime_Semantics('IteratorBindingInitialization', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
             else {
                 var v = concreteCompletion(IteratorValue(next));
                 if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(v);
-                v = resolveCompletion(v);
             }
         }
         if (iteratorRecord.Done === true) var v = undefined;
@@ -1170,7 +1166,6 @@ Runtime_Semantics('IteratorBindingInitialization', [
                 var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
                 if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(next);
-                next = resolveCompletion(next);
                 if (next === false) iteratorRecord.Done = true;
             }
             if (iteratorRecord.Done === true) {
@@ -1180,7 +1175,6 @@ Runtime_Semantics('IteratorBindingInitialization', [
             var nextValue = concreteCompletion(IteratorValue(next));
             if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(nextValue);
-            nextValue = resolveCompletion(nextValue);
             var status = CreateDataProperty(A, ToString(n), nextValue);
             Assert(status === true);
             n++;
@@ -1196,7 +1190,6 @@ Runtime_Semantics('IteratorBindingInitialization', [
                 var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
                 if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(next);
-                next = resolveCompletion(next);
                 if (next === false) iteratorRecord.Done = true;
             }
             if (iteratorRecord.Done === true) {
@@ -1205,7 +1198,6 @@ Runtime_Semantics('IteratorBindingInitialization', [
             var nextValue = concreteCompletion(IteratorValue(next));
             if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(nextValue);
-            nextValue = resolveCompletion(nextValue);
             var status = CreateDataProperty(A, ToString(n), nextValue);
             Assert(status === true);
             n++;
@@ -2675,7 +2667,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             if (found === false) {
                 var clauseSelector = concreteCompletion(C.CaseSelectorEvaluation());
                 ReturnIfAbrupt(clauseSelector);
-                var found = (input === clauseSelector.Value);
+                var found = (input === clauseSelector);
             }
             if (found === true) {
                 var R = concreteCompletion(C.Evaluation());
@@ -2695,7 +2687,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
             if (found === false) {
                 var clauseSelector = concreteCompletion(C.CaseSelectorEvaluation());
                 ReturnIfAbrupt(clauseSelector);
-                var found = (input === clauseSelector.Value);
+                var found = (input === clauseSelector);
             }
             if (found === true) {
                 var R = concreteCompletion(C.Evaluation());
@@ -2710,7 +2702,7 @@ Runtime_Semantics('CaseBlockEvaluation', [
                 if (foundInB === false) {
                     var clauseSelector = concreteCompletion(C.CaseSelectorEvaluation());
                     ReturnIfAbrupt(clauseSelector);
-                    var foundInB = (input === clauseSelector.Value);
+                    var foundInB = (input === clauseSelector);
                 }
                 if (foundInB === true) {
                     var R = concreteCompletion(C.Evaluation());

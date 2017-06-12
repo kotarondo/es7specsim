@@ -2651,7 +2651,6 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
         }
         return empty;
@@ -2664,7 +2663,6 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
         }
         return empty;
@@ -2679,13 +2677,11 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
             else {
                 var value = concreteCompletion(IteratorValue(next));
                 if (value.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(value);
-                value = resolveCompletion(value);
             }
         }
         if (iteratorRecord.Done === true) var value = undefined;
@@ -2715,13 +2711,11 @@ Runtime_Semantics('IteratorDestructuringAssignmentEvaluation', [
             var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
             if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(next);
-            next = resolveCompletion(next);
             if (next === false) iteratorRecord.Done = true;
             else {
                 var nextValue = concreteCompletion(IteratorValue(next));
                 if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
                 ReturnIfAbrupt(nextValue);
-                nextValue = resolveCompletion(nextValue);
                 var status = CreateDataProperty(A, ToString(n), nextValue);
                 Assert(status === true);
                 n++;

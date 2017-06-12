@@ -47,19 +47,6 @@
 var Production = {};
 var ProductionPrototype = {};
 
-function isref(e) {
-    return (/[A-Z]/.exec(e[0]) !== null);
-}
-
-function abbrev(e) {
-    if (e === '[empty]') return e;
-    return e.replace(/\[(?!opt]).*?]/g, '');
-}
-
-function strip(e) {
-    return e.split(/[[:]/)[0];
-}
-
 function rename_duplicated(e, i, names) {
     var r;
     var k = 0;
@@ -81,7 +68,12 @@ function Syntax(arr) {
 }
 
 function createProduction(g) {
-    var elems = g.split(' ').map(abbrev);
+    var isref = e => /[A-Z]/.exec(e[0]) !== null;
+    var strip = e => e.split(/[[:]/)[0];
+    var elems = g.split(' ').map(function abbrev(e) {
+        if (e === '[empty]') return e;
+        return e.replace(/\[(?!opt]).*?]/g, '');
+    });
     var name = elems.join(' ');
     var types = [];
     var index = [];
@@ -225,6 +217,8 @@ function expand_opts(name, func) {
 function ParsedGrammarProduction() {}
 
 function createProductionPrototype(name, refs) {
+    var isref = e => /[A-Z]/.exec(e[0]) !== null;
+    var strip = e => e.split(/[[:]/)[0];
     Assert(!ProductionPrototype[name]);
     var elems = name.split(' ');
     var goal = strip(elems[0]);
@@ -317,6 +311,7 @@ function createProductionPrototype(name, refs) {
 }
 
 function create_implicit_static_semantic_rule_Contains() {
+    var strip = e => e.split(/[[:]/)[0];
     for (var name in ProductionPrototype) {
         var proto = ProductionPrototype[name];
         if ('Contains' in proto) continue;

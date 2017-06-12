@@ -115,32 +115,37 @@ function SetValueInBuffer(arrayBuffer, byteIndex, type, value, isLittleEndian) {
     Assert(Type(value) === 'Number');
     var block = arrayBuffer.ArrayBufferData;
     Assert(block !== undefined);
-    switch (type) {
-        case 'Int8':
-            block.setInt8(byteIndex, value, isLittleEndian);
-            break;
-        case 'Uint8':
-        case 'Uint8C':
-            block.setUint8(byteIndex, value, isLittleEndian);
-            break;
-        case 'Int16':
-            block.setInt16(byteIndex, value, isLittleEndian);
-            break;
-        case 'Uint16':
-            block.setUint16(byteIndex, value, isLittleEndian);
-            break;
-        case 'Int32':
-            block.setInt32(byteIndex, value, isLittleEndian);
-            break;
-        case 'Uint32':
-            block.setUint32(byteIndex, value, isLittleEndian);
-            break;
-        case 'Float32':
-            block.setFloat32(byteIndex, value, isLittleEndian);
-            break;
-        case 'Float64':
-            block.setFloat64(byteIndex, value, isLittleEndian);
-            break;
+    if (type === "Float32") {
+        if (Number.isNaN(value)) value = NaN;
+        block.setFloat32(byteIndex, value, isLittleEndian);
+    } else if (type === "Float64") {
+        if (Number.isNaN(value)) value = NaN;
+        block.setFloat64(byteIndex, value, isLittleEndian);
+    } else {
+        var n = Table50[type].ElementSize;
+        var convOp = Table50[type].ConversionOperation;
+        var intValue = convOp(value);
+        switch (type) {
+            case 'Int8':
+                block.setInt8(byteIndex, intValue, isLittleEndian);
+                break;
+            case 'Uint8':
+            case 'Uint8C':
+                block.setUint8(byteIndex, intValue, isLittleEndian);
+                break;
+            case 'Int16':
+                block.setInt16(byteIndex, intValue, isLittleEndian);
+                break;
+            case 'Uint16':
+                block.setUint16(byteIndex, intValue, isLittleEndian);
+                break;
+            case 'Int32':
+                block.setInt32(byteIndex, intValue, isLittleEndian);
+                break;
+            case 'Uint32':
+                block.setUint32(byteIndex, intValue, isLittleEndian);
+                break;
+        }
     }
     return undefined;
 }
@@ -505,7 +510,7 @@ function InternalizeJSONProperty(holder, name, reviver) { //MODIFIED: 'reviver' 
             var I = 0;
             var len = ToLength(Get(val, "length"));
             while (I < len) {
-                var newElement = InternalizeJSONProperty(val, ToString(I));
+                var newElement = InternalizeJSONProperty(val, ToString(I), reviver);
                 if (newElement === undefined) {
                     val.Delete(ToString(I));
                 } else {
@@ -516,7 +521,7 @@ function InternalizeJSONProperty(holder, name, reviver) { //MODIFIED: 'reviver' 
         } else {
             var keys = EnumerableOwnNames(val);
             for (var P of keys) {
-                var newElement = InternalizeJSONProperty(val, P);
+                var newElement = InternalizeJSONProperty(val, P, reviver);
                 if (newElement === undefined) {
                     val.Delete(P);
                 } else {
@@ -580,161 +585,163 @@ function JSON_stringify(value, replacer, space) {
     var wrapper = ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%']);
     var status = CreateDataProperty(wrapper, '', value);
     Assert(status === true);
-    return SerializeJSONProperty('', wrapper);
+    return SerializeJSONProperty('', wrapper, { stack, indent, PropertyList, ReplacerFunction, gap });
+}
 
-    // 24.3.2.1
-    function SerializeJSONProperty(key, holder) {
-        var value = Get(holder, key);
-        if (Type(value) === 'Object') {
-            var toJSON = Get(value, "toJSON");
-            if (IsCallable(toJSON) === true) {
-                var value = Call(toJSON, value, [key]);
-            }
+// 24.3.2.1
+function SerializeJSONProperty(key, holder, access) { //MODIFIED: 'access' argument added
+    var { ReplacerFunction } = access;
+    var value = Get(holder, key);
+    if (Type(value) === 'Object') {
+        var toJSON = Get(value, "toJSON");
+        if (IsCallable(toJSON) === true) {
+            var value = Call(toJSON, value, [key]);
         }
-        if (ReplacerFunction !== undefined) {
-            var value = Call(ReplacerFunction, holder, [key, value]);
-        }
-        if (Type(value) === 'Object') {
-            if ('NumberData' in value) {
-                var value = ToNumber(value);
-            } else if ('StringData' in value) {
-                var value = ToString(value);
-            } else if ('BooleanData' in value) {
-                var value = value.BooleanData;
-            }
-        }
-        if (value === null) return "null";
-        if (value === true) return "true";
-        if (value === false) return "false";
-        if (Type(value) === 'String') return QuoteJSONString(value);
-        if (Type(value) === 'Number') {
-            if (Number.isFinite(value)) return ToString(value);
-            else return "null";
-        }
-        if (Type(value) === 'Object' && IsCallable(value) === false) {
-            var isArray = IsArray(value);
-            if (isArray === true) return SerializeJSONArray(value);
-            else return SerializeJSONObject(value);
-        }
-        return undefined;
     }
-
-    // 24.3.2.2 
-    function QuoteJSONString(value) {
-        var product = '"';
-        for (var C of value) {
-            if (C === '"' || C === '\\') {
-                var product = product + '\\';
-                var product = product + C;
-            } else if (C === '\b' || C === '\f' || C === '\n' || C === '\r' || C === '\t') {
-                var product = product + '\\';
-                switch (C) {
-                    case '\b':
-                        var abbrev = "b";
-                        break;
-                    case '\f':
-                        var abbrev = "f";
-                        break;
-                    case '\n':
-                        var abbrev = "n";
-                        break;
-                    case '\r':
-                        var abbrev = "r";
-                        break;
-                    case '\t':
-                        var abbrev = "t";
-                        break;
-                }
-                var product = product + abbrev;
-            } else if (C.charCodeAt(0) < 0x0020) {
-                var product = product + '\\';
-                var product = product + "u";
-                var x = C.charCodeAt(0);
-                var hex = '0123456789abcdef' [x >> 12] + '0123456789abcdef' [15 & (x >> 8)] + '0123456789abcdef' [15 & (x >> 4)] + '0123456789abcdef' [15 & x];
-                var product = product + hex;
-            } else {
-                var product = product + C;
-            }
-        }
-        var product = product + '"';
-        return product;
+    if (ReplacerFunction !== undefined) {
+        var value = Call(ReplacerFunction, holder, [key, value]);
     }
+    if (Type(value) === 'Object') {
+        if ('NumberData' in value) {
+            var value = ToNumber(value);
+        } else if ('StringData' in value) {
+            var value = ToString(value);
+        } else if ('BooleanData' in value) {
+            var value = value.BooleanData;
+        }
+    }
+    if (value === null) return "null";
+    if (value === true) return "true";
+    if (value === false) return "false";
+    if (Type(value) === 'String') return QuoteJSONString(value);
+    if (Type(value) === 'Number') {
+        if (Number.isFinite(value)) return ToString(value);
+        else return "null";
+    }
+    if (Type(value) === 'Object' && IsCallable(value) === false) {
+        var isArray = IsArray(value);
+        if (isArray === true) return SerializeJSONArray(value, access);
+        else return SerializeJSONObject(value, access);
+    }
+    return undefined;
+}
 
-    // 24.3.2.3
-    function SerializeJSONObject(value) {
-        if (stack.contains(value)) throw $TypeError();
-        stack.push(value);
-        var stepback = indent;
-        indent = indent + gap;
-        if (PropertyList !== undefined) {
-            var K = PropertyList;
+// 24.3.2.2 
+function QuoteJSONString(value) {
+    var product = '"';
+    for (var C of value) {
+        if (C === '"' || C === '\\') {
+            var product = product + '\\';
+            var product = product + C;
+        } else if (C === '\b' || C === '\f' || C === '\n' || C === '\r' || C === '\t') {
+            var product = product + '\\';
+            switch (C) {
+                case '\b':
+                    var abbrev = "b";
+                    break;
+                case '\f':
+                    var abbrev = "f";
+                    break;
+                case '\n':
+                    var abbrev = "n";
+                    break;
+                case '\r':
+                    var abbrev = "r";
+                    break;
+                case '\t':
+                    var abbrev = "t";
+                    break;
+            }
+            var product = product + abbrev;
+        } else if (code_unit_value(C) < 0x0020) {
+            var product = product + '\\';
+            var product = product + "u";
+            var hex = make_hex4digit(C, '0123456789abcdef');
+            var product = product + hex;
         } else {
-            var K = EnumerableOwnNames(value);
+            var product = product + C;
         }
-        var partial = [];
-        for (var P of K) {
-            var strP = SerializeJSONProperty(P, value);
-            if (strP !== undefined) {
-                var member = QuoteJSONString(P);
-                var member = member + ":";
-                if (gap !== '') {
-                    var member = member + ' ';
-                }
-                var member = member + strP;
-                partial.push(member);
-            }
-        }
-        if (partial.length === 0) {
-            var final = "{}";
-        } else {
-            if (gap === '') {
-                var properties = partial.join(',');
-                var final = "{" + properties + "}";
-            } else {
-                var separator = ',' + '\n' + indent;
-                var properties = partial.join(separator);
-                var final = "{" + '\n' + indent + properties + '\n' + stepback + "}";
-            }
-        }
-        stack.pop();
-        indent = stepback;
-        return final;
     }
+    var product = product + '"';
+    return product;
+}
 
-    // 24.3.2.4
-    function SerializeJSONArray(value) {
-        if (stack.contains(value)) throw $TypeError();
-        stack.push(value);
-        var stepback = indent;
-        indent = indent + gap;
-        var partial = [];
-        var len = ToLength(Get(value, "length"));
-        var index = 0;
-        while (index < len) {
-            var strP = SerializeJSONProperty(ToString(index), value);
-            if (strP === undefined) {
-                partial.push("null");
-            } else {
-                partial.push(strP);
-            }
-            index++;
-        }
-        if (partial.length === 0) {
-            var final = "[]";
-        } else {
-            if (gap === '') {
-                var properties = partial.join(',');
-                var final = "[" + properties + "]";
-            } else {
-                var separator = ',' + '\n' + indent;
-                var properties = partial.join(separator);
-                var final = "[" + '\n' + indent + properties + '\n' + stepback + "]";
-            }
-        }
-        stack.pop();
-        indent = stepback;
-        return final;
+// 24.3.2.3
+function SerializeJSONObject(value, access) { //MODIFIED: 'access' argument added
+    var { stack, indent, gap, PropertyList } = access;
+    if (stack.contains(value)) throw $TypeError();
+    stack.push(value);
+    var stepback = indent;
+    indent = indent + gap;
+    if (PropertyList !== undefined) {
+        var K = PropertyList;
+    } else {
+        var K = EnumerableOwnNames(value);
     }
+    var partial = [];
+    for (var P of K) {
+        var strP = SerializeJSONProperty(P, value, access);
+        if (strP !== undefined) {
+            var member = QuoteJSONString(P);
+            var member = member + ":";
+            if (gap !== '') {
+                var member = member + ' ';
+            }
+            var member = member + strP;
+            partial.push(member);
+        }
+    }
+    if (partial.length === 0) {
+        var final = "{}";
+    } else {
+        if (gap === '') {
+            var properties = partial.join(',');
+            var final = "{" + properties + "}";
+        } else {
+            var separator = ',' + '\n' + indent;
+            var properties = partial.join(separator);
+            var final = "{" + '\n' + indent + properties + '\n' + stepback + "}";
+        }
+    }
+    stack.pop();
+    indent = stepback;
+    return final;
+}
+
+// 24.3.2.4
+function SerializeJSONArray(value, access) { //MODIFIED: 'access' argument added
+    var { stack, indent, gap } = access;
+    if (stack.contains(value)) throw $TypeError();
+    stack.push(value);
+    var stepback = indent;
+    indent = indent + gap;
+    var partial = [];
+    var len = ToLength(Get(value, "length"));
+    var index = 0;
+    while (index < len) {
+        var strP = SerializeJSONProperty(ToString(index), value, access);
+        if (strP === undefined) {
+            partial.push("null");
+        } else {
+            partial.push(strP);
+        }
+        index++;
+    }
+    if (partial.length === 0) {
+        var final = "[]";
+    } else {
+        if (gap === '') {
+            var properties = partial.join(',');
+            var final = "[" + properties + "]";
+        } else {
+            var separator = ',' + '\n' + indent;
+            var properties = partial.join(separator);
+            var final = "[" + '\n' + indent + properties + '\n' + stepback + "]";
+        }
+    }
+    stack.pop();
+    indent = stepback;
+    return final;
 }
 
 // 24.3.3 JSON [ @@toStringTag ]

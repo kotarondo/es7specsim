@@ -64,6 +64,7 @@ var filenames = [
     '22-indexed-collections.js',
     '23-keyed-collection.js',
     '24-structured-data.js',
+    '25-control-abstraction-objects.js',
     '26-reflection.js',
 ];
 
@@ -77,10 +78,22 @@ function expand_throw(raw) {
         'throw Completion({Type:"throw",Value:$1,Target:empty});');
 }
 
+function expand_ReturnIfAbrupt(raw) {
+    return raw.replace(/ReturnIfAbrupt\(([^)]*)\);/g,
+        'if($1.is_an_abrupt_completion()){throw $1;}$1=$1.Value;');
+}
+
+function expand_IfAbruptRejectPromise(raw) {
+    return raw.replace(/IfAbruptRejectPromise\(([^,]*), ([^)]*)\);/g,
+        'if($1.is_an_abrupt_completion()){Call($2.Reject,undefined,$1.Value);return $2.Promise;}$1=$1.Value;');
+}
+
 for (var filename of filenames) {
     var text = fs.readFileSync(path.join(__dirname, 'src', filename), 'utf8');
     var text = expand_concreteCompletion(text);
     var text = expand_throw(text);
+    var text = expand_ReturnIfAbrupt(text);
+    var text = expand_IfAbruptRejectPromise(text);
     vm.runInThisContext(text, {
         filename: filename,
         displayErrors: true,
@@ -96,6 +109,8 @@ for (var __TypedArray__ in Table50) {
     var text = expand_TypedArray(template, __TypedArray__);
     var text = expand_concreteCompletion(text);
     var text = expand_throw(text);
+    var text = expand_ReturnIfAbrupt(text);
+    var text = expand_IfAbruptRejectPromise(text);
     vm.runInThisContext(text, {
         filename: __TypedArray__ + '.js',
         displayErrors: true,

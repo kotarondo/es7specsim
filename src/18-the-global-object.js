@@ -63,7 +63,7 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
         script.apply_early_error_rules();
     } catch (e) {
         if (e instanceof EarlySyntaxError) throw $SyntaxError();
-        if (e instanceof EarlyReferenceError) throw $ReferenceError(); // TODO: clarify the specification
+        if (e instanceof EarlyReferenceError) throw $ReferenceError();
         throw e;
     }
     if (script.Contains('ScriptBody') === false) return undefined;

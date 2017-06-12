@@ -29,7 +29,7 @@ function evalScript(sourceText) {
     var hostDefined = undefined;
     var realm = currentRealm;
     var s = ParseScript(sourceText, realm, hostDefined);
-    if (Type(s) === 'List') {
+    if (Array.isArray(s)) {
         var error = s[0];
         throw Completion({ Type: 'throw', Value: error, Target: empty });
     }
@@ -55,8 +55,12 @@ var assert_src = fs.readFileSync(path.join(test262_dir, "harness/assert.js"), "u
 var sta_src = fs.readFileSync(path.join(test262_dir, "harness/sta.js"), "utf8");
 var total = 0;
 var failure = 0;
+var exception = 0;
+var heavy = 0;
+var failed_tests = [];
 
 function test_do(src, spec) {
+    total++;
     var errors;
     HostReportErrors = function(errorList) {
         errors = errorList;
@@ -70,7 +74,6 @@ function test_do(src, spec) {
         entries.push({ sourceText: inc_src });
     }
     entries.push({ sourceText: src });
-    total++;
     InitializeHostDefinedRealm(entries, customize_global_object);
     if (!spec.negative && !errors) return true;
     if (spec.negative && errors && Type(errors[0]) === 'Object') {
@@ -81,6 +84,78 @@ function test_do(src, spec) {
     if (errors) console.log(Get(errors[0], "name"), Get(errors[0], "message"));
     failure++;
     return false;
+}
+
+function test_file(pathname) {
+    for (var testname of heavy_tests) {
+        if (pathname.endsWith(testname)) return;
+    }
+    var src = fs.readFileSync(pathname, "utf8");
+    var file = { contents: src };
+    parser.parseFile(file);
+    var spec = file.attrs;
+    if (!spec.features) spec.features = [];
+    if (!(spec.es7id || spec.es6id || spec.es5id)) return;
+    if (spec.features.contains("object-spread")) return; // unsupported
+    if (spec.features.contains("object-rest")) return; // unsupported
+    if (spec.features.contains("caller")) return; // unsupported
+    if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
+    if (spec.negative) {
+        if (spec.negative.phase === "early" && !spec.flags.raw) {
+            src = "throw 'no early error occurred';\n" + src;
+        }
+    }
+    console.log(pathname);
+    var begin = Date.now();
+    var f = true;
+    try {
+        if (spec.flags.module) {
+            //TODO
+            return;
+        }
+        if (spec.flags.async) {
+            //TODO
+            return;
+        }
+        if (!spec.flags.onlyStrict) {
+            f &= test_do(src, spec);
+        }
+        if (!spec.flags.noStrict && !spec.flags.raw) {
+            f &= test_do('"use strict";\n' + src, spec);
+        }
+    } catch (e) {
+        exception++;
+        console.log(e);
+        the_execution_context_stack.length = 0;
+    }
+    if (!f) failed_tests.push(pathname);
+    var elapsed = Date.now() - begin;
+    if (elapsed > 10000) {
+        heavy++;
+        console.log("elapsed", elapsed);
+    }
+}
+
+function test_dir(pathname) {
+    if (pathname[0] !== '/') {
+        var org_pathname = pathname;
+        pathname = path.join(test262_dir, "test", org_pathname);
+        if (!fs.existsSync(pathname)) {
+            pathname = path.join(test262_dir, "test", "built-ins", org_pathname);
+        }
+    }
+    if (/\.js$/.test(pathname)) {
+        return test_file(pathname);
+    }
+    try {
+        var files = fs.readdirSync(pathname);
+    } catch (e) {
+        console.log("skip:", pathname);
+        return;
+    }
+    for (var f of files) {
+        test_dir(path.join(pathname, f));
+    }
 }
 
 const heavy_tests = [
@@ -125,73 +200,19 @@ const heavy_tests = [
     "/S15.1.3.4_A2.4_T2.js",
     "/S15.1.3.4_A2.5_T1.js",
     "/S15.4.5.2_A3_T4.js",
+    "/S15.10.2.12_A3_T1.js",
+    "/S15.10.2.12_A4_T1.js",
+    "/S15.10.2.12_A5_T1.js",
+    "/S15.10.2.12_A6_T1.js",
+    "/Array.prototype.concat_large-typed-array.js",
 ];
-
-function test_file(pathname) {
-    for (var testname of heavy_tests) {
-        if (pathname.endsWith(testname)) return;
-    }
-    var src = fs.readFileSync(pathname, "utf8");
-    var file = { contents: src };
-    parser.parseFile(file);
-    var spec = file.attrs;
-    if (!spec.features) spec.features = [];
-    if (!(spec.es7id || spec.es6id || spec.es5id)) return;
-    if (spec.features.contains("object-spread")) return; // unsupported
-    if (spec.features.contains("object-rest")) return; // unsupported
-    if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
-    if (spec.features.contains("Reflect.construct")) return; // TODO
-    if (spec.negative) {
-        if (spec.negative.phase === "early" && !spec.flags.raw) {
-            src = "throw 'no early error occurred';\n" + src;
-        }
-    }
-    console.log(pathname);
-    try {
-        if (spec.flags.module) {
-            //TODO
-            return;
-        }
-        if (spec.flags.async) {
-            //TODO
-            return;
-        }
-        if (!spec.flags.onlyStrict) {
-            test_do(src, spec);
-        }
-        if (!spec.flags.noStrict && !spec.flags.raw) {
-            test_do('"use strict";\n' + src, spec);
-        }
-    } catch (e) {
-        console.log(e);
-        the_execution_context_stack.length = 0;
-    }
-}
-
-function test_dir(pathname) {
-    if (pathname[0] !== '/') {
-        var org_pathname = pathname;
-        pathname = path.join(test262_dir, "test", org_pathname);
-        if (!fs.existsSync(pathname)) {
-            pathname = path.join(test262_dir, "test", "built-ins", org_pathname);
-        }
-    }
-    if (/\.js$/.test(pathname)) {
-        return test_file(pathname);
-    }
-    try {
-        var files = fs.readdirSync(pathname);
-    } catch (e) {
-        console.log("skip:", pathname);
-        return;
-    }
-    for (var f of files) {
-        test_dir(path.join(pathname, f));
-    }
-}
 
 for (var i = 2; i < process.argv.length; i++) {
     test_dir(process.argv[i]);
 }
+
+if (failed_tests.length) console.log("FAILED TESTS:\n", failed_tests.join('\n'));
+if (heavy) console.log("heavy", heavy);
+if (failure) console.log("failure", failure);
+if (exception) console.log("exception", exception);
 console.log("total", total);
-console.log("failure", failure);

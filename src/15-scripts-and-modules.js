@@ -848,10 +848,9 @@ Runtime_Semantics('Evaluation', [
 
     'ModuleItemList: ModuleItemList ModuleItem',
     function() {
-        var sl = concreteCompletion(this.ModuleItemList.Evaluation());
-        ReturnIfAbrupt(sl);
+        var sl = this.ModuleItemList.Evaluation();
         var s = concreteCompletion(this.ModuleItem.Evaluation());
-        return resolveCompletion(UpdateEmpty(s, sl.Value));
+        return resolveCompletion(UpdateEmpty(s, sl)); // clarify the specification
     },
 
     'ModuleItem: ImportDeclaration',

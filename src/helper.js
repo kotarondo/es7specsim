@@ -88,6 +88,13 @@ function mv_of_hexdigit_char(c) {
     return x - 6;
 }
 
+function make_hex4digit(c, hexchars) {
+    Assert(c.length === 1);
+    Assert(hexchars === '0123456789abcdef' || hexchars === '0123456789ABCDEF');
+    var x = c.charCodeAt(0);
+    return hexchars[x >> 12] + hexchars[15 & (x >> 8)] + hexchars[15 & (x >> 4)] + hexchars[15 & x];
+}
+
 function code_unit_value(c) {
     Assert(c.length === 1);
     return c.charCodeAt(0);

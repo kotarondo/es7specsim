@@ -713,13 +713,11 @@ Runtime_Semantics('IteratorBindingInitialization', [
         var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
         if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
         ReturnIfAbrupt(next);
-        next = resolveCompletion(next);
         if (next === false) iteratorRecord.Done = true;
         else {
             var v = concreteCompletion(IteratorValue(next));
             if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
             ReturnIfAbrupt(v);
-            v = resolveCompletion(v);
         }
         if (iteratorRecord.Done === true) var v = undefined;
         return this.BindingIdentifier.BindingInitialization(v, environment);

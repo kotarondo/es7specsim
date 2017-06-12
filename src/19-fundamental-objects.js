@@ -355,7 +355,7 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
         }
     } catch (e) {
         if (e instanceof EarlySyntaxError) throw $SyntaxError();
-        if (e instanceof EarlyReferenceError) throw $ReferenceError(); // TODO: clarify the specification
+        if (e instanceof EarlyReferenceError) throw $ReferenceError();
         throw e;
     }
     if (body.ContainsUseStrict() === true && parameters.IsSimpleParameterList() === false) throw $SyntaxError();

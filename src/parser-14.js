@@ -320,11 +320,11 @@ function parseYieldExpression(In) {
         case '*':
             consumeToken('*');
             var nt = parseAssignmentExpression(In, 'Yield');
-            return Production['YieldExpression: yield AssignmentExpression'](nt);
+            return Production['YieldExpression: yield * AssignmentExpression'](nt);
 
     }
     var nt = parseAssignmentExpression(In, 'Yield');
-    return Production['YieldExpression: yield * AssignmentExpression'](nt);
+    return Production['YieldExpression: yield AssignmentExpression'](nt);
 }
 
 // 14.5 Class Definitions

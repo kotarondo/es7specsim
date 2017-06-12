@@ -683,6 +683,8 @@ function CreateIntrinsics(realmRec) {
 
     thrower.DefineOwnProperty('length', PropertyDescriptor({ Value: 0, Writable: false, Enumerable: false, Configurable: false })); // 9.2.7.1
     thrower.Extensible = false; // 9.2.7.1
+    intrinsics['%IteratorPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 25.1.2
+    intrinsic_function(realmRec, '%IteratorPrototype%', wellKnownSymbols['@@iterator'], IteratorPrototype_iterator, 0, { name: '[Symbol.iterator]' }); // 25.1.2.1
 
     intrinsics['%eval%'] = intrinsic_function(realmRec, null, 'eval', global_eval, 1); // 18.2.1
     intrinsics['%isFinite%'] = intrinsic_function(realmRec, null, 'isFinite', global_isFinite, 1); // 18.2.2
@@ -1018,7 +1020,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'byteLength', get_TypedArray_prototype_byteLength); // 22.2.3.2
     intrinsic_accessor(realmRec, '%TypedArrayPrototype%', 'byteOffset', get_TypedArray_prototype_byteOffset); // 22.2.3.3
     intrinsic_property(realmRec, '%TypedArrayPrototype%', 'constructor', intrinsics['%TypedArray%']); // 22.2.3.4
-    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'copyWithin', TypedArray_prototype_copyWithin, 1); // 22.2.3.5
+    intrinsic_function(realmRec, '%TypedArrayPrototype%', 'copyWithin', TypedArray_prototype_copyWithin, 2); // 22.2.3.5
     intrinsic_function(realmRec, '%TypedArrayPrototype%', 'entries', TypedArray_prototype_entries, 0); // 22.2.3.6
     intrinsic_function(realmRec, '%TypedArrayPrototype%', 'every', TypedArray_prototype_every, 1); // 22.2.3.7
     intrinsic_function(realmRec, '%TypedArrayPrototype%', 'fill', TypedArray_prototype_fill, 1); // 22.2.3.8
@@ -1156,12 +1158,31 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%JSON%', 'stringify', JSON_stringify, 3); // 24.3.2
     intrinsic_property(realmRec, '%JSON%', wellKnownSymbols['@@toStringTag'], "JSON", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 24.3.3
 
-    intrinsics['%Generator%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%GeneratorPrototype%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%IteratorPrototype%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%Promise%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%PromisePrototype%'] = ObjectCreate(objProto); //TODO
-    intrinsics['%GeneratorFunction%'] = CreateBuiltinFunction(realmRec, noSteps, objProto); //TODO
+    intrinsics['%GeneratorFunction%'] = intrinsic_constructor(realmRec, 'GeneratorFunction', GeneratorFunction$, 1); // 25.2.2
+    intrinsics['%Generator%'] = ObjectCreate(intrinsics['%FunctionPrototype%']); // 25.2.3
+    intrinsics['%GeneratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 25.3.1
+    intrinsic_property(realmRec, '%GeneratorFunction%', 'prototype', intrinsics['%Generator%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 25.2.2.2
+    intrinsic_property(realmRec, '%Generator%', 'constructor', intrinsics['%GeneratorFunction%'], { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.2.3.1
+    intrinsic_property(realmRec, '%Generator%', 'prototype', intrinsics['%GeneratorPrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.2.3.2
+    intrinsic_property(realmRec, '%Generator%', wellKnownSymbols['@@toStringTag'], "GeneratorFunction", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.2.3.3
+    intrinsic_property(realmRec, '%GeneratorPrototype%', 'constructor', intrinsics['%Generator%'], { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.3.1.1
+    intrinsic_property(realmRec, '%GeneratorPrototype%', wellKnownSymbols['@@toStringTag'], "Generator", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.3.1.5
+    intrinsic_function(realmRec, '%GeneratorPrototype%', 'next', Generator_prototype_next, 1); // 25.3.1.2
+    intrinsic_function(realmRec, '%GeneratorPrototype%', 'return', Generator_prototype_return, 1); // 25.3.1.3
+    intrinsic_function(realmRec, '%GeneratorPrototype%', 'throw', Generator_prototype_throw, 1); // 25.3.1.4
+
+    intrinsics['%Promise%'] = intrinsic_constructor(realmRec, 'Promise', Promise$, 1); // 25.4.3
+    intrinsics['%PromisePrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 25.4.5
+    intrinsic_function(realmRec, '%Promise%', 'all', Promise_all, 1); // 25.4.4.1
+    intrinsic_property(realmRec, '%Promise%', 'prototype', intrinsics['%PromisePrototype%'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 25.4.4.2
+    intrinsic_function(realmRec, '%Promise%', 'race', Promise_race, 1); // 25.4.4.3
+    intrinsic_function(realmRec, '%Promise%', 'reject', Promise_reject, 1); // 25.4.4.4
+    intrinsic_function(realmRec, '%Promise%', 'resolve', Promise_resolve, 1); // 25.4.4.5
+    intrinsic_accessor(realmRec, '%Promise%', wellKnownSymbols['@@species'], get_Promise_species, undefined, { name: '[Symbol.species]' }); // 25.4.4.6
+    intrinsic_function(realmRec, '%PromisePrototype%', 'catch', Promise_prototype_catch, 1); // 25.4.5.1
+    intrinsic_property(realmRec, '%PromisePrototype%', 'constructor', intrinsics['%Promise%']); // 25.4.5.2
+    intrinsic_function(realmRec, '%PromisePrototype%', 'then', Promise_prototype_then, 2); // 25.4.5.3
+    intrinsic_property(realmRec, '%PromisePrototype%', wellKnownSymbols['@@toStringTag'], "Promise", { attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 25.4.5.4
 
     intrinsics['%Reflect%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 26.1
     intrinsic_function(realmRec, '%Reflect%', 'apply', Reflect_apply, 3); // 26.1.1
@@ -1277,8 +1298,6 @@ function ResolveBinding(name, env, strict) { //MODIFIED: strict argument added
         var env = the_running_execution_context.LexicalEnvironment;
     }
     Assert(Type(env) === 'Lexical Environment');
-    // moved to the argument.
-    // if (the_code_matching_the_syntactic_production_that_is_being_evaluated_is_contained_in_strict_mode_code) var strict = true; else var strict = false;
     return GetIdentifierReference(env, name, strict);
 }
 

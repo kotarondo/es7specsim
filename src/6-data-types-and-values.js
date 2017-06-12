@@ -60,6 +60,7 @@ function Type(x) {
     if (x instanceof LexicalEnvironment) return 'Lexical Environment';
     if (x instanceof EnvironmentRecord) return 'Environment Record';
     if (x instanceof RealmRecord) return 'Realm Record';
+    if (x instanceof PromiseCapability) return 'PromiseCapability';
     Assert(false);
 }
 
@@ -141,15 +142,11 @@ function NormalCompletion(argument) {
 // 6.2.2.2 Implicit Completion Values
 // 6.2.2.3 Throw an Exception
 
-// 6.2.2.4
-function ReturnIfAbrupt(c) {
-    Assert(Type(c) === 'Completion Record');
-    if (c.Type !== 'normal') throw c;
-}
+// 6.2.2.4 ReturnIfAbrupt
 
 function resolveCompletion(c) {
     ReturnIfAbrupt(c);
-    return c.Value;
+    return c;
 }
 
 // 6.2.2.5
