@@ -110,7 +110,7 @@ function ToNumber(argument) {
         case 'Number':
             return argument;
         case 'String':
-            return ToNumber_Applied_to_the_String_Type(argument);
+            return ToNumber_Applied_to_String_Type(argument);
         case 'Symbol':
             throw $TypeError();
         case 'Object':
@@ -120,7 +120,7 @@ function ToNumber(argument) {
 }
 
 // 7.1.3.1
-function ToNumber_Applied_to_the_String_Type(argument) {
+function ToNumber_Applied_to_String_Type(argument) {
     // Here we rely on underlying virtual machine.
     return +argument;
 }
@@ -206,7 +206,7 @@ function ToString(argument) {
             if (argument === true) return "true";
             return "false";
         case 'Number':
-            return ToString_Applied_to_the_Number_Type(argument);
+            return ToString_Applied_to_Number_Type(argument);
         case 'String':
             return argument;
         case 'Symbol':
@@ -218,7 +218,7 @@ function ToString(argument) {
 }
 
 // 7.1.12.1
-function ToString_Applied_to_the_Number_Type(argument) {
+function ToString_Applied_to_Number_Type(argument) {
     // Here we rely on underlying virtual machine.
     return String(argument);
 }

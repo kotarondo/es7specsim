@@ -70,7 +70,7 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
     var body = script.ScriptBody;
     if (strictCaller === true) var strictEval = true;
     else var strictEval = script.IsStrict();
-    var ctx = the_running_execution_context;
+    var ctx = running_execution_context;
     if (direct === true) {
         var lexEnv = NewDeclarativeEnvironment(ctx.LexicalEnvironment);
         var varEnv = ctx.VariableEnvironment;
@@ -85,8 +85,8 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
     evalCxt.ScriptOrModule = ctx.ScriptOrModule;
     evalCxt.VariableEnvironment = varEnv;
     evalCxt.LexicalEnvironment = lexEnv;
-    push_onto_the_execution_context_stack(evalCxt);
-    Assert(evalCxt === the_running_execution_context);
+    push_onto_execution_context_stack(evalCxt);
+    Assert(evalCxt === running_execution_context);
     var result = concreteCompletion(EvalDeclarationInstantiation(body, varEnv, lexEnv, strictEval));
     if (result.Type === 'normal') {
         var result = concreteCompletion(body.Evaluation());
@@ -94,7 +94,7 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
     if (result.Type === 'normal' && result.Value === empty) {
         var result = NormalCompletion(undefined);
     }
-    remove_from_the_execution_context_stack(evalCxt);
+    remove_from_execution_context_stack(evalCxt);
     return resolveCompletion(result);
 }
 

@@ -1254,39 +1254,39 @@ function SetDefaultGlobalBindings(realmRec) {
 // 8.3
 class ExecutionContext {}
 
-const the_execution_context_stack = [];
-var the_running_execution_context = undefined;
+const execution_context_stack = [];
+var running_execution_context = undefined;
 var active_function_object = undefined;
 var currentRealm = undefined;
 
-function push_onto_the_execution_context_stack(ctx) {
-    the_execution_context_stack.push(ctx);
-    the_running_execution_context = ctx;
+function push_onto_execution_context_stack(ctx) {
+    execution_context_stack.push(ctx);
+    running_execution_context = ctx;
     active_function_object = ctx.Function;
     currentRealm = ctx.Realm;
 }
 
-function remove_from_the_execution_context_stack(ctx) {
-    Assert(the_running_execution_context === ctx);
-    the_execution_context_stack.pop();
-    var len = the_execution_context_stack.length;
+function remove_from_execution_context_stack(ctx) {
+    Assert(running_execution_context === ctx);
+    execution_context_stack.pop();
+    var len = execution_context_stack.length;
     if (len === 0) {
-        the_running_execution_context = undefined;
+        running_execution_context = undefined;
         active_function_object = undefined;
         currentRealm = undefined;
         return;
     }
-    var ctx = the_execution_context_stack[len - 1];
-    the_running_execution_context = ctx;
+    var ctx = execution_context_stack[len - 1];
+    running_execution_context = ctx;
     active_function_object = ctx.Function;
     currentRealm = ctx.Realm;
 }
 
 // 8.3.1
 function GetActiveScriptOrModule() { // EcmaScript8
-    if (the_execution_context_stack.length === 0) return null;
-    for (var i = the_execution_context_stack.length - 1; i >= 0; i--) {
-        var ec = the_execution_context_stack[i];
+    if (execution_context_stack.length === 0) return null;
+    for (var i = execution_context_stack.length - 1; i >= 0; i--) {
+        var ec = execution_context_stack[i];
         if (ec.ScriptOrModule !== null) return ec.ScriptOrModule;
     }
     return null;
@@ -1295,7 +1295,7 @@ function GetActiveScriptOrModule() { // EcmaScript8
 // 8.3.2
 function ResolveBinding(name, env, strict) { //MODIFIED: strict argument added
     if (env === undefined) {
-        var env = the_running_execution_context.LexicalEnvironment;
+        var env = running_execution_context.LexicalEnvironment;
     }
     Assert(Type(env) === 'Lexical Environment');
     return GetIdentifierReference(env, name, strict);
@@ -1303,7 +1303,7 @@ function ResolveBinding(name, env, strict) { //MODIFIED: strict argument added
 
 // 8.3.3
 function GetThisEnvironment() {
-    var lex = the_running_execution_context.LexicalEnvironment;
+    var lex = running_execution_context.LexicalEnvironment;
     while (true) {
         if (!lex) return null; // MODIFIED: for 15.1.1
         var envRec = lex.EnvironmentRecord;
@@ -1329,14 +1329,14 @@ function GetNewTarget() {
 
 // 8.3.6
 function GetGlobalObject() {
-    var ctx = the_running_execution_context;
+    var ctx = running_execution_context;
     Assert(currentRealm === ctx.Realm);
     return currentRealm.GlobalObject;
 }
 
 // 8.4 Jobs and Job Queues
 
-const theJobQueue = {
+const JobQueues = {
     ScriptJobs: [],
     PromiseJobs: [],
 };
@@ -1345,24 +1345,24 @@ const theJobQueue = {
 function EnqueueJob(queueName, job, _arguments) {
     Assert(Type(queueName) === 'String');
     Assert(job instanceof Function);
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var callerRealm = callerContext.Realm;
     var callerScriptOrModule = callerContext.ScriptOrModule;
     var pending = { Job: job, Arguments: _arguments, Realm: callerRealm, ScriptOrModule: callerScriptOrModule, HostDefined: undefined };
     // Perform any implementation or host environment defined processing of pending.
-    theJobQueue[queueName].push(pending);
+    JobQueues[queueName].push(pending);
     return empty;
 }
 
 // 8.4.2
 function NextJob(result) {
     if (result.is_an_abrupt_completion()) HostReportErrors([result.Value]);
-    remove_from_the_execution_context_stack(the_running_execution_context);
-    Assert(the_execution_context_stack.length === 0);
-    if (theJobQueue.PromiseJobs.length > 0) {
-        var nextQueue = theJobQueue.PromiseJobs;
-    } else if (theJobQueue.ScriptJobs.length > 0) {
-        var nextQueue = theJobQueue.ScriptJobs;
+    remove_from_execution_context_stack(running_execution_context);
+    Assert(execution_context_stack.length === 0);
+    if (JobQueues.PromiseJobs.length > 0) {
+        var nextQueue = JobQueues.PromiseJobs;
+    } else if (JobQueues.ScriptJobs.length > 0) {
+        var nextQueue = JobQueues.ScriptJobs;
     } else {
         return empty;
     }
@@ -1371,7 +1371,7 @@ function NextJob(result) {
     newContext.Function = null;
     newContext.Realm = nextPending.Realm;
     newContext.ScriptOrModule = nextPending.ScriptOrModule;
-    push_onto_the_execution_context_stack(newContext);
+    push_onto_execution_context_stack(newContext);
     return nextPending.Job.apply(null, nextPending.Arguments); // we assume underlying TailCall works fine.
 }
 
@@ -1382,7 +1382,7 @@ function InitializeHostDefinedRealm(entries, customize_global_object) { // MODIF
     newContext.Function = null;
     newContext.Realm = realm;
     newContext.ScriptOrModule = null;
-    push_onto_the_execution_context_stack(newContext);
+    push_onto_execution_context_stack(newContext);
     var global = undefined; // implementation defined
     var thisValue = undefined; // implementation defined
     SetRealmGlobalObject(realm, global, thisValue);

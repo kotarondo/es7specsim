@@ -119,12 +119,12 @@ function Generator_prototype_throw(exception) {
 // 25.3.3.1
 function GeneratorStart(generator, generatorBody) {
     Assert(generator.GeneratorState === undefined);
-    var genContext = the_running_execution_context;
+    var genContext = running_execution_context;
     genContext.Generator = generator;
     genContext.code_evaluation_state = function*() {
         /* TODO compiled code */
         var result = concreteCompletion(generatorBody.EvaluateBody());
-        remove_from_the_execution_context_stack(genContext);
+        remove_from_execution_context_stack(genContext);
         generator.GeneratorState = "completed";
         if (result.Type === 'normal') var resultValue = undefined;
         else if (result.Type === 'return') var resultValue = result.Value;
@@ -152,12 +152,12 @@ function GeneratorResume(generator, value) {
     if (state === "completed") return CreateIterResultObject(undefined, true);
     Assert(state === "suspendedStart" || state === "suspendedYield");
     var genContext = generator.GeneratorContext;
-    var methodContext = the_running_execution_context;
+    var methodContext = running_execution_context;
     generator.GeneratorState = "executing";
-    push_onto_the_execution_context_stack(genContext);
-    Assert(genContext === the_running_execution_context);
+    push_onto_execution_context_stack(genContext);
+    Assert(genContext === running_execution_context);
     var result = genContext.code_evaluation_state.next(NormalCompletion(value)).value;
-    Assert(methodContext === the_running_execution_context);
+    Assert(methodContext === running_execution_context);
     return resolveCompletion(result);
 }
 
@@ -176,24 +176,24 @@ function GeneratorResumeAbrupt(generator, abruptCompletion) {
     }
     Assert(state === "suspendedYield");
     var genContext = generator.GeneratorContext;
-    var methodContext = the_running_execution_context;
+    var methodContext = running_execution_context;
     generator.GeneratorState = "executing";
-    push_onto_the_execution_context_stack(genContext);
-    Assert(genContext === the_running_execution_context);
+    push_onto_execution_context_stack(genContext);
+    Assert(genContext === running_execution_context);
     var result = genContext.code_evaluation_state.next(abruptCompletion).value;
-    Assert(methodContext === the_running_execution_context);
+    Assert(methodContext === running_execution_context);
     return resolveCompletion(result);
 }
 
 // 25.3.3.5
 function GeneratorYield(iterNextObj) {
     /* TODO compiled code
-    var genContext = the_running_execution_context;
+    var genContext = running_execution_context;
     var generator = genContext.Generator ;
     generator.GeneratorState= "suspendedYield";
-    remove_from_the_execution_context_stack(genContext);
+    remove_from_execution_context_stack(genContext);
     var resumptionValue = yield NormalCompletion(iterNextObj);
-    Assert(genContext === the_running_execution_context);
+    Assert(genContext === running_execution_context);
     return resolveCompletion(resumptionValue);
     */
 }

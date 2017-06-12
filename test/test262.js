@@ -211,7 +211,7 @@ for (var i = 2; i < process.argv.length; i++) {
     test_dir(process.argv[i]);
 }
 
-if (failed_tests.length) console.log("FAILED TESTS:\n", failed_tests.join('\n'));
+if (failed_tests.length) console.log("FAILED TESTS:\n" + failed_tests.join('\n'));
 if (heavy) console.log("heavy", heavy);
 if (failure) console.log("failure", failure);
 if (exception) console.log("exception", exception);

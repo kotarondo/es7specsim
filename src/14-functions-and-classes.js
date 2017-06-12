@@ -431,7 +431,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
     'FormalParameter: BindingElement',
     function(iteratorRecord, environment) {
         if (this.BindingElement.ContainsExpression() === false) return this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
-        var currentContext = the_running_execution_context;
+        var currentContext = running_execution_context;
         var originalEnv = currentContext.VariableEnvironment;
         Assert(currentContext.VariableEnvironment === currentContext.LexicalEnvironment);
         Assert(environment === originalEnv);
@@ -441,7 +441,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         try {
             var result = this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
         } finally {
-            Assert(currentContext === the_running_execution_context);
+            Assert(currentContext === running_execution_context);
             currentContext.VariableEnvironment = originalEnv;
             currentContext.LexicalEnvironment = originalEnv;
         }
@@ -451,7 +451,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
     'FunctionRestParameter: BindingRestElement',
     function(iteratorRecord, environment) {
         if (this.BindingRestElement.ContainsExpression() === false) return this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
-        var currentContext = the_running_execution_context;
+        var currentContext = running_execution_context;
         var originalEnv = currentContext.VariableEnvironment;
         Assert(currentContext.VariableEnvironment === currentContext.LexicalEnvironment);
         Assert(environment === originalEnv);
@@ -461,7 +461,7 @@ Runtime_Semantics('IteratorBindingInitialization', [
         try {
             var result = this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
         } finally {
-            Assert(currentContext === the_running_execution_context);
+            Assert(currentContext === running_execution_context);
             currentContext.VariableEnvironment = originalEnv;
             currentContext.LexicalEnvironment = originalEnv;
         }
@@ -511,7 +511,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var closure = FunctionCreate('Normal', this.FormalParameters, this.FunctionBody, scope, strict);
         MakeConstructor(closure);
         return closure;
@@ -521,7 +521,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var funcEnv = NewDeclarativeEnvironment(scope);
         var envRec = funcEnv.EnvironmentRecord;
         var name = this.BindingIdentifier.StringValue();
@@ -742,7 +742,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.ConciseBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var parameters = this.ArrowParameters.CoveredFormalsList();
         var closure = FunctionCreate('Arrow', parameters, this.ConciseBody, scope, strict);
         return closure;
@@ -864,7 +864,7 @@ Runtime_Semantics('DefineMethod', [
         var propKey = this.PropertyName.Evaluation();
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         if (functionPrototype !== undefined) var kind = 'Normal';
         else var kind = 'Method';
         var closure = FunctionCreate(kind, this.StrictFormalParameters, this.FunctionBody, scope, strict, functionPrototype);
@@ -889,7 +889,7 @@ Runtime_Semantics('PropertyDefinitionEvaluation', [
         var propKey = this.PropertyName.Evaluation();
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var formalParameterList = Production['FormalParameters: [empty]']([]);
         var closure = FunctionCreate('Method', formalParameterList, this.FunctionBody, scope, strict);
         MakeMethod(closure, object);
@@ -903,7 +903,7 @@ Runtime_Semantics('PropertyDefinitionEvaluation', [
         var propKey = this.PropertyName.Evaluation();
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var closure = FunctionCreate('Method', this.PropertySetParameterList, this.FunctionBody, scope, strict);
         MakeMethod(closure, object);
         SetFunctionName(closure, propKey, "set");
@@ -1099,7 +1099,7 @@ Runtime_Semantics('PropertyDefinitionEvaluation', [
         var propKey = this.PropertyName.Evaluation();
         if (this.GeneratorBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var closure = GeneratorFunctionCreate('Method', this.StrictFormalParameters, this.GeneratorBody, scope, strict);
         MakeMethod(closure, object);
         var prototype = ObjectCreate(currentRealm.Intrinsics['%GeneratorPrototype%']);
@@ -1117,7 +1117,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.GeneratorBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var closure = GeneratorFunctionCreate('Normal', this.FormalParameters, this.GeneratorBody, scope, strict);
         var prototype = ObjectCreate(currentRealm.Intrinsics['%GeneratorPrototype%']);
         DefinePropertyOrThrow(closure, "prototype", PropertyDescriptor({ Value: prototype, Writable: true, Enumerable: false, Configurable: false }));
@@ -1128,7 +1128,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         if (this.GeneratorBody.strict) var strict = true;
         else var strict = false;
-        var scope = the_running_execution_context.LexicalEnvironment;
+        var scope = running_execution_context.LexicalEnvironment;
         var funcEnv = NewDeclarativeEnvironment(scope);
         var envRec = funcEnv.EnvironmentRecord;
         var name = this.BindingIdentifier.StringValue();
@@ -1450,7 +1450,7 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
 
     'ClassTail: ClassHeritage[opt] { ClassBody[opt] }',
     function(className) {
-        var lex = the_running_execution_context.LexicalEnvironment;
+        var lex = running_execution_context.LexicalEnvironment;
         var classScope = NewDeclarativeEnvironment(lex);
         var classScopeEnvRec = classScope.EnvironmentRecord;
         if (className !== undefined) {
@@ -1460,14 +1460,14 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
             var protoParent = currentRealm.Intrinsics['%ObjectPrototype%'];
             var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];
         } else {
-            var currentContext = the_running_execution_context;
-            the_running_execution_context.LexicalEnvironment = classScope;
+            var currentContext = running_execution_context;
+            running_execution_context.LexicalEnvironment = classScope;
             try {
                 var superclassRef = this.ClassHeritage.Evaluation();
                 var superclass = GetValue(superclassRef); // clarify the specification
             } finally {
-                Assert(currentContext === the_running_execution_context);
-                the_running_execution_context.LexicalEnvironment = lex;
+                Assert(currentContext === running_execution_context);
+                running_execution_context.LexicalEnvironment = lex;
             }
             if (superclass === null) {
                 var protoParent = null;
@@ -1491,7 +1491,7 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
                 constructor = parseMethodDefinition();
             }
         }
-        the_running_execution_context.LexicalEnvironment = classScope;
+        running_execution_context.LexicalEnvironment = classScope;
         var constructorInfo = constructor.DefineMethod(proto, constructorParent);
         var F = constructorInfo.Closure;
         if (this.ClassHeritage) F.ConstructorKind = "derived";
@@ -1507,11 +1507,11 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
                 var status = concreteCompletion(m.PropertyDefinitionEvaluation(F, false));
             }
             if (status.is_an_abrupt_completion()) {
-                the_running_execution_context.LexicalEnvironment = lex;
+                running_execution_context.LexicalEnvironment = lex;
                 return resolveCompletion(status);
             }
         }
-        the_running_execution_context.LexicalEnvironment = lex;
+        running_execution_context.LexicalEnvironment = lex;
         if (className !== undefined) {
             classScopeEnvRec.InitializeBinding(className, F);
         }
@@ -1528,7 +1528,7 @@ Runtime_Semantics('BindingClassDeclarationEvaluation', [
         var value = this.ClassTail.ClassDefinitionEvaluation(className);
         var hasNameProperty = HasOwnProperty(value, "name");
         if (hasNameProperty === false) SetFunctionName(value, className);
-        var env = the_running_execution_context.LexicalEnvironment;
+        var env = running_execution_context.LexicalEnvironment;
         InitializeBoundName(className, value, env);
         return value;
     },

@@ -515,16 +515,16 @@ Runtime_Semantics('Evaluation', [
 
     'Block: { StatementList }',
     function() {
-        var currentContext = the_running_execution_context;
-        var oldEnv = the_running_execution_context.LexicalEnvironment;
+        var currentContext = running_execution_context;
+        var oldEnv = running_execution_context.LexicalEnvironment;
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
         BlockDeclarationInstantiation(this.StatementList, blockEnv);
-        the_running_execution_context.LexicalEnvironment = blockEnv;
+        running_execution_context.LexicalEnvironment = blockEnv;
         try {
             var blockValue = this.StatementList.Evaluation();
         } finally {
-            Assert(currentContext === the_running_execution_context);
-            the_running_execution_context.LexicalEnvironment = oldEnv;
+            Assert(currentContext === running_execution_context);
+            running_execution_context.LexicalEnvironment = oldEnv;
         }
         return blockValue;
     },
@@ -670,7 +670,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var rhs = this.Initializer.Evaluation();
         var value = GetValue(rhs);
-        var env = the_running_execution_context.LexicalEnvironment;
+        var env = running_execution_context.LexicalEnvironment;
         return this.BindingPattern.BindingInitialization(value, env);
     },
 ]);
@@ -1681,7 +1681,7 @@ Runtime_Semantics('LabelledEvaluation', [
 
     'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(labelSet) {
-        var oldEnv = the_running_execution_context.LexicalEnvironment;
+        var oldEnv = running_execution_context.LexicalEnvironment;
         var loopEnv = NewDeclarativeEnvironment(oldEnv);
         var loopEnvRec = loopEnv.EnvironmentRecord;
         var isConst = this.LexicalDeclaration.IsConstantDeclaration();
@@ -1693,16 +1693,16 @@ Runtime_Semantics('LabelledEvaluation', [
                 loopEnvRec.CreateMutableBinding(dn, false);
             }
         }
-        the_running_execution_context.LexicalEnvironment = loopEnv;
+        running_execution_context.LexicalEnvironment = loopEnv;
         var forDcl = concreteCompletion(this.LexicalDeclaration.Evaluation());
         if (forDcl.is_an_abrupt_completion()) {
-            the_running_execution_context.LexicalEnvironment = oldEnv;
+            running_execution_context.LexicalEnvironment = oldEnv;
             return resolveCompletion(forDcl);
         }
         if (isConst === false) var perIterationLets = boundNames;
         else var perIterationLets = [];
         var bodyResult = concreteCompletion(ForBodyEvaluation(this.Expression1, this.Expression2, this.Statement, perIterationLets, labelSet));
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        running_execution_context.LexicalEnvironment = oldEnv;
         return resolveCompletion(bodyResult);
     },
 ]);
@@ -1731,7 +1731,7 @@ function ForBodyEvaluation(test, increment, stmt, perIterationBindings, labelSet
 // 13.7.4.9
 function CreatePerIterationEnvironment(perIterationBindings) {
     if (perIterationBindings.length > 0) {
-        var lastIterationEnv = the_running_execution_context.LexicalEnvironment;
+        var lastIterationEnv = running_execution_context.LexicalEnvironment;
         var lastIterationEnvRec = lastIterationEnv.EnvironmentRecord;
         var outer = lastIterationEnv.outer_lexical_environment;
         Assert(outer !== null);
@@ -1742,7 +1742,7 @@ function CreatePerIterationEnvironment(perIterationBindings) {
             var lastValue = lastIterationEnvRec.GetBindingValue(bn, true);
             thisIterationEnvRec.InitializeBinding(bn, lastValue);
         }
-        the_running_execution_context.LexicalEnvironment = thisIterationEnv;
+        running_execution_context.LexicalEnvironment = thisIterationEnv;
     }
     return undefined;
 }
@@ -1990,8 +1990,8 @@ Runtime_Semantics('LabelledEvaluation', [
 
 // 13.7.5.12
 function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
-    var currentContext = the_running_execution_context;
-    var oldEnv = the_running_execution_context.LexicalEnvironment;
+    var currentContext = running_execution_context;
+    var oldEnv = running_execution_context.LexicalEnvironment;
     if (TDZnames.length > 0) {
         Assert(!TDZnames.contains_any_duplicate_entries());
         var TDZ = NewDeclarativeEnvironment(oldEnv);
@@ -1999,13 +1999,13 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
         for (var name of TDZnames) {
             TDZEnvRec.CreateMutableBinding(name, false);
         }
-        the_running_execution_context.LexicalEnvironment = TDZ;
+        running_execution_context.LexicalEnvironment = TDZ;
     }
     try {
         var exprRef = expr.Evaluation();
     } finally {
-        Assert(currentContext === the_running_execution_context);
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        Assert(currentContext === running_execution_context);
+        running_execution_context.LexicalEnvironment = oldEnv;
     }
     var exprValue = GetValue(exprRef);
     if (iterationKind === 'enumerate') {
@@ -2022,7 +2022,7 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
 
 // 13.7.5.13
 function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
-    var oldEnv = the_running_execution_context.LexicalEnvironment;
+    var oldEnv = running_execution_context.LexicalEnvironment;
     var V = undefined;
     var destructuring = lhs.IsDestructuring();
     if (destructuring === true && lhsKind === 'assignment') {
@@ -2042,7 +2042,7 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
             Assert(lhs.is('ForDeclaration'));
             var iterationEnv = NewDeclarativeEnvironment(oldEnv);
             lhs.BindingInstantiation(iterationEnv);
-            the_running_execution_context.LexicalEnvironment = iterationEnv;
+            running_execution_context.LexicalEnvironment = iterationEnv;
             if (destructuring === false) {
                 Assert(lhs.BoundNames().length === 1);
                 var lhsName = lhs.BoundNames()[0];
@@ -2070,11 +2070,11 @@ function ForIn_OfBodyEvaluation(lhs, stmt, iterator, lhsKind, labelSet) {
             }
         }
         if (status.is_an_abrupt_completion()) {
-            the_running_execution_context.LexicalEnvironment = oldEnv;
+            running_execution_context.LexicalEnvironment = oldEnv;
             return IteratorClose(iterator, status);
         }
         var result = concreteCompletion(stmt.Evaluation());
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        running_execution_context.LexicalEnvironment = oldEnv;
         if (LoopContinues(result, labelSet) === false) return IteratorClose(iterator, UpdateEmpty(result, V));
         if (result.Value !== empty) var V = result.Value;
     }
@@ -2312,12 +2312,12 @@ Runtime_Semantics('Evaluation', [
     function() {
         var val = this.Expression.Evaluation();
         var obj = ToObject(GetValue(val));
-        var oldEnv = the_running_execution_context.LexicalEnvironment;
+        var oldEnv = running_execution_context.LexicalEnvironment;
         var newEnv = NewObjectEnvironment(obj, oldEnv);
         newEnv.EnvironmentRecord.withEnvironment = true;
-        the_running_execution_context.LexicalEnvironment = newEnv;
+        running_execution_context.LexicalEnvironment = newEnv;
         var C = concreteCompletion(this.Statement.Evaluation());
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        running_execution_context.LexicalEnvironment = oldEnv;
         return resolveCompletion(UpdateEmpty(C, undefined));
     },
 ]);
@@ -2741,12 +2741,12 @@ Runtime_Semantics('Evaluation', [
     function() {
         var exprRef = this.Expression.Evaluation();
         var switchValue = GetValue(exprRef);
-        var oldEnv = the_running_execution_context.LexicalEnvironment;
+        var oldEnv = running_execution_context.LexicalEnvironment;
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
         BlockDeclarationInstantiation(this.CaseBlock, blockEnv);
-        the_running_execution_context.LexicalEnvironment = blockEnv;
+        running_execution_context.LexicalEnvironment = blockEnv;
         var R = concreteCompletion(this.CaseBlock.CaseBlockEvaluation(switchValue));
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        running_execution_context.LexicalEnvironment = oldEnv;
         return resolveCompletion(R);
     },
 
@@ -3213,20 +3213,20 @@ Runtime_Semantics('CatchClauseEvaluation', [
 
     'Catch: catch ( CatchParameter ) Block',
     function(thrownValue) {
-        var oldEnv = the_running_execution_context.LexicalEnvironment;
+        var oldEnv = running_execution_context.LexicalEnvironment;
         var catchEnv = NewDeclarativeEnvironment(oldEnv);
         var catchEnvRec = catchEnv.EnvironmentRecord;
         for (var argName of this.CatchParameter.BoundNames()) {
             catchEnvRec.CreateMutableBinding(argName, false);
         }
-        the_running_execution_context.LexicalEnvironment = catchEnv;
+        running_execution_context.LexicalEnvironment = catchEnv;
         var status = concreteCompletion(this.CatchParameter.BindingInitialization(thrownValue, catchEnv));
         if (status.is_an_abrupt_completion()) {
-            the_running_execution_context.LexicalEnvironment = oldEnv;
+            running_execution_context.LexicalEnvironment = oldEnv;
             return resolveCompletion(status);
         }
         var B = concreteCompletion(this.Block.Evaluation());
-        the_running_execution_context.LexicalEnvironment = oldEnv;
+        running_execution_context.LexicalEnvironment = oldEnv;
         return resolveCompletion(B);
     },
 ]);

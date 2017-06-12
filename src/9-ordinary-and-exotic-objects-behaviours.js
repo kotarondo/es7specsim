@@ -386,18 +386,18 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
     var F = this;
     Assert(F instanceof ECMAScriptFunctionObject);
     if (F.FunctionKind === "classConstructor") throw $TypeError();
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var calleeContext = PrepareForOrdinaryCall(F, undefined);
-    Assert(calleeContext === the_running_execution_context);
+    Assert(calleeContext === running_execution_context);
     OrdinaryCallBindThis(F, calleeContext, thisArgument);
     try {
         OrdinaryCallEvaluateBody(F, argumentsList);
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         return undefined;
     } catch (e) {
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) {
             return Call(e.func, e.thisValue, e.argList);
         }
@@ -412,7 +412,7 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
 // 9.2.1.1
 function PrepareForOrdinaryCall(F, newTarget) {
     Assert(Type(newTarget) === 'Undefined' || Type(newTarget) === 'Object');
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var calleeContext = new ExecutionContext;
     calleeContext.Function = F;
     var calleeRealm = F.Realm;
@@ -421,8 +421,8 @@ function PrepareForOrdinaryCall(F, newTarget) {
     var localEnv = NewFunctionEnvironment(F, newTarget);
     calleeContext.LexicalEnvironment = localEnv;
     calleeContext.VariableEnvironment = localEnv;
-    push_onto_the_execution_context_stack(calleeContext);
-    Assert(calleeContext === the_running_execution_context);
+    push_onto_execution_context_stack(calleeContext);
+    Assert(calleeContext === running_execution_context);
     return calleeContext;
 }
 
@@ -457,24 +457,24 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
     var F = this;
     Assert(F instanceof ECMAScriptFunctionObject);
     Assert(Type(newTarget) === 'Object');
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var kind = F.ConstructorKind;
     if (kind === "base") {
         var thisArgument = OrdinaryCreateFromConstructor(newTarget, "%ObjectPrototype%");
     }
     var calleeContext = PrepareForOrdinaryCall(F, newTarget);
-    Assert(calleeContext === the_running_execution_context);
+    Assert(calleeContext === running_execution_context);
     if (kind === "base") OrdinaryCallBindThis(F, calleeContext, thisArgument);
     var constructorEnv = calleeContext.LexicalEnvironment;
     var envRec = constructorEnv.EnvironmentRecord;
     try {
         OrdinaryCallEvaluateBody(F, argumentsList);
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         var result = NormalCompletion(undefined);
     } catch (e) {
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) { // clarify the specification
             var value = Call(e.func, e.thisValue, e.argList);
             if (Type(value) === 'Object') return value;
@@ -602,7 +602,7 @@ function SetFunctionName(F, name, prefix) {
 
 // 9.2.12
 function FunctionDeclarationInstantiation(func, argumentsList) {
-    var calleeContext = the_running_execution_context;
+    var calleeContext = running_execution_context;
     var env = calleeContext.LexicalEnvironment;
     var envRec = env.EnvironmentRecord;
     var code = func.ECMAScriptCode;
@@ -726,26 +726,26 @@ var NewTarget;
 // 9.3.1
 define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsList) {
     var F = this;
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var calleeContext = new ExecutionContext;
     calleeContext.Function = F;
     var calleeRealm = F.Realm;
     calleeContext.Realm = calleeRealm;
     calleeContext.ScriptOrModule = F.ScriptOrModule;
-    push_onto_the_execution_context_stack(calleeContext);
-    Assert(calleeContext === the_running_execution_context);
+    push_onto_execution_context_stack(calleeContext);
+    Assert(calleeContext === running_execution_context);
     try {
         var savedNewTarget = NewTarget;
         NewTarget = undefined;
         var value = F.steps.apply(thisArgument, argumentsList);
         NewTarget = savedNewTarget;
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         return value;
     } catch (e) {
         NewTarget = savedNewTarget;
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) {
             return Call(e.func, e.thisValue, e.argList);
         }
@@ -756,26 +756,26 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
 // 9.3.2
 function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
     var F = this;
-    var callerContext = the_running_execution_context;
+    var callerContext = running_execution_context;
     var calleeContext = new ExecutionContext;
     calleeContext.Function = F;
     var calleeRealm = F.Realm;
     calleeContext.Realm = calleeRealm;
     calleeContext.ScriptOrModule = F.ScriptOrModule;
-    push_onto_the_execution_context_stack(calleeContext);
-    Assert(calleeContext === the_running_execution_context);
+    push_onto_execution_context_stack(calleeContext);
+    Assert(calleeContext === running_execution_context);
     try {
         var savedNewTarget = NewTarget;
         NewTarget = newTarget;
         var value = F.steps.apply(null, argumentsList);
         NewTarget = savedNewTarget;
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         return value;
     } catch (e) {
         NewTarget = savedNewTarget;
-        remove_from_the_execution_context_stack(calleeContext);
-        Assert(callerContext === the_running_execution_context);
+        remove_from_execution_context_stack(calleeContext);
+        Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) {
             return Call(e.func, e.thisValue, e.argList);
         }
