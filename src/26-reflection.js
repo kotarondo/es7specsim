@@ -172,9 +172,9 @@ function Proxy_revocation_function() {
 
 // 26.3 Module Namespace Objects
 
-// 26.3.1@@toStringTag
+// 26.3.1 @@toStringTag
 
-// 26.3.2[ @@iterator ] ( )
+// 26.3.2 [ @@iterator ] ( )
 function Module_Namespace_iterator() {
     var N = this;
     if (!(N instanceof ModuleNamespaceExoticObject)) throw $TypeError();

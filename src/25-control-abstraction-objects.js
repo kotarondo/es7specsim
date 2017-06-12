@@ -343,9 +343,9 @@ function TriggerPromiseReactions(reactions, argument) {
 }
 
 // 25.4.1.9
-function HostPromiseRejectionTracker(promise, operation) {
+var HostPromiseRejectionTracker = function(promise, operation) {
     // implementation-defined
-}
+};
 
 // 25.4.2 Promise Jobs
 

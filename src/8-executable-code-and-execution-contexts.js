@@ -627,16 +627,15 @@ function intrinsic_function(realmRec, intrinsicName, P, steps, length, options) 
     var V = CreateBuiltinFunction(realmRec, steps, intrinsics['%FunctionPrototype%']);
     V.DefineOwnProperty('name', PropertyDescriptor({ Value: name, Writable: false, Enumerable: false, Configurable: true }));
     V.DefineOwnProperty('length', PropertyDescriptor({ Value: length, Writable: false, Enumerable: false, Configurable: true }));
-    if (intrinsicName) {
-        var O = intrinsics[intrinsicName];
-        if (options && options.attributes) {
-            var a = options.attributes;
-            O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: a.Writable, Enumerable: a.Enumerable, Configurable: a.Configurable }));
-        } else {
-            O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
-        }
+    if (!intrinsicName) return V;
+    var O = intrinsics[intrinsicName];
+    if (options && options.attributes) {
+        var a = options.attributes;
+        O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: a.Writable, Enumerable: a.Enumerable, Configurable: a.Configurable }));
+    } else {
+        O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
     }
-    return V;
+	return V;
 }
 
 function intrinsic_constructor(realmRec, name, steps, length, options) {

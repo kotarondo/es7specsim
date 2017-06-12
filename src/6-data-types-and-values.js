@@ -52,7 +52,6 @@ function Type(x) {
     if (x === null) return 'Null';
     if (Array.isArray(x) === true) return 'List';
     if (x instanceof OrdinaryObject) return 'Object';
-    if (x instanceof ModuleNamespaceExoticObject) return 'Object';
     if (x instanceof ProxyExoticObject) return 'Object';
     if (x instanceof Completion) return 'Completion Record';
     if (x instanceof Reference) return 'Reference';
@@ -61,6 +60,7 @@ function Type(x) {
     if (x instanceof EnvironmentRecord) return 'Environment Record';
     if (x instanceof RealmRecord) return 'Realm Record';
     if (x instanceof PromiseCapability) return 'PromiseCapability';
+    if (x instanceof SourceTextModuleRecord) return 'Module Record';
     Assert(false);
 }
 

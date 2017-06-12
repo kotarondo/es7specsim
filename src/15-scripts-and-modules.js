@@ -53,7 +53,7 @@ Static_Semantics('Early Errors', [
     'ScriptBody: StatementList',
     function() {
         if (this.StatementList.Contains('super') || this.StatementList.Contains('NewTarget')) {
-            // TODO implements as sspecified
+            // TODO implements as specified
             if (!(GetThisEnvironment() instanceof FunctionEnvironmentRecord)) throw EarlySyntaxError();
         }
         if (this.StatementList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
@@ -290,7 +290,8 @@ Static_Semantics('Early Errors', [
         if (this.ModuleItemList.LexicallyDeclaredNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
         if (this.ModuleItemList.LexicallyDeclaredNames().also_occurs_in(this.ModuleItemList.VarDeclaredNames())) throw EarlySyntaxError();
         if (this.ModuleItemList.ExportedNames().contains_any_duplicate_entries()) throw EarlySyntaxError();
-        if (!this.ModuleItemList.ExportedBindings().also_occur_in(this.ModuleItemList.VarDeclaredNames().concat(this.ModuleItemList.LexicallyDeclaredNames()))) throw EarlySyntaxError();
+        var names = this.ModuleItemList.VarDeclaredNames().concat(this.ModuleItemList.LexicallyDeclaredNames());
+        if (!this.ModuleItemList.ExportedBindings().every(e => names.contains(e))) throw EarlySyntaxError();
         if (this.ModuleItemList.Contains('super')) throw EarlySyntaxError();
         if (this.ModuleItemList.Contains('NewTarget')) throw EarlySyntaxError();
         if (this.ModuleItemList.ContainsDuplicateLabels([]) === true) throw EarlySyntaxError();
@@ -567,7 +568,9 @@ Static_Semantics('VarScopedDeclarations', [
 
     'ModuleItem: ExportDeclaration',
     function() {
-        if (this.ExportDeclaration.is('ExportDeclaration: export VariableStatement')) return this.VariableStatement.VarScopedDeclarations();
+        if (this.ExportDeclaration.is('ExportDeclaration: export VariableStatement')) {
+            return this.ExportDeclaration.VariableStatement.VarScopedDeclarations();
+        }
         return [];
     },
 ]);
@@ -613,9 +616,8 @@ function ParseModule(sourceText, realm, hostDefined) {
             } else {
                 var ie = importEntries.find(e => (e.LocalName === ee.LocalName));
                 if (ie.ImportName === "*") {
-                    //TODO Assert( this is a re-export of an imported module namespace object);
                     localExportEntries.push(ee);
-                } else { // this is a re-export of a single name
+                } else {
                     indirectExportEntries.push(Record({ ModuleRequest: ie.ModuleRequest, ImportName: ie.ImportName, LocalName: null, ExportName: ee.ExportName }));
                 }
             }
@@ -632,17 +634,14 @@ function ParseModule(sourceText, realm, hostDefined) {
 define_method(SourceTextModuleRecord, 'GetExportedNames', function(exportStarSet) {
     var module = this;
     if (exportStarSet.contains(module)) {
-        //TODO Assert( We've reached the starting point of an import * circularity);
         return [];
     }
     exportStarSet.push(module);
     var exportedNames = [];
     for (var e of module.LocalExportEntries) {
-        //TODO Assert( module provides the direct binding for this export);
         exportedNames.push(e.ExportName);
     }
     for (var e of module.IndirectExportEntries) {
-        //TODO Assert( module imports a specific binding for this export);
         exportedNames.push(e.ExportName);
     }
     for (var e of module.StarExportEntries) {
@@ -664,27 +663,23 @@ define_method(SourceTextModuleRecord, 'ResolveExport', function(exportName, reso
     var module = this;
     for (var r of resolveSet) {
         if (module === r.Module && SameValue(exportName, r.ExportName) === true) {
-            //TODO Assert( this === a circular import request);
             return null;
         }
     }
     resolveSet.push(Record({ Module: module, ExportName: exportName }));
     for (var e of module.LocalExportEntries) {
         if (SameValue(exportName, e.ExportName) === true) {
-            //TODO Assert( module provides the direct binding for this export);
             return Record({ Module: module, BindingName: e.LocalName });
         }
     }
     for (var e of module.IndirectExportEntries) {
         if (SameValue(exportName, e.ExportName) === true) {
-            //TODO Assert( module imports a specific binding for this export);
             var importedModule = HostResolveImportedModule(module, e.ModuleRequest);
             var indirectResolution = importedModule.ResolveExport(e.ImportName, resolveSet, exportStarSet);
             if (indirectResolution !== null) return indirectResolution;
         }
     }
     if (SameValue(exportName, "default") === true) {
-        //TODO Assert( A default export was not explicitly defined by this module);
         throw $SyntaxError();
     }
     if (exportStarSet.contains(module)) return null;
@@ -697,7 +692,6 @@ define_method(SourceTextModuleRecord, 'ResolveExport', function(exportName, reso
         if (resolution !== null) {
             if (starResolution === null) var starResolution = resolution;
             else {
-                //TODO Assert( there === more than one * import that includes the requested name);
                 if (resolution.Module !== starResolution.Module || SameValue(resolution.BindingName, starResolution.BindingName) === false) return "ambiguous";
             }
         }
@@ -718,13 +712,12 @@ define_method(SourceTextModuleRecord, 'ModuleDeclarationInstantiation', function
         var requiredModule = HostResolveImportedModule(module, required);
         requiredModule.ModuleDeclarationInstantiation();
     }
-    for (var e in module.IndirectExportEntries) {
+    for (var e of module.IndirectExportEntries) {
         var resolution = module.ResolveExport(e.ExportName, [], []);
         if (resolution === null || resolution === "ambiguous") throw $SyntaxError();
     }
-    //TODO Assert( all named exports from module are resolvable);
     var envRec = env.EnvironmentRecord;
-    for (var _in in module.ImportEntries) {
+    for (var _in of module.ImportEntries) {
         var importedModule = HostResolveImportedModule(module, _in.ModuleRequest);
         if (_in.ImportName === "*") {
             var namespace = GetModuleNamespace(importedModule);
@@ -767,7 +760,6 @@ define_method(SourceTextModuleRecord, 'ModuleDeclarationInstantiation', function
 // 15.2.1.16.5
 define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
     var module = this;
-    //TODO Assert( ModuleDeclarationInstantiation has already been invoked on module and successfully completed);
     Assert(module.Realm !== undefined);
     if (module.Evaluated === true) return undefined;
     module.Evaluated = true;
@@ -780,7 +772,6 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
     moduleCtx.Function = null;
     moduleCtx.Realm = module.Realm;
     moduleCtx.ScriptOrModule = module;
-    //TODO Assert( module has been linked and declarations in its module environment have been instantiated);
     moduleCtx.VariableEnvironment = module.Environment;
     moduleCtx.LexicalEnvironment = module.Environment;
     push_onto_execution_context_stack(moduleCtx);
@@ -791,13 +782,12 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
 });
 
 // 15.2.1.17
-function HostResolveImportedModule(referencingModule, specifier) {
-    //TODO 
-}
+var HostResolveImportedModule = function(referencingModule, specifier) {
+    // implementation-defined
+};
 
 // 15.2.1.18
 function GetModuleNamespace(module) {
-    //TODO Assert( module === an instance of a concrete subclass of Module Record);
     var namespace = module.Namespace;
     if (namespace === undefined) {
         var exportedNames = module.GetExportedNames([]);
@@ -821,9 +811,8 @@ function TopLevelModuleEvaluationJob(sourceText, hostDefined) {
         HostReportErrors(m);
         return NextJob(NormalCompletion(undefined));
     }
-    var status = m.ModuleDeclarationInstantiation();
+    var status = concreteCompletion(m.ModuleDeclarationInstantiation());
     if (!status.is_an_abrupt_completion()) {
-        //TODO Assert( all dependencies of m have been transitively resolved and m === ready for evaluation);
         var status = concreteCompletion(m.ModuleEvaluation());
     }
     return NextJob(status);
@@ -1051,7 +1040,7 @@ Static_Semantics('Early Errors', [
     'ExportDeclaration: export ExportClause ;',
     function() {
         for (var n of this.ExportClause.ReferencedBindings()) {
-            if (n.StringValue().is('ReservedWord') || n.StringValue().is_an_element_of(["implements", "interface", "let", "package", "private", "protected", "public", "static"])) throw EarlySyntaxError();
+            if (isReservedWord(n.StringValue()) || n.StringValue().is_an_element_of(["implements", "interface", "let", "package", "private", "protected", "public", "static"])) throw EarlySyntaxError();
         }
     },
 ]);
@@ -1124,7 +1113,7 @@ Static_Semantics('ExportedBindings', [
     'ExportDeclaration: export default ClassDeclaration',
     'ExportDeclaration: export default AssignmentExpression ;',
     function() {
-        return this.ExportDeclaration.BoundNames();
+        return this.BoundNames();
     },
 
     'ExportClause: { }',

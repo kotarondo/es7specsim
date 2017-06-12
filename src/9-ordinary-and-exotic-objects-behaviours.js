@@ -1349,7 +1349,7 @@ function IntegerIndexedElementSet(O, index, value) {
 
 // 9.4.6 Module Namespace Exotic Objects
 
-class ModuleNamespaceExoticObject {}
+class ModuleNamespaceExoticObject extends OrdinaryObject {}
 
 // 9.4.6.1
 define_method(ModuleNamespaceExoticObject, 'GetPrototypeOf', function() {
@@ -1432,7 +1432,7 @@ define_method(ModuleNamespaceExoticObject, 'Delete', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
     var exports = O.Exports;
-    if (P.is_an_element_of(exports)) return false;
+    if (exports.contains(P)) return false;
     return true;
 });
 
@@ -1453,7 +1453,9 @@ function ModuleNamespaceCreate(module, exports) {
     var M = new ModuleNamespaceExoticObject;
     M.Module = module;
     M.Exports = exports;
-    //TODO Create own properties of M corresponding to the definitions in 26.3;
+    M.properties[wellKnownSymbols['@@toStringTag']] = { Value: "Module", Writable: false, Enumerable: false, Configurable: true }; // 26.3.1
+    var func = intrinsic_function(currentRealm, null, null, Module_Namespace_iterator, 0, { name: '[Symbol.iterator]' }); // 26.3.2
+    M[wellKnownSymbols['@@iterator']] = { Value: func, Writable: true, Enumerable: false, Configurable: true }; // 26.3.2
     module.Namespace = M;
     return M;
 }
@@ -1742,12 +1744,12 @@ define_method(ProxyExoticObject, 'OwnPropertyKeys', function() {
     }
     var uncheckedResultKeys = trapResult.slice();
     for (var key of targetNonconfigurableKeys) {
-        if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
+        if (!uncheckedResultKeys.contains(key)) throw $TypeError();
         while (uncheckedResultKeys.remove(key));
     }
     if (extensibleTarget === true) return trapResult;
     for (var key of targetConfigurableKeys) {
-        if (!key.is_an_element_of(uncheckedResultKeys)) throw $TypeError();
+        if (!uncheckedResultKeys.contains(key)) throw $TypeError();
         while (uncheckedResultKeys.remove(key));
     }
     if (uncheckedResultKeys.length > 0) throw $TypeError();

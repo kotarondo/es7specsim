@@ -53,11 +53,27 @@ function customize_global_object(realm, global) {
 var test262_dir = path.join(__dirname, "../../test262");
 var assert_src = fs.readFileSync(path.join(test262_dir, "harness/assert.js"), "utf8");
 var sta_src = fs.readFileSync(path.join(test262_dir, "harness/sta.js"), "utf8");
+var current_dirname;
 var total = 0;
-var failure = 0;
-var exception = 0;
 var heavy = 0;
+var failure = 0;
+var exception = [];
 var failed_tests = [];
+
+var module_cache = {};
+
+HostResolveImportedModule = function(referencingModule, specifier) {
+    if (module_cache[specifier]) return module_cache[specifier];
+    var sourceText = fs.readFileSync(path.join(current_dirname, specifier), "utf8");
+    var realm = referencingModule.Realm;
+    var m = ParseModule(sourceText, realm);
+    if (Array.isArray(m)) {
+        var error = m[0];
+        throw Completion({ Type: 'throw', Value: error, Target: empty });
+    }
+    module_cache[specifier] = m;
+    return module_cache[specifier];
+};
 
 function test_do(src, spec) {
     total++;
@@ -73,29 +89,35 @@ function test_do(src, spec) {
         var inc_src = fs.readFileSync(path.join(test262_dir, "harness", inc), "utf8");
         entries.push({ sourceText: inc_src });
     }
-    entries.push({ sourceText: src });
+    entries.push({ sourceText: src, isModule: !!spec.flags.module });
     InitializeHostDefinedRealm(entries, customize_global_object);
     if (!spec.negative && !errors) return true;
     if (spec.negative && errors && Type(errors[0]) === 'Object') {
         var c = Get(errors[0], "constructor");
         if (c && Get(c, "name") === spec.negative.type) return true;
     }
-    //console.log(src);
-    if (errors) console.log(Get(errors[0], "name"), Get(errors[0], "message"));
+    if (errors) {
+        if (Type(errors[0]) === 'Object') console.log(Get(errors[0], "name"), Get(errors[0], "message"));
+        else console.log(errors[0]);
+    }
     failure++;
     return false;
 }
 
 function test_file(pathname) {
+    if (pathname.endsWith("_FIXTURES.js")) return;
     for (var testname of heavy_tests) {
         if (pathname.endsWith(testname)) return;
     }
+    current_dirname = path.dirname(pathname);
     var src = fs.readFileSync(pathname, "utf8");
     var file = { contents: src };
     parser.parseFile(file);
     var spec = file.attrs;
     if (!spec.features) spec.features = [];
-    if (!(spec.es7id || spec.es6id || spec.es5id)) return;
+
+    if (!spec.flags.module) return;
+
     if (spec.features.contains("object-spread")) return; // unsupported
     if (spec.features.contains("object-rest")) return; // unsupported
     if (spec.features.contains("caller")) return; // unsupported
@@ -109,24 +131,20 @@ function test_file(pathname) {
     var begin = Date.now();
     var f = true;
     try {
-        if (spec.flags.module) {
-            //TODO
-            return;
-        }
         if (spec.flags.async) {
             //TODO
             return;
         }
-        if (!spec.flags.onlyStrict) {
+        if (!spec.flags.onlyStrict || spec.flags.module) {
             f &= test_do(src, spec);
         }
-        if (!spec.flags.noStrict && !spec.flags.raw) {
+        if (!spec.flags.noStrict && !spec.flags.raw && !spec.flags.module) {
             f &= test_do('"use strict";\n' + src, spec);
         }
     } catch (e) {
-        exception++;
+        exception.push(pathname);
         console.log(e);
-        the_execution_context_stack.length = 0;
+        execution_context_stack.length = 0;
     }
     if (!f) failed_tests.push(pathname);
     var elapsed = Date.now() - begin;
@@ -212,7 +230,8 @@ for (var i = 2; i < process.argv.length; i++) {
 }
 
 if (failed_tests.length) console.log("FAILED TESTS:\n" + failed_tests.join('\n'));
+if (exception.length) console.log("EXCEPTION THROWN TESTS:\n" + exception.join('\n'));
 if (heavy) console.log("heavy", heavy);
 if (failure) console.log("failure", failure);
-if (exception) console.log("exception", exception);
+if (exception.length) console.log("exception", exception.length);
 console.log("total", total);
