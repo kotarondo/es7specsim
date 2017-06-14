@@ -58,6 +58,8 @@
 */
 
 function parseStatement(Yield, Return) {
+    Assert(!Yield || Yield === 'Yield');
+    Assert(!Return || Return === 'Return');
     switch (peekToken()) {
         case '{':
             var nt = parseBlockStatement(Yield, Return);

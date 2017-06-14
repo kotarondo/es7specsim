@@ -438,14 +438,11 @@ Runtime_Semantics('IteratorBindingInitialization', [
         var paramVarEnv = NewDeclarativeEnvironment(originalEnv);
         currentContext.VariableEnvironment = paramVarEnv;
         currentContext.LexicalEnvironment = paramVarEnv;
-        try {
-            var result = this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
-        } finally {
-            Assert(currentContext === running_execution_context);
-            currentContext.VariableEnvironment = originalEnv;
-            currentContext.LexicalEnvironment = originalEnv;
-        }
-        return result;
+        var result = concreteCompletion(this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment));
+        Assert(currentContext === running_execution_context);
+        currentContext.VariableEnvironment = originalEnv;
+        currentContext.LexicalEnvironment = originalEnv;
+        return resolveCompletion(result);
     },
 
     'FunctionRestParameter: BindingRestElement',
@@ -458,14 +455,11 @@ Runtime_Semantics('IteratorBindingInitialization', [
         var paramVarEnv = NewDeclarativeEnvironment(originalEnv);
         currentContext.VariableEnvironment = paramVarEnv;
         currentContext.LexicalEnvironment = paramVarEnv;
-        try {
-            var result = this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
-        } finally {
-            Assert(currentContext === running_execution_context);
-            currentContext.VariableEnvironment = originalEnv;
-            currentContext.LexicalEnvironment = originalEnv;
-        }
-        return result;
+        var result = concreteCompletion(this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment));
+        Assert(currentContext === running_execution_context);
+        currentContext.VariableEnvironment = originalEnv;
+        currentContext.LexicalEnvironment = originalEnv;
+        return resolveCompletion(result);
     },
 ]);
 
@@ -1462,13 +1456,11 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         } else {
             var currentContext = running_execution_context;
             running_execution_context.LexicalEnvironment = classScope;
-            try {
-                var superclassRef = this.ClassHeritage.Evaluation();
-                var superclass = GetValue(superclassRef); // clarify the specification
-            } finally {
-                Assert(currentContext === running_execution_context);
-                running_execution_context.LexicalEnvironment = lex;
-            }
+            // clarify the specification; needs GetValue
+            var superclass = concreteCompletion(GetValue(this.ClassHeritage.Evaluation()));
+            Assert(currentContext === running_execution_context);
+            running_execution_context.LexicalEnvironment = lex;
+            ReturnIfAbrupt(superclass);
             if (superclass === null) {
                 var protoParent = null;
                 var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];

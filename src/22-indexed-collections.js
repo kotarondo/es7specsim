@@ -1439,7 +1439,7 @@ function TypedArray_prototype_lastIndexOf(searchElement, fromIndex) {
             var same = StrictEqualityComparison(searchElement, elementK);
             if (same === true) return k;
         }
-        k++;
+        k--;
     }
     return -1;
 }

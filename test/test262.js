@@ -12,6 +12,11 @@ function print(a) {
     console.log(a);
 }
 
+function console_log() {
+    var a = Array.prototype.map.call(arguments, e => ToString(e));
+    console.log.apply(console, a);
+}
+
 function createRealm() {
     var realm = CreateRealm();
     SetRealmGlobalObject(realm);
@@ -39,7 +44,9 @@ function evalScript(sourceText) {
 
 function customize_global_object(realm, global) {
     var intrinsics = realm.Intrinsics;
-    var obj262, agent;
+    var console, obj262, agent;
+    CreateDataProperty(global, `console`, console = ObjectCreate(intrinsics['%ObjectPrototype%']));
+    CreateMethodProperty(console, `log`, CreateBuiltinFunction(currentRealm, console_log, intrinsics['%FunctionPrototype%']));
     CreateMethodProperty(global, `print`, CreateBuiltinFunction(currentRealm, print, intrinsics['%FunctionPrototype%']));
     CreateMethodProperty(global, `$262`, obj262 = ObjectCreate(intrinsics['%ObjectPrototype%']));
     CreateMethodProperty(obj262, `createRealm`, CreateBuiltinFunction(currentRealm, createRealm, intrinsics['%FunctionPrototype%']));
@@ -109,6 +116,7 @@ function test_file(pathname) {
     for (var testname of heavy_tests) {
         if (pathname.endsWith(testname)) return;
     }
+
     current_dirname = path.dirname(pathname);
     var src = fs.readFileSync(pathname, "utf8");
     var file = { contents: src };
@@ -116,12 +124,15 @@ function test_file(pathname) {
     var spec = file.attrs;
     if (!spec.features) spec.features = [];
 
-    if (!spec.flags.module) return;
-
     if (spec.features.contains("object-spread")) return; // unsupported
     if (spec.features.contains("object-rest")) return; // unsupported
     if (spec.features.contains("caller")) return; // unsupported
     if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
+
+
+    if (pathname.indexOf("/star-rhs-iter-") > 0) return; // TODO
+
+
     if (spec.negative) {
         if (spec.negative.phase === "early" && !spec.flags.raw) {
             src = "throw 'no early error occurred';\n" + src;

@@ -520,13 +520,10 @@ Runtime_Semantics('Evaluation', [
         var blockEnv = NewDeclarativeEnvironment(oldEnv);
         BlockDeclarationInstantiation(this.StatementList, blockEnv);
         running_execution_context.LexicalEnvironment = blockEnv;
-        try {
-            var blockValue = this.StatementList.Evaluation();
-        } finally {
-            Assert(currentContext === running_execution_context);
-            running_execution_context.LexicalEnvironment = oldEnv;
-        }
-        return blockValue;
+        var blockValue = concreteCompletion(this.StatementList.Evaluation());
+        Assert(currentContext === running_execution_context);
+        running_execution_context.LexicalEnvironment = oldEnv;
+        return resolveCompletion(blockValue);
     },
 
     'StatementList: StatementList StatementListItem',
@@ -2001,12 +1998,10 @@ function ForIn_OfHeadEvaluation(TDZnames, expr, iterationKind) {
         }
         running_execution_context.LexicalEnvironment = TDZ;
     }
-    try {
-        var exprRef = expr.Evaluation();
-    } finally {
-        Assert(currentContext === running_execution_context);
-        running_execution_context.LexicalEnvironment = oldEnv;
-    }
+    var exprRef = concreteCompletion(expr.Evaluation());
+    Assert(currentContext === running_execution_context);
+    running_execution_context.LexicalEnvironment = oldEnv;
+    ReturnIfAbrupt(exprRef);
     var exprValue = GetValue(exprRef);
     if (iterationKind === 'enumerate') {
         if (exprValue === null || exprValue === undefined) {

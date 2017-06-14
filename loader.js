@@ -66,6 +66,7 @@ var filenames = [
     '24-structured-data.js',
     '25-control-abstraction-objects.js',
     '26-reflection.js',
+    'generator_compiler.js',
 ];
 
 function expand_concreteCompletion(raw) {
@@ -73,8 +74,14 @@ function expand_concreteCompletion(raw) {
         'try{var $1=$2;$1=NormalCompletion($1)}catch(_e){if(!(_e instanceof Completion))throw _e;$1=_e}');
 }
 
+function expand_compileConcreteCompletion(raw) {
+    return raw.replace(/var (\w*) = compileConcreteCompletion(\(.*\));$/gm,
+        '{ctx.code(`try{`);var $1=$2||ctx.allocVar();' +
+        'ctx.code(`var ${$1}=NormalCompletion(${$1})}catch(_e){if(!(_e instanceof Completion))throw _e;${$1}=_e}`)}');
+}
+
 function expand_throw(raw) {
-    return raw.replace(/throw (\$.*);/g,
+    return raw.replace(/throw (\$[^;]*);/g,
         'throw Completion({Type:"throw",Value:$1,Target:empty});');
 }
 
@@ -90,10 +97,15 @@ function expand_IfAbruptRejectPromise(raw) {
 
 for (var filename of filenames) {
     var text = fs.readFileSync(path.join(__dirname, 'src', filename), 'utf8');
-    var text = expand_concreteCompletion(text);
     var text = expand_throw(text);
     var text = expand_ReturnIfAbrupt(text);
-    var text = expand_IfAbruptRejectPromise(text);
+    if (filename === '25-control-abstraction-objects.js') {
+        var text = expand_IfAbruptRejectPromise(text);
+    }
+    var text = expand_concreteCompletion(text);
+    if (['25-control-abstraction-objects.js', 'generator_compiler.js'].includes(filename)) {
+        var text = expand_compileConcreteCompletion(text);
+    }
     vm.runInThisContext(text, {
         filename: filename,
         displayErrors: true,
@@ -107,10 +119,9 @@ function expand_TypedArray(raw, __TypedArray__) {
 var template = fs.readFileSync(path.join(__dirname, 'src', '2224-typed-array-constructor.js'), 'utf8');
 for (var __TypedArray__ in Table50) {
     var text = expand_TypedArray(template, __TypedArray__);
-    var text = expand_concreteCompletion(text);
     var text = expand_throw(text);
     var text = expand_ReturnIfAbrupt(text);
-    var text = expand_IfAbruptRejectPromise(text);
+    var text = expand_concreteCompletion(text);
     vm.runInThisContext(text, {
         filename: __TypedArray__ + '.js',
         displayErrors: true,

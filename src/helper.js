@@ -118,13 +118,17 @@ function define_method(c, n, v) {
     });
 }
 
-define_method(Array, 'contains', Array.prototype.includes);
-
 define_method(String, 'contains', String.prototype.includes);
+
+define_method(String, 'quote', function() {
+    return JSON.stringify(this); // TODO line terminator chars?
+});
 
 define_method(String, 'is_an_element_of', function(a) {
     return a.contains(this.valueOf());
 });
+
+define_method(Array, 'contains', Array.prototype.includes);
 
 define_method(Array, 'contains_any_duplicate_entries', function() {
     return (this.length !== new Set(this).size);

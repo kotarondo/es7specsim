@@ -104,6 +104,7 @@ function parseIdentifier() {
 */
 
 function parsePrimaryExpression(Yield) {
+    Assert(!Yield || Yield === 'Yield');
     switch (peekToken()) {
         case 'this':
             consumeToken('this');
@@ -830,6 +831,7 @@ function parseShiftExpression(Yield) {
 */
 
 function parseRelationalExpression(In, Yield) {
+    Assert(!In || In === 'In');
     var nt = parseShiftExpression(Yield);
     var lval = Production['RelationalExpression: ShiftExpression'](nt);
     while (true) {
@@ -1249,6 +1251,8 @@ function parseExpression_opt(In, Yield) {
 }
 
 function parseExpression(In, Yield) {
+    Assert(!In || In === 'In');
+    Assert(!Yield || Yield === 'Yield');
     var nt = parseAssignmentExpression(In, Yield);
     var lval = Production['Expression: AssignmentExpression'](nt);
     while (peekToken() === ',') {

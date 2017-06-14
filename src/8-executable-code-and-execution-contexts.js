@@ -635,7 +635,7 @@ function intrinsic_function(realmRec, intrinsicName, P, steps, length, options) 
     } else {
         O.DefineOwnProperty(P, PropertyDescriptor({ Value: V, Writable: true, Enumerable: false, Configurable: true }));
     }
-	return V;
+    return V;
 }
 
 function intrinsic_constructor(realmRec, name, steps, length, options) {
