@@ -41,7 +41,19 @@ class GeneratorCompilerContext {
 
     createGenerator() {
         // var g = new GeneratorFunction('literals', this.codes.join('\n'));
-        var g = eval('(function*(literals){' + this.codes.join('\n') + '})');
+        var text = `(function*(literals){
+            try{
+                ${this.codes.join('\n')}
+            } catch(e) {
+                console.log(e); // for debug
+            }
+        })`;
+        try {
+            var g = eval(text);
+        } catch (e) {
+            console.log(text); // for debug
+            console.log(e); // for debug
+        }
         return g(this.literals);
     }
 
@@ -59,22 +71,19 @@ class GeneratorCompilerContext {
         return 'v' + (this.maxvar++);
     }
 
-    code(text) {
+    $(text) {
         this.codes.push(text);
     }
     _(text) {
         var r = this.allocVar();
-        this.code(`var ${r} = ${text};`);
+        this.$(`var ${r} = ${text};`);
         return r;
     }
     Assert(expr) {
-        this.code(`Assert(${expr});`);
+        this.$(`Assert(${expr});`);
     }
     GetValue(ref) {
         return this._(`GetValue(${ref})`);
-    }
-    Evaluation(nt) {
-        return this._(`${this.literal(nt)}.Evaluation()`);
     }
     ResolveBinding(name, env, strict) {
         return this._(`ResolveBinding(${name}, ${env}, ${strict})`);
@@ -90,6 +99,9 @@ class GeneratorCompilerContext {
     }
     CreateDataProperty(O, P, V) {
         return this._(`CreateDataProperty(${O}, ${P}, ${V})`);
+    }
+    CreateDataPropertyOrThrow(O, P, V) {
+        return this._(`CreateDataPropertyOrThrow(${O}, ${P}, ${V})`);
     }
     RequireObjectCoercible(argument) {
         return this._(`RequireObjectCoercible(${argument})`);
@@ -118,11 +130,17 @@ class GeneratorCompilerContext {
     ToString(argument) {
         return this._(`ToString(${argument})`);
     }
+    ToNumber(argument) {
+        return this._(`ToNumber(${argument})`);
+    }
     GetIterator(obj, method) {
         return this._(`GetIterator(${obj}, ${method})`);
     }
     CreateIterResultObject(value, done) {
         return this._(`CreateIterResultObject(${value}, ${done})`);
+    }
+    NewDeclarativeEnvironment(E) {
+        return this._(`NewDeclarativeEnvironment(${E})`);
     }
 }
 
@@ -145,7 +163,7 @@ Runtime_Semantics('compileEvaluation', [
     'FunctionExpression: function ( FormalParameters ) { FunctionBody }',
     'FunctionExpression: function BindingIdentifier ( FormalParameters ) { FunctionBody }',
     function(ctx) {
-        return ctx.Evaluation(this);
+        return ctx._(`${ctx.literal(this)}.Evaluation()`);
     },
 
     'FunctionStatementList: [empty]',
@@ -157,7 +175,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'ArrowFunction: ArrowParameters => ConciseBody',
     function(ctx) {
-        return ctx.Evaluation(this);
+        return this._(`${ctx.literal(this)}.Evaluation()`);
     },
 ]);
 
@@ -166,16 +184,18 @@ Runtime_Semantics('compileDefineMethod', [
 
     'MethodDefinition: PropertyName ( StrictFormalParameters ) { FunctionBody }',
     function(ctx, object, functionPrototype) {
-        throw Error('not yet implemented'); // TODO
+        var _this = ctx.literal(this);
         var propKey = this.PropertyName.compileEvaluation(ctx);
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
+        ctx.$(`
         var scope = running_execution_context.LexicalEnvironment;
-        if (functionPrototype !== undefined) var kind = 'Normal';
+        if (${functionPrototype} !== undefined) var kind = 'Normal';
         else var kind = 'Method';
-        var closure = FunctionCreate(kind, this.StrictFormalParameters, this.FunctionBody, scope, strict, functionPrototype);
-        MakeMethod(closure, object);
-        return Record({ Key: propKey, Closure: closure });
+        var closure = FunctionCreate(kind, ${_this}.StrictFormalParameters, ${_this}.FunctionBody, scope, ${strict}, ${functionPrototype});
+        MakeMethod(closure, ${object});
+        `);
+        return ctx._(`Record({ Key: ${propKey}, Closure: closure })`);
     },
 ]);
 
@@ -184,40 +204,45 @@ Runtime_Semantics('compilePropertyDefinitionEvaluation', [
 
     'MethodDefinition: PropertyName ( StrictFormalParameters ) { FunctionBody }',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
-        var methodDef = this.DefineMethod(object);
-        SetFunctionName(methodDef.Closure, methodDef.Key);
-        var desc = PropertyDescriptor({ Value: methodDef.Closure, Writable: true, Enumerable: enumerable, Configurable: true });
-        return DefinePropertyOrThrow(object, methodDef.Key, desc);
+        var methodDef = this.compileDefineMethod(ctx, object);
+        ctx.$(`
+        SetFunctionName(${methodDef}.Closure, ${methodDef}.Key);
+        var desc = PropertyDescriptor({ Value: ${methodDef}.Closure, Writable: true, Enumerable: ${enumerable}, Configurable: true });
+        DefinePropertyOrThrow(${object}, ${methodDef}.Key, desc);
+        `);
     },
 
     'MethodDefinition: get PropertyName ( ) { FunctionBody }',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
+        var _this = ctx.literal(this);
         var propKey = this.PropertyName.compileEvaluation(ctx);
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
+        ctx.$(`
         var scope = running_execution_context.LexicalEnvironment;
         var formalParameterList = Production['FormalParameters: [empty]']([]);
-        var closure = FunctionCreate('Method', formalParameterList, this.FunctionBody, scope, strict);
-        MakeMethod(closure, object);
-        SetFunctionName(closure, propKey, "get");
-        var desc = PropertyDescriptor({ Get: closure, Enumerable: enumerable, Configurable: true });
-        return DefinePropertyOrThrow(object, propKey, desc);
+        var closure = FunctionCreate('Method', formalParameterList, ${_this}.FunctionBody, scope, ${strict});
+        MakeMethod(closure, ${object});
+        SetFunctionName(closure, ${propKey}, "get");
+        var desc = PropertyDescriptor({ Get: closure, Enumerable: ${enumerable}, Configurable: true });
+        DefinePropertyOrThrow(${object}, ${propKey}, desc);
+        `);
     },
 
     'MethodDefinition: set PropertyName ( PropertySetParameterList ) { FunctionBody }',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
+        var _this = ctx.literal(this);
         var propKey = this.PropertyName.compileEvaluation(ctx);
         if (this.FunctionBody.strict) var strict = true;
         else var strict = false;
+        ctx.$(`
         var scope = running_execution_context.LexicalEnvironment;
-        var closure = FunctionCreate('Method', this.PropertySetParameterList, this.FunctionBody, scope, strict);
-        MakeMethod(closure, object);
-        SetFunctionName(closure, propKey, "set");
-        var desc = PropertyDescriptor({ Set: closure, Enumerable: enumerable, Configurable: true });
-        return DefinePropertyOrThrow(object, propKey, desc);
+        var closure = FunctionCreate('Method', ${_this}.PropertySetParameterList, ${_this}.FunctionBody, scope, ${strict});
+        MakeMethod(closure, ${object});
+        SetFunctionName(closure, ${propKey}, "set");
+        var desc = PropertyDescriptor({ Set: closure, Enumerable: ${enumerable}, Configurable: true });
+        DefinePropertyOrThrow(${object}, ${propKey}, desc);
+        `);
     },
 ]);
 
@@ -226,18 +251,20 @@ Runtime_Semantics('compilePropertyDefinitionEvaluation', [
 
     'GeneratorMethod: * PropertyName ( StrictFormalParameters ) { GeneratorBody }',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
+        var _this = ctx.literal(this);
         var propKey = this.PropertyName.compileEvaluation(ctx);
         if (this.GeneratorBody.strict) var strict = true;
         else var strict = false;
+        ctx.$(`
         var scope = running_execution_context.LexicalEnvironment;
-        var closure = GeneratorFunctionCreate('Method', this.StrictFormalParameters, this.GeneratorBody, scope, strict);
-        MakeMethod(closure, object);
+        var closure = GeneratorFunctionCreate('Method', ${_this}.StrictFormalParameters, ${_this}.GeneratorBody, scope, ${strict});
+        MakeMethod(closure, ${object});
         var prototype = ObjectCreate(currentRealm.Intrinsics['%GeneratorPrototype%']);
         DefinePropertyOrThrow(closure, "prototype", PropertyDescriptor({ Value: prototype, Writable: true, Enumerable: false, Configurable: false }));
-        SetFunctionName(closure, propKey);
-        var desc = PropertyDescriptor({ Value: closure, Writable: true, Enumerable: enumerable, Configurable: true });
-        return DefinePropertyOrThrow(object, propKey, desc);
+        SetFunctionName(closure, ${propKey});
+        var desc = PropertyDescriptor({ Value: closure, Writable: true, Enumerable: ${enumerable}, Configurable: true });
+        DefinePropertyOrThrow(${object}, ${propKey}, desc);
+        `);
     },
 ]);
 
@@ -247,7 +274,7 @@ Runtime_Semantics('compileEvaluation', [
     'GeneratorExpression: function * ( FormalParameters ) { GeneratorBody }',
     'GeneratorExpression: function * BindingIdentifier ( FormalParameters ) { GeneratorBody }',
     function(ctx) {
-        return ctx.Evaluation(this);
+        return ctx._(`${ctx.literal(this)}.Evaluation()`);
     },
 
     'YieldExpression: yield',
@@ -266,7 +293,7 @@ Runtime_Semantics('compileEvaluation', [
     function(ctx) {
         var exprRef = this.AssignmentExpression.compileEvaluation(ctx);
         var r = ctx.allocVar();
-        ctx.code(`
+        ctx.$(`
         var value = GetValue(${exprRef});
         var iterator = GetIterator(value);
         var received = NormalCompletion(undefined);
@@ -281,8 +308,8 @@ Runtime_Semantics('compileEvaluation', [
         `);
 
         var received = compileConcreteCompletion(compileGeneratorYield(ctx, 'innerResult'));
-        ctx.code(`var received = ${received};`);
-        ctx.code(`
+        ctx.$(`
+                var received = ${received};
             } else if (received.Type === 'throw') {
                 var _throw = GetMethod(iterator, "throw");
                 if (_throw !== undefined) {
@@ -295,8 +322,8 @@ Runtime_Semantics('compileEvaluation', [
         `);
 
         var received = compileConcreteCompletion(compileGeneratorYield(ctx, 'innerResult'));
-        ctx.code(`var received = ${received};`);
-        ctx.code(`
+        ctx.$(`
+                var received = ${received};
                 } else {
                     IteratorClose(iterator, Completion({ Type: 'normal', Value: empty, Target: empty }));
                     throw $TypeError();
@@ -304,7 +331,7 @@ Runtime_Semantics('compileEvaluation', [
             } else {
                 Assert(received.Type === 'return');
                 var _return = GetMethod(iterator, "return");
-                if (_return === undefined) return resolveCompletion(received);
+                if (_return === undefined) resolveCompletion(received); // always abrupt
                 var innerReturnResult = Call(_return, iterator, [received.Value]);
                 if (Type(innerReturnResult) !== 'Object') throw $TypeError();
                 var done = IteratorComplete(innerReturnResult);
@@ -315,8 +342,8 @@ Runtime_Semantics('compileEvaluation', [
         `);
 
         var received = compileConcreteCompletion(compileGeneratorYield(ctx, 'innerReturnResult'));
-        ctx.code(`var received = ${received};`);
-        ctx.code(`
+        ctx.$(`
+                var received = ${received};
             }
         }
         `);
@@ -329,37 +356,46 @@ Runtime_Semantics('compileClassDefinitionEvaluation', [
 
     'ClassTail: ClassHeritage[opt] { ClassBody[opt] }',
     function(ctx, className) {
-        throw Error('not yet implemented'); // TODO
-        var lex = running_execution_context.LexicalEnvironment;
-        var classScope = NewDeclarativeEnvironment(lex);
-        var classScopeEnvRec = classScope.EnvironmentRecord;
+        var [lex, classScope, classScopeEnvRec, currentContext, proto, F] = ctx.allocVars();
+        ctx.$(`
+        var ${lex} = running_execution_context.LexicalEnvironment;
+        var ${classScope} = NewDeclarativeEnvironment(${lex});
+        var ${classScopeEnvRec} = ${classScope}.EnvironmentRecord;
+        `);
         if (className !== undefined) {
-            classScopeEnvRec.CreateImmutableBinding(className, true);
+            ctx.$(`
+            ${classScopeEnvRec}.CreateImmutableBinding(${className}, true);
+            `);
         }
         if (!this.ClassHeritage) {
+            ctx.$(`
             var protoParent = currentRealm.Intrinsics['%ObjectPrototype%'];
             var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];
+            `);
         } else {
-            var currentContext = running_execution_context;
-            running_execution_context.LexicalEnvironment = classScope;
-            try {
-                var superclassRef = this.ClassHeritage.compileEvaluation(ctx);
-                var superclass = GetValue(superclassRef); // clarify the specification
-            } finally {
-                Assert(currentContext === running_execution_context);
-                running_execution_context.LexicalEnvironment = lex;
-            }
-            if (superclass === null) {
+            ctx.$(`
+            var ${currentContext} = running_execution_context;
+            running_execution_context.LexicalEnvironment = ${classScope};
+            `);
+            var superclass = compileConcreteCompletion(ctx, ctx.GetValue(this.ClassHeritage.compileEvaluation(ctx)));
+            ctx.$(`
+            Assert(${currentContext} === running_execution_context);
+            running_execution_context.LexicalEnvironment = ${lex};
+            ReturnIfAbrupt(${superclass});
+            if (${superclass} === null) {
                 var protoParent = null;
                 var constructorParent = currentRealm.Intrinsics['%FunctionPrototype%'];
-            } else if (IsConstructor(superclass) === false) throw $TypeError();
+            } else if (IsConstructor(${superclass}) === false) throw $TypeError();
             else {
-                var protoParent = Get(superclass, "prototype");
+                var protoParent = Get(${superclass}, "prototype");
                 if (Type(protoParent) !== 'Object' && Type(protoParent) !== 'Null') throw $TypeError();
-                var constructorParent = superclass;
+                var constructorParent = ${superclass};
             }
+            `);
         }
-        var proto = ObjectCreate(protoParent);
+        ctx.$(`
+        var ${proto} = ObjectCreate(protoParent);
+        `);
         if (!this.ClassBody) var constructor = empty;
         else var constructor = this.ClassBody.ConstructorMethod();
         if (constructor === empty) {
@@ -371,29 +407,35 @@ Runtime_Semantics('compileClassDefinitionEvaluation', [
                 constructor = parseMethodDefinition();
             }
         }
-        running_execution_context.LexicalEnvironment = classScope;
-        var constructorInfo = constructor.DefineMethod(proto, constructorParent);
-        var F = constructorInfo.Closure;
-        if (this.ClassHeritage) F.ConstructorKind = "derived";
-        MakeConstructor(F, false, proto);
-        MakeClassConstructor(F);
-        CreateMethodProperty(proto, "constructor", F);
+        ctx.$(`
+        running_execution_context.LexicalEnvironment = ${classScope};
+        var constructorInfo = ${ctx.literal(constructor)}.DefineMethod(${proto}, constructorParent);
+        var ${F} = constructorInfo.Closure;
+        `);
+        if (this.ClassHeritage) ctx.$(`${F}.ConstructorKind = "derived";`);
+        ctx.$(`
+        MakeConstructor(${F}, false, ${proto});
+        MakeClassConstructor(${F});
+        CreateMethodProperty(${proto}, "constructor", ${F});
+        `);
         if (!this.ClassBody) var methods = [];
         else var methods = this.ClassBody.NonConstructorMethodDefinitions();
         for (var m of methods) {
             if (m.IsStatic() === false) {
-                var status = compileConcreteCompletion(m.PropertyDefinitionEvaluation(proto, false));
+                var status = compileConcreteCompletion(m.compilePropertyDefinitionEvaluation(ctx, proto, false));
             } else {
-                var status = compileConcreteCompletion(m.PropertyDefinitionEvaluation(F, false));
+                var status = compileConcreteCompletion(m.compilePropertyDefinitionEvaluation(ctx, F, false));
             }
-            if (status.is_an_abrupt_completion()) {
-                running_execution_context.LexicalEnvironment = lex;
-                return resolveCompletion(status);
+            ctx.$(`
+            if (${status}.is_an_abrupt_completion()) {
+                running_execution_context.LexicalEnvironment = ${lex};
+                resolveCompletion(${status}); // always abrupt
             }
+            `);
         }
-        running_execution_context.LexicalEnvironment = lex;
+        ctx.$(`running_execution_context.LexicalEnvironment = ${lex};`);
         if (className !== undefined) {
-            classScopeEnvRec.InitializeBinding(className, F);
+            ctx.$(`${classScopeEnvRec}.InitializeBinding(${className}, ${F});`);
         }
         return F;
     },
@@ -404,20 +446,20 @@ Runtime_Semantics('compileBindingClassDeclarationEvaluation', [
 
     'ClassDeclaration: class BindingIdentifier ClassTail',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var className = this.BindingIdentifier.StringValue();
-        var value = this.ClassTail.ClassDefinitionEvaluation(className);
-        var hasNameProperty = HasOwnProperty(value, "name");
-        if (hasNameProperty === false) SetFunctionName(value, className);
+        var className = this.BindingIdentifier.StringValue().quote();
+        var value = this.ClassTail.compileClassDefinitionEvaluation(ctx, className);
+        ctx.$(`
+        var hasNameProperty = HasOwnProperty(${value}, "name");
+        if (hasNameProperty === false) SetFunctionName(${value}, ${className});
         var env = running_execution_context.LexicalEnvironment;
-        InitializeBoundName(className, value, env);
+        InitializeBoundName(${className}, ${value}, env);
+        `);
         return value;
     },
 
     'ClassDeclaration: class ClassTail',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.ClassTail.ClassDefinitionEvaluation(undefined);
+        return this.ClassTail.compileClassDefinitionEvaluation(ctx, undefined);
     },
 ]);
 
@@ -426,28 +468,21 @@ Runtime_Semantics('compileEvaluation', [
 
     'ClassDeclaration: class BindingIdentifier ClassTail',
     function(ctx) {
-        if (!this.Contains('YieldExpression')) {
-            return ctx.Evaluation(this);
-        }
-        throw Error('not yet implemented'); // TODO
-        var status = this.BindingClassDeclarationEvaluation();
-        return empty;
+        return this.compileBindingClassDeclarationEvaluation(ctx);
     },
 
     'ClassExpression: class BindingIdentifier[opt] ClassTail',
     function(ctx) {
-        if (!this.Contains('YieldExpression')) {
-            return ctx.Evaluation(this);
-        }
-        throw Error('not yet implemented'); // TODO
         if (!this.BindingIdentifier) var className = undefined;
-        else var className = this.BindingIdentifier.StringValue();
-        var value = this.ClassTail.ClassDefinitionEvaluation(className);
+        else var className = this.BindingIdentifier.StringValue().quote();
+        var value = this.ClassTail.compileClassDefinitionEvaluation(ctx, className);
         if (className !== undefined) {
-            var hasNameProperty = HasOwnProperty(value, "name");
+            ctx.$(`
+            var hasNameProperty = HasOwnProperty(${value}, "name");
             if (hasNameProperty === false) {
-                SetFunctionName(value, className);
+                SetFunctionName(${value}, ${className});
             }
+            `);
         }
         return value;
     },
@@ -459,11 +494,10 @@ Runtime_Semantics('compileLabelledEvaluation', [
     'BreakableStatement: IterationStatement',
     function(ctx, labelSet) {
         var stmtResult = compileConcreteCompletion(this.IterationStatement.compileLabelledEvaluation(ctx, labelSet));
-        ctx.code(`
+        ctx.$(`
         if (${stmtResult}.Type === 'break') {
             if (${stmtResult}.Target === empty) {
-                if (${stmtResult}.Value === empty) var ${stmtResult} = NormalCompletion(undefined);
-                else var ${stmtResult} = NormalCompletion(${stmtResult}.Value);
+                var ${stmtResult} = NormalCompletion(undefined);
             }
         }
         resolveCompletion(${stmtResult});
@@ -473,11 +507,10 @@ Runtime_Semantics('compileLabelledEvaluation', [
     'BreakableStatement: SwitchStatement',
     function(ctx, labelSet) {
         var stmtResult = compileConcreteCompletion(this.SwitchStatement.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         if (${stmtResult}.Type === 'break') {
             if (${stmtResult}.Target === empty) {
-                if (${stmtResult}.Value === empty) var ${stmtResult} = NormalCompletion(undefined);
-                else var ${stmtResult} = NormalCompletion(${stmtResult}.Value);
+                ${stmtResult} = NormalCompletion(undefined);
             }
         }
         resolveCompletion(${stmtResult});
@@ -499,7 +532,7 @@ Runtime_Semantics('compileEvaluation', [
     'BreakableStatement: IterationStatement',
     'BreakableStatement: SwitchStatement',
     function(ctx) {
-        var newLabelSet = [];
+        var newLabelSet = `[]`;
         this.compileLabelledEvaluation(ctx, newLabelSet);
     },
 ]);
@@ -512,16 +545,17 @@ Runtime_Semantics('compileEvaluation', [
 
     'Block: { StatementList }',
     function(ctx) {
+        var _this = ctx.literal(this);
         var [currentContext, oldEnv, blockEnv] = ctx.allocVars();
-        ctx.code(`
+        ctx.$(`
         var ${currentContext} = running_execution_context;
         var ${oldEnv} = running_execution_context.LexicalEnvironment;
         var ${blockEnv} = NewDeclarativeEnvironment(${oldEnv});
-        BlockDeclarationInstantiation(${ctx.literal(this.StatementList)}, ${blockEnv});
+        BlockDeclarationInstantiation(${_this}.StatementList, ${blockEnv});
         running_execution_context.LexicalEnvironment = ${blockEnv};
         `);
         var blockValue = compileConcreteCompletion(this.StatementList.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         Assert(${currentContext} === running_execution_context);
         running_execution_context.LexicalEnvironment = ${oldEnv};
         resolveCompletion(${blockValue});
@@ -562,7 +596,7 @@ Runtime_Semantics('compileEvaluation', [
         var rhs = this.Initializer.compileEvaluation(ctx);
         var value = ctx.GetValue(rhs);
         if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-            ctx.code(`
+            ctx.$(`
             var hasNameProperty = HasOwnProperty(${value}, "name");
             if (hasNameProperty === false) SetFunctionName(${value}, ${bindingId});
             `);
@@ -603,7 +637,7 @@ Runtime_Semantics('compileEvaluation', [
         var rhs = this.Initializer.compileEvaluation(ctx);
         var value = ctx.GetValue(rhs);
         if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-            ctx.code(`
+            ctx.$(`
             var hasNameProperty = HasOwnProperty(${value}, "name");
             if (hasNameProperty === false) SetFunctionName(${value}, ${bindingId});
             `);
@@ -624,30 +658,22 @@ Runtime_Semantics('compileBindingInitialization', [
 
     'BindingPattern: ObjectBindingPattern',
     function(ctx, value, environment) {
-        if (!this.Contains('YieldExpression')) { //TODO
-            ctx.code(`
-            ${ctx.literal(this)}.BindingInitialization(${value}, ${environment});
-            `);
-            return;
-        }
         ctx.RequireObjectCoercible(value);
         this.ObjectBindingPattern.compileBindingInitialization(ctx, value, environment);
     },
 
     'BindingPattern: ArrayBindingPattern',
     function(ctx, value, environment) {
-        if (!this.Contains('YieldExpression')) { //TODO
-            ctx.code(`
-            ${ctx.literal(this)}.BindingInitialization(${value}, ${environment});
-            `);
-            return;
-        }
-        throw Error('not yet implemented'); // TODO
-        var iterator = ctx.GetIterator(value);
-        var iteratorRecord = ctx._(`Record({ Iterator: ${iterator}, Done: false })`);
-        var result = compileConcreteCompletion(this.ArrayBindingPattern.IteratorBindingInitialization(iteratorRecord, environment));
-        if (iteratorRecord.Done === false) return IteratorClose(iterator, result);
-        return resolveCompletion(result);
+        var [iterator, iteratorRecord] = ctx.allocVars();
+        ctx.$(`
+        var ${iterator} = GetIterator(${value});
+        var ${iteratorRecord} = Record({ Iterator: ${iterator}, Done: false });
+        `);
+        var result = compileConcreteCompletion(this.ArrayBindingPattern.compileIteratorBindingInitialization(ctx, iteratorRecord, environment));
+        ctx.$(`
+        if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${result});
+        else resolveCompletion(${result});
+        `);
     },
 
     'ObjectBindingPattern: { }',
@@ -655,23 +681,20 @@ Runtime_Semantics('compileBindingInitialization', [
 
     'BindingPropertyList: BindingPropertyList , BindingProperty',
     function(ctx, value, environment) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.BindingPropertyList.BindingInitialization(value, environment);
-        return this.BindingProperty.BindingInitialization(value, environment);
+        this.BindingPropertyList.compileBindingInitialization(ctx, value, environment);
+        this.BindingProperty.compileBindingInitialization(ctx, value, environment);
     },
 
     'BindingProperty: SingleNameBinding',
     function(ctx, value, environment) {
-        throw Error('not yet implemented'); // TODO
-        var name = this.SingleNameBinding.BoundNames()[0];
-        return this.SingleNameBinding.KeyedBindingInitialization(value, environment, name);
+        var name = this.SingleNameBinding.BoundNames()[0].quote();
+        this.SingleNameBinding.compileKeyedBindingInitialization(ctx, value, environment, name);
     },
 
     'BindingProperty: PropertyName : BindingElement',
     function(ctx, value, environment) {
-        throw Error('not yet implemented'); // TODO
         var P = this.PropertyName.compileEvaluation(ctx);
-        return this.BindingElement.KeyedBindingInitialization(value, environment, P);
+        this.BindingElement.compileKeyedBindingInitialization(ctx, value, environment, P);
     },
 ]);
 
@@ -679,186 +702,163 @@ Runtime_Semantics('compileBindingInitialization', [
 Runtime_Semantics('compileIteratorBindingInitialization', [
 
     'ArrayBindingPattern: [ ]',
-    function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return empty;
-    },
-
     'ArrayBindingPattern: [ Elision ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
+        this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
     },
 
     'ArrayBindingPattern: [ Elision[opt] BindingRestElement ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
         if (this.Elision) {
-            var status = this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
+            this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
         }
-        return this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingRestElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'ArrayBindingPattern: [ BindingElementList ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElementList.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'ArrayBindingPattern: [ BindingElementList , ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElementList.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'ArrayBindingPattern: [ BindingElementList , Elision ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
-        return this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
+        this.BindingElementList.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
+        this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
     },
 
     'ArrayBindingPattern: [ BindingElementList , Elision[opt] BindingRestElement ]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElementList.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
         if (this.Elision) {
-            var status = this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
+            this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
         }
-        return this.BindingRestElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingRestElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'BindingElementList: BindingElisionElement',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.BindingElisionElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElisionElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'BindingElementList: BindingElementList , BindingElisionElement',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.BindingElementList.IteratorBindingInitialization(iteratorRecord, environment);
-        return this.BindingElisionElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElementList.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
+        this.BindingElisionElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'BindingElisionElement: BindingElement',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.BindingElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'BindingElisionElement: Elision BindingElement',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
-        return this.BindingElement.IteratorBindingInitialization(iteratorRecord, environment);
+        this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
+        this.BindingElement.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'BindingElement: SingleNameBinding',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.SingleNameBinding.IteratorBindingInitialization(iteratorRecord, environment);
+        this.SingleNameBinding.compileIteratorBindingInitialization(ctx, iteratorRecord, environment);
     },
 
     'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId, environment, this.strict);
-        if (iteratorRecord.Done === false) {
-            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
-            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+        var v = ctx.allocVar();
+        var bindingId = this.BindingIdentifier.StringValue().quote();
+        var lhs = ctx.ResolveBinding(bindingId, environment, this.strict);
+        ctx.$(`
+        if (${iteratorRecord}.Done === false) {
+            var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
+            if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
             ReturnIfAbrupt(next);
-            if (next === false) iteratorRecord.Done = true;
+            if (next === false) ${iteratorRecord}.Done = true;
             else {
-                var v = concreteCompletion(IteratorValue(next));
-                if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
-                ReturnIfAbrupt(v);
+                var ${v} = concreteCompletion(IteratorValue(next));
+                if (${v}.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
+                ReturnIfAbrupt(${v});
             }
         }
-        if (iteratorRecord.Done === true) var v = undefined;
-        if (this.Initializer && v === undefined) {
+        if (${iteratorRecord}.Done === true) var ${v} = undefined;
+        `);
+        if (this.Initializer) {
+            ctx.$(` if(${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
-            var v = GetValue(defaultValue);
+            ctx.$(`var ${v} = GetValue(${defaultValue});`);
             if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-                var hasNameProperty = HasOwnProperty(v, "name");
-                if (hasNameProperty === false) SetFunctionName(v, bindingId);
+                ctx.$(`
+                var hasNameProperty = HasOwnProperty(${v}, "name");
+                if (hasNameProperty === false) SetFunctionName(${v}, ${bindingId});
+                `);
             }
+            ctx.$(` } `);
         }
-        if (environment === undefined) return PutValue(lhs, v);
-        return InitializeReferencedBinding(lhs, v);
+        ctx.$(`
+        if (${environment} === undefined) PutValue(${lhs}, ${v});
+        else InitializeReferencedBinding(${lhs}, ${v});
+        `);
     },
 
     'BindingElement: BindingPattern Initializer[opt]',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        if (iteratorRecord.Done === false) {
-            var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
-            if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+        var v = ctx.allocVar();
+        ctx.$(`
+        if (${iteratorRecord}.Done === false) {
+            var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
+            if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
             ReturnIfAbrupt(next);
-            if (next === false) iteratorRecord.Done = true;
+            if (next === false) ${iteratorRecord}.Done = true;
             else {
-                var v = concreteCompletion(IteratorValue(next));
-                if (v.is_an_abrupt_completion()) iteratorRecord.Done = true;
-                ReturnIfAbrupt(v);
+                var ${v} = concreteCompletion(IteratorValue(next));
+                if (${v}.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
+                ReturnIfAbrupt(${v});
             }
         }
-        if (iteratorRecord.Done === true) var v = undefined;
-        if (this.Initializer && v === undefined) {
+        if (${iteratorRecord}.Done === true) var ${v} = undefined;
+        `);
+        if (this.Initializer) {
+            ctx.$(` if(${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
-            var v = GetValue(defaultValue);
+            ctx.$(`var ${v} = GetValue(${defaultValue});`);
+            ctx.$(` } `);
         }
-        return this.BindingPattern.BindingInitialization(v, environment);
+        this.BindingPattern.compileBindingInitialization(ctx, v, environment);
     },
 
     'BindingRestElement: ... BindingIdentifier',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var lhs = ResolveBinding(this.BindingIdentifier.StringValue(), environment, this.strict);
-        var A = ArrayCreate(0);
-        var n = 0;
-        while (true) {
-            if (iteratorRecord.Done === false) {
-                var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
-                if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
-                ReturnIfAbrupt(next);
-                if (next === false) iteratorRecord.Done = true;
-            }
-            if (iteratorRecord.Done === true) {
-                if (environment === undefined) return PutValue(lhs, A);
-                return InitializeReferencedBinding(lhs, A);
-            }
-            var nextValue = concreteCompletion(IteratorValue(next));
-            if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
-            ReturnIfAbrupt(nextValue);
-            var status = ctx.CreateDataProperty(A, ToString(n).quote(), nextValue);
-            Assert(status === true);
-            n++;
-        }
+        return ctx._(`${ctx.literal(this)}.IteratorBindingInitialization(${iteratorRecord}, ${environment})`);
     },
 
     'BindingRestElement: ... BindingPattern',
     function(ctx, iteratorRecord, environment) {
-        throw Error('not yet implemented'); // TODO
-        var A = ArrayCreate(0);
+        var A = ctx._(`ArrayCreate(0)`);
+        ctx.$(`
         var n = 0;
         while (true) {
-            if (iteratorRecord.Done === false) {
-                var next = concreteCompletion(IteratorStep(iteratorRecord.Iterator));
-                if (next.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            if (${iteratorRecord}.Done === false) {
+                var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
+                if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
                 ReturnIfAbrupt(next);
-                if (next === false) iteratorRecord.Done = true;
+                if (next === false) ${iteratorRecord}.Done = true;
             }
-            if (iteratorRecord.Done === true) {
-                return this.BindingPattern.BindingInitialization(A, environment);
+            if (${iteratorRecord}.Done === true) {
+                break;
             }
             var nextValue = concreteCompletion(IteratorValue(next));
-            if (nextValue.is_an_abrupt_completion()) iteratorRecord.Done = true;
+            if (nextValue.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
             ReturnIfAbrupt(nextValue);
-            var status = ctx.CreateDataProperty(A, ToString(n).quote(), nextValue);
+            var status = CreateDataProperty(${A}, ToString(n), nextValue);
             Assert(status === true);
             n++;
         }
+        `);
+        this.BindingPattern.compileBindingInitialization(ctx, A, environment);
     },
 ]);
 
@@ -867,31 +867,37 @@ Runtime_Semantics('compileKeyedBindingInitialization', [
 
     'BindingElement: BindingPattern Initializer[opt]',
     function(ctx, value, environment, propertyName) {
-        throw Error('not yet implemented'); // TODO
-        var v = GetV(value, propertyName);
-        if (this.Initializer && v === undefined) {
+        var v = ctx.GetV(value, propertyName);
+        if (this.Initializer) {
+            ctx.$(` if(${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
-            var v = GetValue(defaultValue);
+            ctx.$(`var ${v} = GetValue(${defaultValue});`);
+            ctx.$(` } `);
         }
-        return this.BindingPattern.BindingInitialization(v, environment);
+        this.BindingPattern.compileBindingInitialization(ctx, v, environment);
     },
 
     'SingleNameBinding: BindingIdentifier Initializer[opt]',
     function(ctx, value, environment, propertyName) {
-        throw Error('not yet implemented'); // TODO
-        var bindingId = this.BindingIdentifier.StringValue();
-        var lhs = ResolveBinding(bindingId, environment, this.strict);
-        var v = GetV(value, propertyName);
-        if (this.Initializer && v === undefined) {
+        var bindingId = this.BindingIdentifier.StringValue().quote();
+        var lhs = ctx.ResolveBinding(bindingId, environment, this.strict);
+        var v = ctx.GetV(value, propertyName);
+        if (this.Initializer) {
+            ctx.$(` if(${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
-            var v = GetValue(defaultValue);
+            ctx.$(`var ${v} = GetValue(${defaultValue});`);
             if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-                var hasNameProperty = HasOwnProperty(v, "name");
-                if (hasNameProperty === false) SetFunctionName(v, bindingId);
+                ctx.$(`
+                var hasNameProperty = HasOwnProperty(${v}, "name");
+                if (hasNameProperty === false) SetFunctionName(${v}, ${bindingId});
+                `);
             }
+            ctx.$(` } `);
         }
-        if (environment === undefined) return PutValue(lhs, v);
-        return InitializeReferencedBinding(lhs, v);
+        ctx.$(`
+        if (${environment} === undefined) PutValue(${lhs}, ${v});
+        else InitializeReferencedBinding(${lhs}, ${v});
+        `);
     },
 ]);
 
@@ -899,10 +905,7 @@ Runtime_Semantics('compileKeyedBindingInitialization', [
 Runtime_Semantics('compileEvaluation', [
 
     'EmptyStatement: ;',
-    function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return empty;
-    },
+    function(ctx) {},
 ]);
 
 // 13.5.1
@@ -920,28 +923,22 @@ Runtime_Semantics('compileEvaluation', [
 
     'IfStatement: if ( Expression ) Statement else Statement',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var exprRef = this.Expression.compileEvaluation(ctx);
-        var exprValue = ToBoolean(GetValue(exprRef));
-        if (exprValue === true) {
-            var stmtCompletion = compileConcreteCompletion(this.Statement1.compileEvaluation(ctx));
-        } else {
-            var stmtCompletion = compileConcreteCompletion(this.Statement2.compileEvaluation(ctx));
-        }
-        return resolveCompletion(UpdateEmpty(stmtCompletion, undefined));
+        var exprValue = ctx.ToBoolean(ctx.GetValue(exprRef));
+        ctx.$(` if (${exprValue} === true) { `);
+        this.Statement1.compileEvaluation(ctx);
+        ctx.$(` } else { `);
+        this.Statement2.compileEvaluation(ctx);
+        ctx.$(` } `);
     },
 
     'IfStatement: if ( Expression ) Statement',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var exprRef = this.Expression.compileEvaluation(ctx);
-        var exprValue = ToBoolean(GetValue(exprRef));
-        if (exprValue === false) {
-            return undefined;
-        } else {
-            var stmtCompletion = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
-            return resolveCompletion(UpdateEmpty(stmtCompletion, undefined));
-        }
+        var exprValue = ctx.ToBoolean(ctx.GetValue(exprRef));
+        ctx.$(` if (${exprValue} !== false) { `);
+        this.Statement.compileEvaluation(ctx);
+        ctx.$(` } `);
     },
 ]);
 
@@ -950,16 +947,17 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'IterationStatement: do Statement while ( Expression ) ;',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var V = undefined;
-        while (true) {
-            var stmt = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
-            if (LoopContinues(stmt, labelSet) === false) return resolveCompletion(UpdateEmpty(stmt, V));
-            if (stmt.Value !== empty) var V = stmt.Value;
-            var exprRef = this.Expression.compileEvaluation(ctx);
-            var exprValue = GetValue(exprRef);
-            if (ToBoolean(exprValue) === false) return V;
-        }
+        ctx.$(` while (true) { `);
+        var stmt = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
+        ctx.$(`
+            if (LoopContinues(${stmt}, ${labelSet}) === false) resolveCompletion(${stmt}); // always abrupt
+        `);
+        var exprRef = this.Expression.compileEvaluation(ctx);
+        ctx.$(`
+            var exprValue = GetValue(${exprRef});
+            if (ToBoolean(exprValue) === false) break;
+        `);
+        ctx.$(` } `);
     },
 ]);
 
@@ -968,16 +966,17 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'IterationStatement: while ( Expression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var V = undefined;
-        while (true) {
-            var exprRef = this.Expression.compileEvaluation(ctx);
-            var exprValue = GetValue(exprRef);
-            if (ToBoolean(exprValue) === false) return V;
-            var stmt = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
-            if (LoopContinues(stmt, labelSet) === false) return resolveCompletion(UpdateEmpty(stmt, V));
-            if (stmt.Value !== empty) var V = stmt.Value;
-        }
+        ctx.$(` while (true) { `);
+        var exprRef = this.Expression.compileEvaluation(ctx);
+        ctx.$(`
+            var exprValue = GetValue(${exprRef});
+            if (ToBoolean(exprValue) === false) break;
+        `);
+        var stmt = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
+        ctx.$(`
+            if (LoopContinues(${stmt}, ${labelSet}) === false) resolveCompletion(${stmt}); // always abrupt
+        `);
+        ctx.$(` } `);
     },
 ]);
 
@@ -986,70 +985,78 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'IterationStatement: for ( Expression[opt] ; Expression[opt] ; Expression[opt] ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
         if (this.Expression1) {
             var exprRef = this.Expression1.compileEvaluation(ctx);
-            GetValue(exprRef);
+            ctx.GetValue(exprRef);
         }
-        return ForBodyEvaluation(this.Expression2, this.Expression3, this.Statement, [], labelSet);
+        compileForBodyEvaluation(ctx, this.Expression2, this.Expression3, this.Statement, [], labelSet);
     },
 
     'IterationStatement: for ( var VariableDeclarationList ; Expression[opt] ; Expression[opt] ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
         var varDcl = this.VariableDeclarationList.compileEvaluation(ctx);
-        return ForBodyEvaluation(this.Expression1, this.Expression2, this.Statement, [], labelSet);
+        compileForBodyEvaluation(ctx, this.Expression1, this.Expression2, this.Statement, [], labelSet);
     },
 
     'IterationStatement: for ( LexicalDeclaration Expression[opt] ; Expression[opt] ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var oldEnv = running_execution_context.LexicalEnvironment;
-        var loopEnv = NewDeclarativeEnvironment(oldEnv);
-        var loopEnvRec = loopEnv.EnvironmentRecord;
+        var [oldEnv, loopEnv, loopEnvRec] = ctx.allocVars();
+        ctx.$(`
+        var ${oldEnv} = running_execution_context.LexicalEnvironment;
+        var ${loopEnv} = NewDeclarativeEnvironment(${oldEnv});
+        var ${loopEnvRec} = ${loopEnv}.EnvironmentRecord;
+        `);
         var isConst = this.LexicalDeclaration.IsConstantDeclaration();
         var boundNames = this.LexicalDeclaration.BoundNames();
         for (var dn of boundNames) {
             if (isConst === true) {
-                loopEnvRec.CreateImmutableBinding(dn, true);
+                ctx.$(`${loopEnvRec}.CreateImmutableBinding(${dn.quote()}, true);`);
             } else {
-                loopEnvRec.CreateMutableBinding(dn, false);
+                ctx.$(`${loopEnvRec}.CreateMutableBinding(${dn.quote()}, false);`);
             }
         }
-        running_execution_context.LexicalEnvironment = loopEnv;
+        ctx.$(`running_execution_context.LexicalEnvironment = ${loopEnv};`);
         var forDcl = compileConcreteCompletion(this.LexicalDeclaration.compileEvaluation(ctx));
-        if (forDcl.is_an_abrupt_completion()) {
-            running_execution_context.LexicalEnvironment = oldEnv;
-            return resolveCompletion(forDcl);
+        ctx.$(`
+        if (${forDcl}.is_an_abrupt_completion()) {
+            running_execution_context.LexicalEnvironment = ${oldEnv};
+            resolveCompletion(${forDcl}); // always abrupt
         }
+        `);
         if (isConst === false) var perIterationLets = boundNames;
         else var perIterationLets = [];
-        var bodyResult = compileConcreteCompletion(ForBodyEvaluation(this.Expression1, this.Expression2, this.Statement, perIterationLets, labelSet));
-        running_execution_context.LexicalEnvironment = oldEnv;
-        return resolveCompletion(bodyResult);
+        var bodyResult = compileConcreteCompletion(compileForBodyEvaluation(ctx, this.Expression1, this.Expression2, this.Statement, perIterationLets, labelSet));
+        ctx.$(`
+        running_execution_context.LexicalEnvironment = ${oldEnv};
+        resolveCompletion(${bodyResult});
+        `);
     },
 ]);
 
 // 13.7.4.8
 function compileForBodyEvaluation(ctx, test, increment, stmt, perIterationBindings, labelSet) {
-    throw Error('not yet implemented'); // TODO
-    var V = undefined;
-    CreatePerIterationEnvironment(perIterationBindings);
-    while (true) {
-        if (test) {
-            var testRef = test.compileEvaluation(ctx);
-            var testValue = GetValue(testRef);
-            if (ToBoolean(testValue) === false) return V;
-        }
-        var result = compileConcreteCompletion(stmt.compileEvaluation(ctx));
-        if (LoopContinues(result, labelSet) === false) return resolveCompletion(UpdateEmpty(result, V));
-        if (result.Value !== empty) var V = result.Value;
-        CreatePerIterationEnvironment(perIterationBindings);
-        if (increment) {
-            var incRef = increment.compileEvaluation(ctx);
-            GetValue(incRef);
-        }
+    var perIterationBindings = ctx.literal(perIterationBindings);
+    ctx.$(`
+    CreatePerIterationEnvironment(${perIterationBindings});
+    `);
+    ctx.$(` while (true) { `);
+    if (test) {
+        var testRef = test.compileEvaluation(ctx);
+        ctx.$(`
+        var testValue = GetValue(${testRef});
+        if (ToBoolean(testValue) === false) break;
+        `);
     }
+    var result = compileConcreteCompletion(stmt.compileEvaluation(ctx));
+    ctx.$(`
+    if (LoopContinues(${result}, ${labelSet}) === false) resolveCompletion(${result}); // always abrupt
+    CreatePerIterationEnvironment(${perIterationBindings});
+    `);
+    if (increment) {
+        var incRef = increment.compileEvaluation(ctx);
+        ctx.GetValue(incRef);
+    }
+    ctx.$(` } `);
 }
 
 // 13.7.5.9
@@ -1057,8 +1064,7 @@ Runtime_Semantics('compileBindingInitialization', [
 
     'ForDeclaration: LetOrConst ForBinding',
     function(ctx, value, environment) {
-        throw Error('not yet implemented'); // TODO
-        return this.ForBinding.BindingInitialization(value, environment);
+        this.ForBinding.compileBindingInitialization(ctx, value, environment);
     },
 ]);
 
@@ -1067,16 +1073,7 @@ Runtime_Semantics('compileBindingInstantiation', [
 
     'ForDeclaration: LetOrConst ForBinding',
     function(ctx, environment) {
-        throw Error('not yet implemented'); // TODO
-        var envRec = environment.EnvironmentRecord;
-        Assert(envRec instanceof DeclarativeEnvironmentRecord);
-        for (var name of this.ForBinding.BoundNames()) {
-            if (this.LetOrConst.IsConstantDeclaration() === true) {
-                envRec.CreateImmutableBinding(name, true);
-            } else {
-                envRec.CreateMutableBinding(name, false);
-            }
-        }
+        return ctx._(`${ctx.literal(this)}.BindingInstantiation(${environment})`);
     },
 ]);
 
@@ -1085,139 +1082,147 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'IterationStatement: for ( LeftHandSideExpression in Expression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation([], this.Expression, 'enumerate');
-        return ForIn_OfBodyEvaluation(this.LeftHandSideExpression, this.Statement, keyResult, 'assignment', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, [], this.Expression, 'enumerate');
+        compileForIn_OfBodyEvaluation(ctx, this.LeftHandSideExpression, this.Statement, keyResult, 'assignment', labelSet);
     },
 
     'IterationStatement: for ( var ForBinding in Expression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation([], this.Expression, 'enumerate');
-        return ForIn_OfBodyEvaluation(this.ForBinding, this.Statement, keyResult, 'varBinding', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, [], this.Expression, 'enumerate');
+        compileForIn_OfBodyEvaluation(ctx, this.ForBinding, this.Statement, keyResult, 'varBinding', labelSet);
     },
 
     'IterationStatement: for ( ForDeclaration in Expression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation(this.ForDeclaration.BoundNames(), this.Expression, 'enumerate');
-        return ForIn_OfBodyEvaluation(this.ForDeclaration, this.Statement, keyResult, 'lexicalBinding', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, this.ForDeclaration.BoundNames(), this.Expression, 'enumerate');
+        compileForIn_OfBodyEvaluation(ctx, this.ForDeclaration, this.Statement, keyResult, 'lexicalBinding', labelSet);
     },
 
     'IterationStatement: for ( LeftHandSideExpression of AssignmentExpression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation([], this.AssignmentExpression, 'iterate');
-        return ForIn_OfBodyEvaluation(this.LeftHandSideExpression, this.Statement, keyResult, 'assignment', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, [], this.AssignmentExpression, 'iterate');
+        compileForIn_OfBodyEvaluation(ctx, this.LeftHandSideExpression, this.Statement, keyResult, 'assignment', labelSet);
     },
 
     'IterationStatement: for ( var ForBinding of AssignmentExpression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation([], this.AssignmentExpression, 'iterate');
-        return ForIn_OfBodyEvaluation(this.ForBinding, this.Statement, keyResult, 'varBinding', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, [], this.AssignmentExpression, 'iterate');
+        compileForIn_OfBodyEvaluation(ctx, this.ForBinding, this.Statement, keyResult, 'varBinding', labelSet);
     },
 
     'IterationStatement: for ( ForDeclaration of AssignmentExpression ) Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
-        var keyResult = ForIn_OfHeadEvaluation(this.ForDeclaration.BoundNames(), this.AssignmentExpression, 'iterate');
-        return ForIn_OfBodyEvaluation(this.ForDeclaration, this.Statement, keyResult, 'lexicalBinding', labelSet);
+        var keyResult = compileForIn_OfHeadEvaluation(ctx, this.ForDeclaration.BoundNames(), this.AssignmentExpression, 'iterate');
+        compileForIn_OfBodyEvaluation(ctx, this.ForDeclaration, this.Statement, keyResult, 'lexicalBinding', labelSet);
     },
 ]);
 
 // 13.7.5.12
 function compileForIn_OfHeadEvaluation(ctx, TDZnames, expr, iterationKind) {
-    throw Error('not yet implemented'); // TODO
-    var currentContext = running_execution_context;
-    var oldEnv = running_execution_context.LexicalEnvironment;
+    var currentContext = ctx._(`running_execution_context`);
+    var oldEnv = ctx._(`running_execution_context.LexicalEnvironment`);
     if (TDZnames.length > 0) {
         Assert(!TDZnames.contains_any_duplicate_entries());
-        var TDZ = NewDeclarativeEnvironment(oldEnv);
-        var TDZEnvRec = TDZ.EnvironmentRecord;
+        var TDZ = ctx.NewDeclarativeEnvironment(oldEnv);
+        var TDZEnvRec = ctx._(`${TDZ}.EnvironmentRecord`);
         for (var name of TDZnames) {
-            TDZEnvRec.CreateMutableBinding(name, false);
+            ctx.$(`${TDZEnvRec}.CreateMutableBinding(${name.quote()}, false);`);
         }
-        running_execution_context.LexicalEnvironment = TDZ;
+        ctx.$(`running_execution_context.LexicalEnvironment = ${TDZ};`);
     }
-    try {
-        var exprRef = expr.compileEvaluation(ctx);
-    } finally {
-        Assert(currentContext === running_execution_context);
-        running_execution_context.LexicalEnvironment = oldEnv;
-    }
-    var exprValue = GetValue(exprRef);
+    var exprRef = compileConcreteCompletion(expr.compileEvaluation(ctx));
+    ctx.$(`
+    Assert(${currentContext} === running_execution_context);
+    running_execution_context.LexicalEnvironment = ${oldEnv};
+    ReturnIfAbrupt(${exprRef});
+    `);
+    var exprValue = ctx.GetValue(exprRef);
     if (iterationKind === 'enumerate') {
-        if (exprValue === null || exprValue === undefined) {
+        ctx.$(`
+        if (${exprValue} === null || ${exprValue} === undefined) {
             throw Completion({ Type: 'break', Value: empty, Target: empty });
         }
-        var obj = ToObject(exprValue);
-        return EnumerateObjectProperties(obj);
+        `);
+        var obj = ctx.ToObject(exprValue);
+        return ctx._(`EnumerateObjectProperties(${obj})`);
     } else {
         Assert(iterationKind === 'iterate');
-        return GetIterator(exprValue);
+        return ctx.GetIterator(exprValue);
     }
 }
 
 // 13.7.5.13
 function compileForIn_OfBodyEvaluation(ctx, lhs, stmt, iterator, lhsKind, labelSet) {
-    throw Error('not yet implemented'); // TODO
-    var oldEnv = running_execution_context.LexicalEnvironment;
-    var V = undefined;
+    var oldEnv = ctx._(`running_execution_context.LexicalEnvironment`);
     var destructuring = lhs.IsDestructuring();
     if (destructuring === true && lhsKind === 'assignment') {
         Assert(lhs.is('LeftHandSideExpression'));
         var assignmentPattern = lhs.AssignmentPattern;
     }
-    while (true) {
-        var nextResult = IteratorStep(iterator);
-        if (nextResult === false) return V;
-        var nextValue = IteratorValue(nextResult);
-        if (lhsKind === 'assignment' || lhsKind === 'varBinding') {
-            if (destructuring === false) {
-                var lhsRef = compileConcreteCompletion(lhs.compileEvaluation(ctx));
-            }
+    ctx.$(` while (true) { `);
+    var nextValue = ctx.allocVar();
+    ctx.$(`
+        var nextResult = IteratorStep(${iterator});
+        if (nextResult === false) break;
+        var ${nextValue} = IteratorValue(nextResult);
+    `);
+    if (lhsKind === 'assignment' || lhsKind === 'varBinding') {
+        if (destructuring === false) {
+            var lhsRef = compileConcreteCompletion(lhs.compileEvaluation(ctx));
+        }
+    } else {
+        Assert(lhsKind === 'lexicalBinding');
+        Assert(lhs.is('ForDeclaration'));
+        var iterationEnv = ctx.NewDeclarativeEnvironment(oldEnv);
+        lhs.compileBindingInstantiation(ctx, iterationEnv);
+        ctx.$(`running_execution_context.LexicalEnvironment = ${iterationEnv};`);
+        if (destructuring === false) {
+            Assert(lhs.BoundNames().length === 1);
+            var lhsName = lhs.BoundNames()[0];
+            var lhsRef = ctx._(`NormalCompletion(ResolveBinding(${lhsName.quote()}, undefined, ${lhs.strict}))`);
+        }
+    }
+    if (destructuring === false) {
+        var status = ctx.allocVar();
+        ctx.$(`
+        if (${lhsRef}.is_an_abrupt_completion()) {
+            var ${status} = ${lhsRef};
+        } else {
+        `);
+        if (lhsKind === 'lexicalBinding') {
+            ctx.$(`
+            var ${status} = concreteCompletion(InitializeReferencedBinding(${lhsRef}.Value, ${nextValue}));
+            `);
+        } else {
+            ctx.$(`
+            var ${status} = concreteCompletion(PutValue(${lhsRef}.Value, ${nextValue}));
+            `);
+        }
+        ctx.$(` } `);
+    } else {
+        if (lhsKind === 'assignment') {
+            var status = compileConcreteCompletion(assignmentPattern.compileDestructuringAssignmentEvaluation(ctx, nextValue));
+        } else if (lhsKind === 'varBinding') {
+            Assert(lhs.is('ForBinding'));
+            var status = compileConcreteCompletion(lhs.compileBindingInitialization(ctx, nextValue, undefined));
         } else {
             Assert(lhsKind === 'lexicalBinding');
             Assert(lhs.is('ForDeclaration'));
-            var iterationEnv = NewDeclarativeEnvironment(oldEnv);
-            lhs.BindingInstantiation(iterationEnv);
-            running_execution_context.LexicalEnvironment = iterationEnv;
-            if (destructuring === false) {
-                Assert(lhs.BoundNames().length === 1);
-                var lhsName = lhs.BoundNames()[0];
-                var lhsRef = NormalCompletion(ResolveBinding(lhsName, undefined, lhs.strict));
-            }
+            var status = compileConcreteCompletion(lhs.compileBindingInitialization(ctx, nextValue, iterationEnv));
         }
-        if (destructuring === false) {
-            if (lhsRef.is_an_abrupt_completion()) {
-                var status = lhsRef;
-            } else if (lhsKind === 'lexicalBinding') {
-                var status = concreteCompletion(InitializeReferencedBinding(lhsRef.Value, nextValue));
-            } else {
-                var status = concreteCompletion(PutValue(lhsRef.Value, nextValue));
-            }
-        } else {
-            if (lhsKind === 'assignment') {
-                var status = compileConcreteCompletion(assignmentPattern.DestructuringAssignmentEvaluation(nextValue));
-            } else if (lhsKind === 'varBinding') {
-                Assert(lhs.is('ForBinding'));
-                var status = compileConcreteCompletion(lhs.BindingInitialization(nextValue, undefined));
-            } else {
-                Assert(lhsKind === 'lexicalBinding');
-                Assert(lhs.is('ForDeclaration'));
-                var status = compileConcreteCompletion(lhs.BindingInitialization(nextValue, iterationEnv));
-            }
-        }
-        if (status.is_an_abrupt_completion()) {
-            running_execution_context.LexicalEnvironment = oldEnv;
-            return IteratorClose(iterator, status);
-        }
-        var result = compileConcreteCompletion(stmt.compileEvaluation(ctx));
-        running_execution_context.LexicalEnvironment = oldEnv;
-        if (LoopContinues(result, labelSet) === false) return IteratorClose(iterator, UpdateEmpty(result, V));
-        if (result.Value !== empty) var V = result.Value;
     }
+    ctx.$(`
+    if (${status}.is_an_abrupt_completion()) {
+        running_execution_context.LexicalEnvironment = ${oldEnv};
+        return IteratorClose(iterator, ${status});
+    }
+    `);
+    var result = compileConcreteCompletion(stmt.compileEvaluation(ctx));
+    ctx.$(`
+    running_execution_context.LexicalEnvironment = ${oldEnv};
+    if (LoopContinues(${result}, ${labelSet}) === false) IteratorClose(${iterator}, ${result}); // always abrupt
+    `);
+    ctx.$(` } `); // end of while
 }
 
 // 13.7.5.14
@@ -1225,9 +1230,8 @@ Runtime_Semantics('compileEvaluation', [
 
     'ForBinding: BindingIdentifier',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var bindingId = this.BindingIdentifier.StringValue();
-        return ResolveBinding(bindingId, undefined, this.strict);
+        var bindingId = this.BindingIdentifier.StringValue().quote();
+        return ctx.ResolveBinding(bindingId, undefined, this.strict);
     },
 ]);
 
@@ -1236,7 +1240,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'ContinueStatement: continue ;',
     function(ctx) {
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'continue', Value: empty, Target: empty });
         `);
     },
@@ -1244,7 +1248,7 @@ Runtime_Semantics('compileEvaluation', [
     'ContinueStatement: continue LabelIdentifier ;',
     function(ctx) {
         var label = this.LabelIdentifier.StringValue().quote();
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'continue', Value: empty, Target: ${label} });
         `);
     },
@@ -1255,7 +1259,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'BreakStatement: break ;',
     function(ctx) {
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'break', Value: empty, Target: empty });
         `);
     },
@@ -1263,7 +1267,7 @@ Runtime_Semantics('compileEvaluation', [
     'BreakStatement: break LabelIdentifier ;',
     function(ctx) {
         var label = this.LabelIdentifier.StringValue().quote();
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'break', Value: empty, Target: ${label} });
         `);
     },
@@ -1274,7 +1278,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'ReturnStatement: return ;',
     function(ctx) {
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'return', Value: undefined, Target: empty });
         `);
     },
@@ -1283,7 +1287,7 @@ Runtime_Semantics('compileEvaluation', [
     function(ctx) {
         var exprRef = this.Expression.compileEvaluation(ctx);
         var exprValue = ctx.GetValue(exprRef);
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'return', Value: ${exprValue}, Target: empty });
         `);
     },
@@ -1297,14 +1301,14 @@ Runtime_Semantics('compileEvaluation', [
         var val = this.Expression.compileEvaluation(ctx);
         var obj = ctx.ToObject(ctx.GetValue(val));
         var [oldEnv, newEnv] = ctx.allocVars();
-        ctx.code(`
+        ctx.$(`
         var ${oldEnv} = running_execution_context.LexicalEnvironment;
         var ${newEnv} = NewObjectEnvironment(${obj}, ${oldEnv});
         ${newEnv}.EnvironmentRecord.withEnvironment = true;
         running_execution_context.LexicalEnvironment = ${newEnv};
         `)
         var C = compileConcreteCompletion(this.Statement.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         running_execution_context.LexicalEnvironment = ${oldEnv};
         resolveCompletion(${C});
         `)
@@ -1315,76 +1319,55 @@ Runtime_Semantics('compileEvaluation', [
 Runtime_Semantics('compileCaseBlockEvaluation', [
 
     'CaseBlock: { }',
-    function(ctx, input) {
-        throw Error('not yet implemented'); // TODO
-        return undefined;
-    },
+    function(ctx, input) {},
 
     'CaseBlock: { CaseClauses }',
     function(ctx, input) {
-        throw Error('not yet implemented'); // TODO
-        var V = undefined;
         var A = listCaseClauses(this.CaseClauses);
-        var found = false;
+        var found = ctx._(false);
         for (var C of A) {
-            if (found === false) {
-                var clauseSelector = compileConcreteCompletion(C.CaseSelectorEvaluation(ctx));
-                ReturnIfAbrupt(clauseSelector);
-                var found = (input === clauseSelector);
-            }
-            if (found === true) {
-                var R = compileConcreteCompletion(C.compileEvaluation(ctx));
-                if (R.Value !== empty) var V = R.Value;
-                if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
-            }
+            ctx.$(` if (${found} === false) { `);
+            var clauseSelector = C.compileCaseSelectorEvaluation(ctx);
+            ctx.$(`var ${found} = (${input} === ${clauseSelector});`);
+            ctx.$(` } `);
+            ctx.$(` if (${found} === true) { `);
+            C.compileEvaluation(ctx);
+            ctx.$(` } `);
         }
-        return V;
     },
 
     'CaseBlock: { CaseClauses[opt] DefaultClause CaseClauses[opt] }',
     function(ctx, input) {
-        throw Error('not yet implemented'); // TODO
-        var V = undefined;
         var A = listCaseClauses(this.CaseClauses1)
-        var found = false;
+        var found = ctx._(false);
         for (var C of A) {
-            if (found === false) {
-                var clauseSelector = compileConcreteCompletion(C.CaseSelectorEvaluation(ctx));
-                ReturnIfAbrupt(clauseSelector);
-                var found = (input === clauseSelector);
-            }
-            if (found === true) {
-                var R = compileConcreteCompletion(C.compileEvaluation(ctx));
-                if (R.Value !== empty) var V = R.Value;
-                if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
-            }
+            ctx.$(` if (${found} === false) { `);
+            var clauseSelector = C.compileCaseSelectorEvaluation(ctx);
+            ctx.$(`var ${found} = (${input} === ${clauseSelector});`);
+            ctx.$(` } `);
+            ctx.$(` if (${found} === true) { `);
+            C.compileEvaluation(ctx);
+            ctx.$(` } `);
         }
-        var foundInB = false;
+        var foundInB = ctx._(false);
         var B = listCaseClauses(this.CaseClauses2);
-        if (found === false) {
-            for (var C of B) {
-                if (foundInB === false) {
-                    var clauseSelector = compileConcreteCompletion(C.CaseSelectorEvaluation(ctx));
-                    ReturnIfAbrupt(clauseSelector);
-                    var foundInB = (input === clauseSelector);
-                }
-                if (foundInB === true) {
-                    var R = compileConcreteCompletion(C.compileEvaluation(ctx));
-                    if (R.Value !== empty) var V = R.Value;
-                    if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
-                }
-            }
-        }
-        if (foundInB === true) return V;
-        var R = compileConcreteCompletion(this.DefaultClause.compileEvaluation(ctx));
-        if (R.Value !== empty) var V = R.Value;
-        if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
+        ctx.$(` if (${found} === false) { `);
         for (var C of B) {
-            var R = compileConcreteCompletion(C.compileEvaluation(ctx));
-            if (R.Value !== empty) var V = R.Value;
-            if (R.is_an_abrupt_completion()) return resolveCompletion(UpdateEmpty(R, V));
+            ctx.$(` if (${foundInB} === false) { `);
+            var clauseSelector = C.compileCaseSelectorEvaluation(ctx);
+            ctx.$(`var ${foundInB} = (${input} === ${clauseSelector});`);
+            ctx.$(` } `);
+            ctx.$(` if (${foundInB} === true) { `);
+            C.compileEvaluation(ctx);
+            ctx.$(` } `);
         }
-        return V;
+        ctx.$(` } `);
+        ctx.$(` if (${foundInB} !== true){ `);
+        this.DefaultClause.compileEvaluation(ctx);
+        for (var C of B) {
+            C.compileEvaluation(ctx);
+        }
+        ctx.$(` } `);
     },
 ]);
 
@@ -1393,9 +1376,8 @@ Runtime_Semantics('compileCaseSelectorEvaluation', [
 
     'CaseClause: case Expression : StatementList[opt]',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var exprRef = this.Expression.compileEvaluation(ctx);
-        return GetValue(exprRef);
+        return ctx.GetValue(exprRef);
     },
 ]);
 
@@ -1404,40 +1386,37 @@ Runtime_Semantics('compileEvaluation', [
 
     'SwitchStatement: switch ( Expression ) CaseBlock',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
+        var _this = ctx.literal(this);
+        var [oldEnv, blockEnv] = ctx.allocVars();
         var exprRef = this.Expression.compileEvaluation(ctx);
-        var switchValue = GetValue(exprRef);
-        var oldEnv = running_execution_context.LexicalEnvironment;
-        var blockEnv = NewDeclarativeEnvironment(oldEnv);
-        BlockDeclarationInstantiation(this.CaseBlock, blockEnv);
-        running_execution_context.LexicalEnvironment = blockEnv;
-        var R = compileConcreteCompletion(this.CaseBlock.CaseBlockEvaluation(switchValue));
-        running_execution_context.LexicalEnvironment = oldEnv;
-        return resolveCompletion(R);
+        var switchValue = ctx.GetValue(exprRef);
+        ctx.$(`
+        var ${oldEnv} = running_execution_context.LexicalEnvironment;
+        var ${blockEnv} = NewDeclarativeEnvironment(${oldEnv});
+        BlockDeclarationInstantiation(${_this}.CaseBlock, ${blockEnv});
+        running_execution_context.LexicalEnvironment = ${blockEnv};
+        `);
+        var R = compileConcreteCompletion(ctx, this.CaseBlock.compileCaseBlockEvaluation(ctx, switchValue));
+        ctx.$(`
+        running_execution_context.LexicalEnvironment = ${oldEnv};
+        resolveCompletion(${R});
+        `);
     },
 
     'CaseClause: case Expression :',
-    function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return empty;
-    },
+    function(ctx) {},
 
     'CaseClause: case Expression : StatementList',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.StatementList.compileEvaluation(ctx);
+        this.StatementList.compileEvaluation(ctx);
     },
 
     'DefaultClause: default :',
-    function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return empty;
-    },
+    function(ctx) {},
 
     'DefaultClause: default : StatementList',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.StatementList.compileEvaluation(ctx);
+        this.StatementList.compileEvaluation(ctx);
     },
 ]);
 
@@ -1446,20 +1425,23 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'LabelledStatement: LabelIdentifier : LabelledItem',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
         var label = this.LabelIdentifier.StringValue();
         labelSet.push(label);
-        var stmtResult = compileConcreteCompletion(this.LabelledItem.compileLabelledEvaluation(ctx, labelSet));
-        if (stmtResult.Type === 'break' && SameValue(stmtResult.Target, label) === true) {
-            var stmtResult = NormalCompletion(stmtResult.Value);
+        var stmtResult = compileConcreteCompletion(ctx, this.LabelledItem.compileLabelledEvaluation(ctx, labelSet));
+        ctx.$(`
+        if (${stmtResult}.Type === 'break' && SameValue(${stmtResult}.Target, ${label.quote()}) === true) {
+            var ${stmtResult} = NormalCompletion(${stmtResult}.Value);
         }
-        return resolveCompletion(stmtResult);
+        resolveCompletion(${stmtResult});
+        `);
     },
 
     'LabelledItem: Statement',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
         if (this.Statement.is('LabelledStatement') || this.Statement.is('BreakableStatement')) {
+            if (this.Statement.is('BreakableStatement')) {
+                var labelSet = ctx.literal(labelSet);
+            }
             return this.Statement.compileLabelledEvaluation(ctx, labelSet);
         } else {
             return this.Statement.compileEvaluation(ctx);
@@ -1468,7 +1450,6 @@ Runtime_Semantics('compileLabelledEvaluation', [
 
     'LabelledItem: FunctionDeclaration',
     function(ctx, labelSet) {
-        throw Error('not yet implemented'); // TODO
         return this.FunctionDeclaration.compileEvaluation(ctx);
     },
 ]);
@@ -1478,7 +1459,6 @@ Runtime_Semantics('compileEvaluation', [
 
     'LabelledStatement: LabelIdentifier : LabelledItem',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var newLabelSet = [];
         return this.compileLabelledEvaluation(ctx, newLabelSet);
     },
@@ -1491,7 +1471,7 @@ Runtime_Semantics('compileEvaluation', [
     function(ctx) {
         var exprRef = this.Expression.compileEvaluation(ctx);
         var exprValue = ctx.GetValue(exprRef);
-        ctx.code(`
+        ctx.$(`
         throw Completion({ Type: 'throw', Value: ${exprValue}, Target: empty });
         `);
     },
@@ -1503,28 +1483,28 @@ Runtime_Semantics('compileCatchClauseEvaluation', [
     'Catch: catch ( CatchParameter ) Block',
     function(ctx, thrownValue) {
         var [oldEnv, catchEnv, catchEnvRec] = ctx.allocVars();
-        ctx.code(`
+        ctx.$(`
         var ${oldEnv} = running_execution_context.LexicalEnvironment;
         var ${catchEnv} = NewDeclarativeEnvironment(${oldEnv});
         var ${catchEnvRec} = ${catchEnv}.EnvironmentRecord;
         `);
         for (var argName of this.CatchParameter.BoundNames()) {
-            ctx.code(`
+            ctx.$(`
             ${catchEnvRec}.CreateMutableBinding(${argName.quote()}, false);
             `);
         }
-        ctx.code(`
+        ctx.$(`
         running_execution_context.LexicalEnvironment = ${catchEnv};
         `);
         var status = compileConcreteCompletion(this.CatchParameter.compileBindingInitialization(ctx, thrownValue, catchEnv));
-        ctx.code(`
+        ctx.$(`
         if (${status}.is_an_abrupt_completion()) {
             running_execution_context.LexicalEnvironment = ${oldEnv};
-            resolveCompletion(${status});
+            resolveCompletion(${status}); // always abrupt
         }else{
         `);
         var B = compileConcreteCompletion(this.Block.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
             running_execution_context.LexicalEnvironment = ${oldEnv};
             resolveCompletion(${B});
         }
@@ -1538,12 +1518,12 @@ Runtime_Semantics('compileEvaluation', [
     'TryStatement: try Block Catch',
     function(ctx) {
         var B = compileConcreteCompletion(this.Block.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         if (${B}.Type === 'throw'){
         `);
         var V = ctx._(`${B}.Value`);
         var C = compileConcreteCompletion(this.Catch.compileCatchClauseEvaluation(ctx, V));
-        ctx.code(`
+        ctx.$(`
         } else var ${C} = ${B};
         resolveCompletion(${C});
         `);
@@ -1553,7 +1533,7 @@ Runtime_Semantics('compileEvaluation', [
     function(ctx) {
         var B = compileConcreteCompletion(this.Block.compileEvaluation(ctx));
         var F = compileConcreteCompletion(this.Finally.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         if (${F}.Type === 'normal') var ${F} = ${B};
         resolveCompletion(${F});
         `);
@@ -1562,16 +1542,16 @@ Runtime_Semantics('compileEvaluation', [
     'TryStatement: try Block Catch Finally',
     function(ctx) {
         var B = compileConcreteCompletion(this.Block.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         if (${B}.Type === 'throw'){
         `);
         var V = ctx._(`${B}.Value`);
         var C = compileConcreteCompletion(this.Catch.compileCatchClauseEvaluation(ctx, V));
-        ctx.code(`
+        ctx.$(`
         } else var ${C} = ${B};
         `);
         var F = compileConcreteCompletion(this.Finally.compileEvaluation(ctx));
-        ctx.code(`
+        ctx.$(`
         if (${F}.Type === 'normal') var ${F} = ${C};
         resolveCompletion(${F});
         `);
@@ -1583,9 +1563,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'DebuggerStatement: debugger ;',
     function(ctx) {
-        ctx.code(`
-        debugger;
-        `);
+        ctx.$(`debugger;`);
     },
 ]);
 
@@ -1623,8 +1601,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'PrimaryExpression: this',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return ResolveThisBinding();
+        return ctx._(`ResolveThisBinding()`);
     },
 ]);
 
@@ -1650,7 +1627,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'Literal: StringLiteral',
     function(ctx) {
-        return this.StringLiteral.StringValue().quote();
+        return ctx._(this.StringLiteral.StringValue().quote());
     },
 ]);
 
@@ -1675,7 +1652,6 @@ Runtime_Semantics('compileArrayAccumulation', [
 
     'ElementList: ElementList , Elision[opt] AssignmentExpression',
     function(ctx, array, nextIndex) {
-        throw Error('not yet implemented'); // TODO
         var postIndex = this.ElementList.compileArrayAccumulation(ctx, array, nextIndex);
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
         var initResult = this.AssignmentExpression.compileEvaluation(ctx);
@@ -1699,7 +1675,7 @@ Runtime_Semantics('compileArrayAccumulation', [
         var spreadObj = ctx.GetValue(spreadRef);
         var iterator = ctx.GetIterator(spreadObj);
         var nextIndex = ctx._(`${nextIndex}`);
-        ctx.code(`
+        ctx.$(`
         while (true) {
             var next = IteratorStep(${iterator});
             if (next === false) break;
@@ -1718,14 +1694,14 @@ Runtime_Semantics('compileEvaluation', [
 
     'ArrayLiteral: [ Elision[opt] ]',
     function(ctx) {
-        return ctx.Evaluation(this);
+        return ctx._(`${ctx.literal(this)}.Evaluation()`);
     },
 
     'ArrayLiteral: [ ElementList ]',
     function(ctx) {
         var array = ctx._(`ArrayCreate(0)`);
         var len = this.ElementList.compileArrayAccumulation(ctx, array, 0);
-        ctx.code(`_Set(${array}, "length", ToUint32(${len}), false);`);
+        ctx.$(`_Set(${array}, "length", ToUint32(${len}), false);`);
         return array;
     },
 
@@ -1734,7 +1710,7 @@ Runtime_Semantics('compileEvaluation', [
         var array = ctx._(`ArrayCreate(0)`);
         var len = this.ElementList.compileArrayAccumulation(ctx, array, 0);
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
-        ctx.code(`_Set(${array}, "length", ToUint32(${padding}+${len}), false);`);
+        ctx.$(`_Set(${array}, "length", ToUint32(${padding}+${len}), false);`);
         return array;
     },
 ]);
@@ -1750,18 +1726,14 @@ Runtime_Semantics('compileEvaluation', [
     'ObjectLiteral: { PropertyDefinitionList }',
     'ObjectLiteral: { PropertyDefinitionList , }',
     function(ctx) {
-        if (!this.Contains('YieldExpression')) { //TODO
-            return ctx.Evaluation(this);
-        }
-        throw Error('not yet implemented'); // TODO
-        var obj = ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%']);
-        var status = this.PropertyDefinitionList.compilePropertyDefinitionEvaluation(ctx, obj, true);
+        var obj = ctx._(`ObjectCreate(currentRealm.Intrinsics['%ObjectPrototype%'])`);
+        this.PropertyDefinitionList.compilePropertyDefinitionEvaluation(ctx, obj, true);
         return obj;
     },
 
     'LiteralPropertyName: IdentifierName',
     function(ctx) {
-        return this.IdentifierName.StringValue().quote();
+        return ctx._(this.IdentifierName.StringValue().quote());
     },
 
     'LiteralPropertyName: StringLiteral',
@@ -1779,10 +1751,9 @@ Runtime_Semantics('compileEvaluation', [
 
     'ComputedPropertyName: [ AssignmentExpression ]',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var exprValue = this.AssignmentExpression.compileEvaluation(ctx);
-        var propName = GetValue(exprValue);
-        return ToPropertyKey(propName);
+        var propName = ctx.GetValue(exprValue);
+        return ctx.ToPropertyKey(propName);
     },
 ]);
 
@@ -1791,33 +1762,33 @@ Runtime_Semantics('compilePropertyDefinitionEvaluation', [
 
     'PropertyDefinitionList: PropertyDefinitionList , PropertyDefinition',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
-        var status = this.PropertyDefinitionList.PropertyDefinitionEvaluation(object, enumerable);
-        return this.PropertyDefinition.PropertyDefinitionEvaluation(object, enumerable);
+        this.PropertyDefinitionList.compilePropertyDefinitionEvaluation(ctx, object, enumerable);
+        this.PropertyDefinition.compilePropertyDefinitionEvaluation(ctx, object, enumerable);
     },
 
     'PropertyDefinition: IdentifierReference',
     function(ctx, object, enumerable) {
         throw Error('not yet implemented'); // TODO
-        var propName = this.IdentifierReference.StringValue();
+        var propName = this.IdentifierReference.StringValue().quote();
         var exprValue = this.IdentifierReference.compileEvaluation(ctx);
-        var propValue = GetValue(exprValue);
-        Assert(enumerable === true);
-        return CreateDataPropertyOrThrow(object, propName, propValue);
+        var propValue = ctx.GetValue(exprValue);
+        ctx.Assert(`${enumerable} === true`);
+        ctx.CreateDataPropertyOrThrow(object, propName, propValue);
     },
 
     'PropertyDefinition: PropertyName : AssignmentExpression',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
         var propKey = this.PropertyName.compileEvaluation(ctx);
         var exprValueRef = this.AssignmentExpression.compileEvaluation(ctx);
-        var propValue = GetValue(exprValueRef);
+        var propValue = ctx.GetValue(exprValueRef);
         if (IsAnonymousFunctionDefinition(this.AssignmentExpression) === true) {
-            var hasNameProperty = HasOwnProperty(propValue, "name");
-            if (hasNameProperty === false) SetFunctionName(propValue, propKey);
+            ctx.$(`
+            var hasNameProperty = HasOwnProperty(${propValue}, "name");
+            if (hasNameProperty === false) SetFunctionName(${propValue}, ${propKey});
+            `);
         }
-        Assert(enumerable === true);
-        return CreateDataPropertyOrThrow(object, propKey, propValue);
+        ctx.Assert(`${enumerable} === true`);
+        ctx.CreateDataPropertyOrThrow(object, propKey, propValue);
     },
 ]);
 
@@ -2033,11 +2004,11 @@ function compileEvaluateNew(ctx, constructProduction, _arguments) {
     Assert(_arguments === empty || _arguments.is('Arguments'));
     var ref = constructProduction.compileEvaluation(ctx);
     var constructor = ctx.GetValue(ref);
-    if (_arguments === empty) var argList = ctx._(`[]`);
+    if (_arguments === empty) var argList = `[]`;
     else {
         var argList = _arguments.compileArgumentListEvaluation(ctx);
     }
-    ctx.code(`
+    ctx.$(`
     if (IsConstructor(${constructor}) === false) throw $TypeError();
     `);
     return ctx.Construct(constructor, argList);
@@ -2064,7 +2035,7 @@ Runtime_Semantics('compileEvaluation', [
                     }
                 }
         */
-        ctx.code(`
+        ctx.$(`
         if (Type(${ref}) === 'Reference') {
             if (IsPropertyReference(${ref}) === true) {
                 var ${thisValue} = GetThisValue(${ref});
@@ -2092,7 +2063,7 @@ Runtime_Semantics('compileEvaluation', [
 // 12.3.4.3
 function compileEvaluateDirectCall(ctx, func, thisValue, _arguments) {
     var argList = _arguments.compileArgumentListEvaluation(ctx);
-    ctx.code(`
+    ctx.$(`
     if (Type(${func}) !== 'Object') throw $TypeError();
     if (IsCallable(${func}) === false) throw $TypeError();
     `);
@@ -2117,11 +2088,10 @@ Runtime_Semantics('compileEvaluation', [
 
     'SuperProperty: super . IdentifierName',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var propertyKey = this.IdentifierName.StringValue();
+        var propertyKey = this.IdentifierName.StringValue().quote();
         if (this.strict) var strict = true;
         else var strict = false;
-        return MakeSuperPropertyReference(propertyKey, strict);
+        return ctx._(`MakeSuperPropertyReference(${propertyKey}, ${strict})`);
     },
 
     'SuperCall: super Arguments',
@@ -2172,7 +2142,7 @@ Runtime_Semantics('compileArgumentListEvaluation', [
         var precedingArgs = this.ArgumentList.compileArgumentListEvaluation(ctx);
         var ref = this.AssignmentExpression.compileEvaluation(ctx);
         var arg = ctx.GetValue(ref);
-        ctx.code(`${precedingArgs}.push(${arg});`);
+        ctx.$(`${precedingArgs}.push(${arg});`);
         return precedingArgs;
     },
 
@@ -2229,12 +2199,15 @@ Runtime_Semantics('compileEvaluation', [
 
     'UpdateExpression: LeftHandSideExpression ++',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lhs = this.LeftHandSideExpression.compileEvaluation(ctx);
-        var oldValue = ToNumber(GetValue(lhs));
+        var r = ctx.allocVar();
+        ctx.$(`
+        var oldValue = ToNumber(GetValue(${lhs}));
         var newValue = oldValue + 1;
-        PutValue(lhs, newValue);
-        return oldValue;
+        PutValue(${lhs}, newValue);
+        var ${r} = oldValue;
+        `);
+        return r;
     },
 ]);
 
@@ -2354,9 +2327,8 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: + UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        return ToNumber(GetValue(expr));
+        return ctx.ToNumber(ctx.GetValue(expr));
     },
 ]);
 
@@ -2451,7 +2423,7 @@ Runtime_Semantics('compileEvaluation', [
         var rref = this.MultiplicativeExpression.compileEvaluation(ctx);
         var rval = ctx.GetValue(rref);
         var r = ctx.allocVar();
-        ctx.code(`
+        ctx.$(`
         var lprim = ToPrimitive(${lval});
         var rprim = ToPrimitive(${rval});
         if (Type(lprim) === 'String' || Type(rprim) === 'String') {
@@ -2540,14 +2512,16 @@ Runtime_Semantics('compileEvaluation', [
 
     'RelationalExpression: RelationalExpression < ShiftExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.RelationalExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(lval, rval);
-        if (r === undefined) return false;
-        else return r;
+        var rval = ctx.GetValue(rref);
+        var r = ctx.allocVar();
+        ctx.$(`
+        var ${r} = AbstractRelationalComparison(${lval}, ${rval});
+        if (${r} === undefined) ${r} = false;
+        `);
+        return r;
     },
 
     'RelationalExpression: RelationalExpression > ShiftExpression',
@@ -2603,7 +2577,7 @@ Runtime_Semantics('compileEvaluation', [
         var rref = this.ShiftExpression.compileEvaluation(ctx);
         var rval = ctx.GetValue(rref);
         var r = ctx.allocVar();
-        ctx.code(`
+        ctx.$(`
         if (Type(${rval}) !== 'Object') throw $TypeError();
         var ${r} = HasProperty(${rval}, ToPropertyKey(${lval}));
         `);
@@ -2733,19 +2707,13 @@ Runtime_Semantics('compileEvaluation', [
         var lref = this.LogicalORExpression.compileEvaluation(ctx);
         var lval = ctx.ToBoolean(ctx.GetValue(lref));
         var r = ctx.allocVar();
-        ctx.code(`
-        if (${lval} === true) {
-        `);
+        ctx.$(` if (${lval} === true) { `);
         var trueRef = this.AssignmentExpression1.compileEvaluation(ctx);
-        ctx.code(`
-            var ${r} = GetValue(${trueRef});
-        } else {
-        `);
+        ctx.$(`var ${r} = GetValue(${trueRef});`);
+        ctx.$(` } else { `);
         var falseRef = this.AssignmentExpression2.compileEvaluation(ctx);
-        ctx.code(`
-            var ${r} = GetValue(${falseRef});
-        }
-        `);
+        ctx.$(`var ${r} = GetValue(${falseRef});`);
+        ctx.$(` } `);
         return r;
     },
 ]);
@@ -2760,7 +2728,7 @@ Runtime_Semantics('compileEvaluation', [
             var rref = this.AssignmentExpression.compileEvaluation(ctx);
             var rval = ctx.GetValue(rref);
             if (IsAnonymousFunctionDefinition(this.AssignmentExpression) === true && this.LeftHandSideExpression.IsIdentifierRef() === true) {
-                ctx.code(`
+                ctx.$(`
                 var hasNameProperty = HasOwnProperty(${rval}, "name");
                 if (hasNameProperty === false) SetFunctionName(${rval}, GetReferencedName(${lref}));
                 `);
@@ -2783,25 +2751,25 @@ Runtime_Semantics('compileEvaluation', [
         var rval = ctx.GetValue(rref);
         var r = ctx.allocVar();
         if (this.AssignmentOperator.is('AssignmentOperator: *=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToNumber(${lval});
             var rnum = ToNumber(${rval});
             var ${r} = lnum * rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: /=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToNumber(${lval});
             var rnum = ToNumber(${rval});
             var ${r} = lnum / rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: %=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToNumber(${lval});
             var rnum = ToNumber(${rval});
             var ${r} = lnum % rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: +=')) {
-            ctx.code(`
+            ctx.$(`
             var lprim = ToPrimitive(${lval});
             var rprim = ToPrimitive(${rval});
             if (Type(lprim) === 'String' || Type(rprim) === 'String') {
@@ -2815,52 +2783,52 @@ Runtime_Semantics('compileEvaluation', [
             }
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: -=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToNumber(${lval});
             var rnum = ToNumber(${rval});
             var ${r} = lnum - rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: <<=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToInt32(${lval});
             var rnum = ToUint32(${rval});
             var shiftCount = rnum & 0x1F;
             var ${r} = lnum << shiftCount;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: >>=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToInt32(${lval});
             var rnum = ToUint32(${rval});
             var shiftCount = rnum & 0x1F;
             var ${r} = lnum >> shiftCount;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: >>>=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToUint32(${lval});
             var rnum = ToUint32(${rval});
             var shiftCount = rnum & 0x1F;
             var ${r} = lnum >>> shiftCount;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: &=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToInt32(${lval});
             var rnum = ToInt32(${rval});
             var ${r} = lnum & rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: |=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToInt32(${lval});
             var rnum = ToInt32(${rval});
             var ${r} = lnum | rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: ^=')) {
-            ctx.code(`
+            ctx.$(`
             var lnum = ToInt32(${lval});
             var rnum = ToInt32(${rval});
             var ${r} = lnum ^ rnum;
             `);
         } else if (this.AssignmentOperator.is('AssignmentOperator: **=')) {
-            ctx.code(`
+            ctx.$(`
             var base = ToNumber(${lval});
             var exponent = ToNumber(${rval});
             var ${r} = Math.pow(base, exponent);
@@ -2879,7 +2847,7 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
     'ObjectAssignmentPattern: { }',
     function(ctx, value) {
         throw Error('not yet implemented'); // TODO
-        ctx.code(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
+        ctx.$(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
     },
 
     'ObjectAssignmentPattern: { AssignmentPropertyList }',
@@ -2893,25 +2861,27 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
     'ArrayAssignmentPattern: [ Elision ]',
     function(ctx, value) {
         throw Error('not yet implemented'); // TODO
-        ctx.code(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
+        ctx.$(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
     },
 
     'ArrayAssignmentPattern: [ Elision[opt] AssignmentRestElement ]',
     function(ctx, value) {
-        var iterator = ctx.GetIterator(value);
-        var iteratorRecord = ctx._(`Record({ Iterator: ${iterator}, Done: false })`);
+        var [iterator, iteratorRecord] = ctx.allocVars();
+        ctx.$(`
+        var ${iterator} = GetIterator(${value});
+        var ${iteratorRecord} = Record({ Iterator: ${iterator}, Done: false });
+        `);
         if (this.Elision) {
             var status = compileConcreteCompletion(this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
-            ctx.code(`
+            ctx.$(`
             if (${status}.is_an_abrupt_completion()) {
-                if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status});
-                else resolveCompletion(${status});
-                Assert(false);
+                if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status}); // always abrupt
+                else resolveCompletion(${status}); // always abrupt
             }
             `);
         }
         var result = compileConcreteCompletion(this.AssignmentRestElement.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
-        ctx.code(`
+        ctx.$(`
         if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${result});
         else resolveCompletion(${result});
         `);
@@ -2919,10 +2889,13 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
 
     'ArrayAssignmentPattern: [ AssignmentElementList ]',
     function(ctx, value) {
-        var iterator = ctx.GetIterator(value);
-        var iteratorRecord = ctx._(`Record({ Iterator: ${iterator}, Done: false })`);
+        var [iterator, iteratorRecord] = ctx.allocVars();
+        ctx.$(`
+        var ${iterator} = GetIterator(${value});
+        var ${iteratorRecord} = Record({ Iterator: ${iterator}, Done: false });
+        `);
         var result = compileConcreteCompletion(this.AssignmentElementList.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
-        ctx.code(`
+        ctx.$(`
         if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${result});
         else resolveCompletion(${result});
         `);
@@ -2930,30 +2903,31 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
 
     'ArrayAssignmentPattern: [ AssignmentElementList , Elision[opt] AssignmentRestElement[opt] ]',
     function(ctx, value) {
-        var iterator = ctx.GetIterator(value);
-        var iteratorRecord = ctx._(`Record({ Iterator: ${iterator}, Done: false })`);
+        var [iterator, iteratorRecord] = ctx.allocVars();
+        ctx.$(`
+        var ${iterator} = GetIterator(${value});
+        var ${iteratorRecord} = Record({ Iterator: ${iterator}, Done: false });
+        `);
         var status = compileConcreteCompletion(this.AssignmentElementList.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
-        ctx.code(`
+        ctx.$(`
         if (${status}.is_an_abrupt_completion()) {
-            if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status});
-            else resolveCompletion(${status});
-            Assert(false);
+            if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status}); // always abrupt
+            else resolveCompletion(${status}); // always abrupt
         }
         `);
         if (this.Elision) {
             var status = compileConcreteCompletion(this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
-            ctx.code(`
+            ctx.$(`
             if (${status}.is_an_abrupt_completion()) {
-                if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status});
-                else resolveCompletion(${status});
-                Assert(false);
+                if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status}); // always abrupt
+                else resolveCompletion(${status}); // always abrupt
             }
             `);
         }
         if (this.AssignmentRestElement) {
             var status = compileConcreteCompletion(this.AssignmentRestElement.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord));
         }
-        ctx.code(`
+        ctx.$(`
         if (${iteratorRecord}.Done === false) IteratorClose(${iterator}, ${status});
         else resolveCompletion(${status});
         `);
@@ -2972,22 +2946,16 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
         var lref = ctx.ResolveBinding(P, undefined, this.strict);
         var v = ctx.GetV(value, P);
         if (this.Initializer) {
-            ctx.code(`
-            if( ${v} === undefined) {
-            `);
+            ctx.$(` if( ${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
-            ctx.code(`
-            var ${v} = GetValue(${defaultValue});
-            `);
+            ctx.$(`var ${v} = GetValue(${defaultValue});`);
             if (IsAnonymousFunctionDefinition(this.Initializer) === true) {
-                ctx.code(`
+                ctx.$(`
                 var hasNameProperty = HasOwnProperty(${v}, "name");
                 if (hasNameProperty === false) SetFunctionName(${v}, ${P});
                 `);
             }
-            ctx.code(`
-            }
-            `);
+            ctx.$(` } `);
         }
         ctx.PutValue(lref, v);
     },
@@ -3027,30 +2995,9 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
     },
 
     'Elision: ,',
-    function(ctx, iteratorRecord) {
-        throw Error('not yet implemented'); // TODO
-        ctx.code(`
-        if (${iteratorRecord}.Done === false) {
-            var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
-            if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
-            ReturnIfAbrupt(next);
-            if (next === false) ${iteratorRecord}.Done = true;
-        }
-        `);
-    },
-
     'Elision: Elision ,',
     function(ctx, iteratorRecord) {
-        throw Error('not yet implemented'); // TODO
-        this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
-        ctx.code(`
-        if (${iteratorRecord}.Done === false) {
-            var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
-            if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
-            ReturnIfAbrupt(next);
-            if (next === false) ${iteratorRecord}.Done = true;
-        }
-        `);
+        ctx.$(`${ctx.literal(this)}.IteratorDestructuringAssignmentEvaluation(${iteratorRecord});`);
     },
 
     'AssignmentElement: DestructuringAssignmentTarget Initializer[opt]',
@@ -3059,15 +3006,14 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
             var lref = this.DestructuringAssignmentTarget.compileEvaluation(ctx);
         }
         var value = ctx.allocVar();
-        ctx.code(`
+        ctx.$(`
         if (${iteratorRecord}.Done === false) {
             var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
             if (next.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
             ReturnIfAbrupt(next);
             if (next === false) ${iteratorRecord}.Done = true;
             else {
-                var value = concreteCompletion(IteratorValue(next));
-                var ${value} = value;
+                var ${value} = concreteCompletion(IteratorValue(next));
                 if (${value}.is_an_abrupt_completion()) ${iteratorRecord}.Done = true;
                 ReturnIfAbrupt(${value});
             }
@@ -3075,14 +3021,10 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
         if (${iteratorRecord}.Done === true) var ${value} = undefined;
         `);
         if (this.Initializer) {
-            ctx.code(`
-            if(${value} === undefined) {
-            `);
+            ctx.$(` if(${value} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
             var v = ctx.GetValue(defaultValue);
-            ctx.code(`
-            } else var ${v} = ${value};
-            `);
+            ctx.$(` } else var ${v} = ${value}; `);
         } else var v = value;
         if (this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral')) {
             var nestedAssignmentPattern = this.DestructuringAssignmentTarget.LeftHandSideExpression.AssignmentPattern;
@@ -3090,8 +3032,8 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
             return;
         }
         if (this.Initializer && IsAnonymousFunctionDefinition(this.Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {
-            ctx.code(`
-            if(${value} === undefined ){
+            ctx.$(`
+            if(${value} === undefined){
                 var hasNameProperty = HasOwnProperty(${v}, "name");
                 if (hasNameProperty === false) SetFunctionName(${v}, GetReferencedName(${lref}));
             }
@@ -3105,9 +3047,8 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
         if (!(this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral'))) {
             var lref = this.DestructuringAssignmentTarget.compileEvaluation(ctx);
         }
-        var A = ctx.allocVar();
-        ctx.code(`
-        var ${A} = ArrayCreate(0);
+        var A = ctx._(`ArrayCreate(0)`);
+        ctx.$(`
         var n = 0;
         while (${iteratorRecord}.Done === false) {
             var next = concreteCompletion(IteratorStep(${iteratorRecord}.Iterator));
@@ -3144,14 +3085,10 @@ Runtime_Semantics('compileKeyedDestructuringAssignmentEvaluation', [
         }
         var v = ctx.GetV(value, propertyName);
         if (this.Initializer) {
-            ctx.code(`
-            if( ${v} === undefined) {
-            `);
+            ctx.$(` if( ${v} === undefined) { `);
             var defaultValue = this.Initializer.compileEvaluation(ctx);
             var rhsValue = ctx.GetValue(defaultValue);
-            ctx.code(`
-            } else var ${rhsValue} = ${v};
-            `);
+            ctx.$(` } else var ${rhsValue} = ${v}; `);
         } else var rhsValue = v;
         if (this.DestructuringAssignmentTarget.is('ObjectLiteral') || this.DestructuringAssignmentTarget.is('ArrayLiteral')) {
             var assignmentPattern = this.DestructuringAssignmentTarget.LeftHandSideExpression.AssignmentPattern;
@@ -3159,7 +3096,7 @@ Runtime_Semantics('compileKeyedDestructuringAssignmentEvaluation', [
             return;
         }
         if (this.Initializer && IsAnonymousFunctionDefinition(this.Initializer) === true && this.DestructuringAssignmentTarget.IsIdentifierRef() === true) {
-            ctx.code(`
+            ctx.$(`
             if( ${v} === undefined) {
                 var hasNameProperty = HasOwnProperty(${rhsValue}, "name");
                 if (hasNameProperty === false) SetFunctionName(${rhsValue}, GetReferencedName(${lref}));

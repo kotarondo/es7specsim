@@ -123,7 +123,7 @@ function GeneratorStart(generator, generatorBody) {
     genContext.Generator = generator;
     var ctx = new GeneratorCompilerContext();
     var result = compileConcreteCompletion(generatorBody.compileEvaluateBody(ctx));
-    ctx.code(`return ${ctx.literal(finish)}(${result});`);
+    ctx.$(`return ${ctx.literal(finish)}(${result});`);
     genContext.code_evaluation_state = ctx.createGenerator();
 
     function finish(result) {
@@ -194,7 +194,7 @@ function GeneratorResumeAbrupt(generator, abruptCompletion) {
 // 25.3.3.5
 function compileGeneratorYield(ctx, iterNextObj) {
     var r = ctx.allocVar();
-    ctx.code(`
+    ctx.$(`
     var genContext = running_execution_context;
     var generator = genContext.Generator;
     generator.GeneratorState= "suspendedYield";

@@ -70,14 +70,13 @@ var filenames = [
 ];
 
 function expand_concreteCompletion(raw) {
-    return raw.replace(/var (\w*) = concreteCompletion(\(.*\));$/gm,
+    return raw.replace(/var ([\w${}]*) = concreteCompletion(\(.*\));/gm,
         'try{var $1=$2;$1=NormalCompletion($1)}catch(_e){if(!(_e instanceof Completion))throw _e;$1=_e}');
 }
 
 function expand_compileConcreteCompletion(raw) {
-    return raw.replace(/var (\w*) = compileConcreteCompletion(\(.*\));$/gm,
-        '{ctx.code(`try{`);var $1=$2||ctx.allocVar();' +
-        'ctx.code(`var ${$1}=NormalCompletion(${$1})}catch(_e){if(!(_e instanceof Completion))throw _e;${$1}=_e}`)}');
+    return raw.replace(/var (\w*) = compileConcreteCompletion(\(.*\));/gm,
+        '{ctx.$(`try{`);var $1=$2||ctx.allocVar();ctx.$(`var ${$1}=NormalCompletion(${$1})}catch(_e){if(!(_e instanceof Completion))throw _e;${$1}=_e}`)}');
 }
 
 function expand_throw(raw) {
@@ -87,12 +86,12 @@ function expand_throw(raw) {
 
 function expand_ReturnIfAbrupt(raw) {
     return raw.replace(/ReturnIfAbrupt\(([^)]*)\);/g,
-        'if($1.is_an_abrupt_completion()){throw $1;}$1=$1.Value;');
+        '{if($1.is_an_abrupt_completion()){throw $1;}$1=$1.Value;}');
 }
 
 function expand_IfAbruptRejectPromise(raw) {
     return raw.replace(/IfAbruptRejectPromise\(([^,]*), ([^)]*)\);/g,
-        'if($1.is_an_abrupt_completion()){Call($2.Reject,undefined,$1.Value);return $2.Promise;}$1=$1.Value;');
+        '{if($1.is_an_abrupt_completion()){Call($2.Reject,undefined,$1.Value);return $2.Promise;}$1=$1.Value;}');
 }
 
 for (var filename of filenames) {

@@ -166,7 +166,7 @@ function test_file(pathname) {
 }
 
 function test_dir(pathname) {
-    if (pathname[0] !== '/') {
+    if (pathname[0] !== '/' && pathname[0] !== '.') {
         var org_pathname = pathname;
         pathname = path.join(test262_dir, "test", org_pathname);
         if (!fs.existsSync(pathname)) {
