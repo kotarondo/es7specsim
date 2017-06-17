@@ -8,6 +8,111 @@ if (!assert) {
 
 // -------------------------------
 var iter = function*() {
+    function f(...a) { return a }
+    yield f `a${yield 1}b${yield 2}c`;
+    yield f `d d`;
+    yield f `${yield 3}`;
+    yield f `
+    x=${yield 4};
+    y=${yield 5};
+    z=${yield 6};
+    `;
+
+    function g() { return function(...a) { return a } }
+    yield g()
+    `${yield 7}`;
+}();
+
+assert.sameValue(iter.next().value, 1);
+assert.sameValue(iter.next(11).value, 2);
+assert.sameValue(JSON.stringify(iter.next(22).value), '[["a","b","c"],11,22]');
+assert.sameValue(JSON.stringify(iter.next().value), '[["d d"]]');
+assert.sameValue(iter.next().value, 3);
+assert.sameValue(JSON.stringify(iter.next().value), '[["",""],null]');
+assert.sameValue(iter.next().value, 4);
+assert.sameValue(iter.next('X').value, 5);
+assert.sameValue(iter.next('Y').value, 6);
+assert.sameValue(JSON.stringify(iter.next('Z').value), '[["\\n    x=",";\\n    y=",";\\n    z=",";\\n    "],"X","Y","Z"]');
+assert.sameValue(iter.next().value, 7);
+assert.sameValue(JSON.stringify(iter.next('WW').value), '[["",""],"WW"]');
+
+// -------------------------------
+var obj = {
+    * gen() {
+        yield super.constructor;
+        yield super[yield 1];
+        yield new.target;
+    }
+};
+
+var iter = obj.gen();
+assert.sameValue(iter.next().value, Object);
+assert.sameValue(iter.next().value, 1);
+assert.sameValue(iter.next('constructor').value, Object);
+assert.sameValue(iter.next().value, undefined);
+
+// -------------------------------
+var iter = function*() {
+    yield [yield 1, ...yield 2, yield 3];
+    yield(yield 4)(...yield 5, ...yield 6);
+}();
+
+assert.sameValue(iter.next('A').value, 1);
+assert.sameValue(iter.next('B').value, 2);
+assert.sameValue(iter.next(['C', 'D']).value, 3);
+assert.sameValue(JSON.stringify(iter.next('E').value), '["B","C","D","E"]');
+assert.sameValue(iter.next().value, 4);
+assert.sameValue(iter.next(function(...a) { return a }).value, 5);
+assert.sameValue(iter.next([7, 8]).value, 6);
+assert.sameValue(JSON.stringify(iter.next([, 9, , 10]).value), "[7,8,null,9,null,10]");
+
+// -------------------------------
+var iter = function*() {
+    function f(a) { return a };
+    yield f(yield 1)[yield 2];
+    yield f(yield 3).yield;
+    yield yield(yield 4)[yield 5] + 9;
+    yield g(yield 4)(yield 5);
+
+    function g(a) { return function(b) { return b + a } };
+}();
+
+assert.sameValue(iter.next().value, 1);
+assert.sameValue(iter.next({ x: 'y' }).value, 2);
+assert.sameValue(iter.next('x').value, 'y');
+assert.sameValue(iter.next().value, 3);
+assert.sameValue(iter.next({ yield: 'z' }).value, 'z');
+assert.sameValue(iter.next().value, 4);
+assert.sameValue(iter.next('abc').value, 5);
+assert.sameValue(iter.next(1).value, 'b9');
+assert.sameValue(iter.next(7).value, 7);
+assert.sameValue(iter.next().value, 4);
+assert.sameValue(iter.next('X').value, 5);
+assert.sameValue(iter.next('Y').value, 'YX');
+assert.sameValue(iter.next().done, true);
+
+// -------------------------------
+var iter = function*() {
+    yield `test`;
+    yield `a=${yield 1} b=${yield `2`}`;
+    yield `a=${yield `3${yield 4}`}`;
+    yield `${yield}${yield}${yield}`;
+}();
+
+assert.sameValue(iter.next().value, 'test');
+assert.sameValue(iter.next().value, 1);
+assert.sameValue(iter.next('x').value, '2');
+assert.sameValue(iter.next('y').value, 'a=x b=y');
+assert.sameValue(iter.next().value, 4);
+assert.sameValue(iter.next(5).value, '35');
+assert.sameValue(iter.next(6).value, 'a=6');
+assert.sameValue(iter.next().value, undefined);
+assert.sameValue(iter.next('.').value, undefined);
+assert.sameValue(iter.next('').value, undefined);
+assert.sameValue(iter.next(55).value, '.55');
+
+// -------------------------------
+var iter = function*() {
     L1: L2: {
         yield 1;
         break L1;
@@ -288,8 +393,9 @@ function* gen6() {
     var { y: z = yield } = yield 6;
     var { x = yield } = yield z + 'a';
     var [{ z } = yield] = yield x + 'b';
-    var { y: { z } = yield } = yield z + 'c';
-    return z + 'd';
+    var { "y": { z } = yield } = yield z + 'c';
+    var { 0: { z: w } = { z } } = yield z + 'd';
+    return w;
 }
 
 var iter = gen6();
@@ -298,6 +404,7 @@ assert.sameValue(iter.next({ y: 66 }).value, '66a');
 assert.sameValue(iter.next({ x: 67 }).value, '67b');
 assert.sameValue(iter.next([{ z: 68 }]).value, '68c');
 assert.sameValue(iter.next({ y: { z: 69 } }).value, '69d');
+assert.sameValue(iter.next({ 0: { z: '70' } }).value, '70');
 
 var iter = gen6();
 assert.sameValue(iter.next().value, 6);

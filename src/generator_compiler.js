@@ -133,6 +133,12 @@ class GeneratorCompilerContext {
     ToNumber(argument) {
         return this._(`ToNumber(${argument})`);
     }
+    ToInt32(argument) {
+        return this._(`ToInt32(${argument})`);
+    }
+    ToUint32(argument) {
+        return this._(`ToUint32(${argument})`);
+    }
     GetIterator(obj, method) {
         return this._(`GetIterator(${obj}, ${method})`);
     }
@@ -317,7 +323,8 @@ Runtime_Semantics('compileEvaluation', [
                     if (Type(innerResult) !== 'Object') throw $TypeError();
                     var done = IteratorComplete(innerResult);
                     if (done === true) {
-                        return IteratorValue(innerResult);
+                        var ${r} = IteratorValue(innerResult);
+                        break;
                     }
         `);
 
@@ -1214,7 +1221,7 @@ function compileForIn_OfBodyEvaluation(ctx, lhs, stmt, iterator, lhsKind, labelS
     ctx.$(`
     if (${status}.is_an_abrupt_completion()) {
         running_execution_context.LexicalEnvironment = ${oldEnv};
-        return IteratorClose(iterator, ${status});
+        IteratorClose(${iterator}, ${status}); // always abrupt
     }
     `);
     var result = compileConcreteCompletion(stmt.compileEvaluation(ctx));
@@ -1627,7 +1634,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'Literal: StringLiteral',
     function(ctx) {
-        return ctx._(this.StringLiteral.StringValue().quote());
+        return this.StringLiteral.StringValue().quote();
     },
 ]);
 
@@ -1663,7 +1670,6 @@ Runtime_Semantics('compileArrayAccumulation', [
 
     'ElementList: ElementList , Elision[opt] SpreadElement',
     function(ctx, array, nextIndex) {
-        throw Error('not yet implemented'); // TODO
         var postIndex = this.ElementList.compileArrayAccumulation(ctx, array, nextIndex);
         var padding = this.Elision ? this.Elision.ElisionWidth() : 0;
         return this.SpreadElement.compileArrayAccumulation(ctx, array, ctx._(`${postIndex} + ${padding}`));
@@ -1733,20 +1739,18 @@ Runtime_Semantics('compileEvaluation', [
 
     'LiteralPropertyName: IdentifierName',
     function(ctx) {
-        return ctx._(this.IdentifierName.StringValue().quote());
+        return this.IdentifierName.StringValue().quote();
     },
 
     'LiteralPropertyName: StringLiteral',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.StringLiteral.SV();
+        return this.StringLiteral.SV().quote();
     },
 
     'LiteralPropertyName: NumericLiteral',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var nbr = this.NumericLiteral.MV();
-        return ToString(nbr);
+        return ToString(nbr).quote();
     },
 
     'ComputedPropertyName: [ AssignmentExpression ]',
@@ -1768,7 +1772,6 @@ Runtime_Semantics('compilePropertyDefinitionEvaluation', [
 
     'PropertyDefinition: IdentifierReference',
     function(ctx, object, enumerable) {
-        throw Error('not yet implemented'); // TODO
         var propName = this.IdentifierReference.StringValue().quote();
         var exprValue = this.IdentifierReference.compileEvaluation(ctx);
         var propValue = ctx.GetValue(exprValue);
@@ -1808,22 +1811,20 @@ Runtime_Semantics('compileArgumentListEvaluation', [
 
     'TemplateLiteral: NoSubstitutionTemplate',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var templateLiteral = this;
-        var siteObj = GetTemplateObject(templateLiteral);
-        return [siteObj];
+        var templateLiteral = ctx.literal(this);
+        var siteObj = ctx._(`GetTemplateObject(${templateLiteral})`);
+        return ctx._(`[${siteObj}]`);
     },
 
     'TemplateLiteral: TemplateHead Expression TemplateSpans',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var templateLiteral = this;
-        var siteObj = GetTemplateObject(templateLiteral);
+        var templateLiteral = ctx.literal(this);
+        var siteObj = ctx._(`GetTemplateObject(${templateLiteral})`);
         var firstSub = this.Expression.compileEvaluation(ctx);
-        var firstSub = GetValue(firstSub); // EcmaScript8
-        var restSub = this.TemplateSpans.SubstitutionEvaluation();
-        Assert(Type(restSub) === 'List');
-        return [siteObj, firstSub].concat(restSub);
+        var firstSub = ctx.GetValue(firstSub);
+        var restSub = this.TemplateSpans.compileSubstitutionEvaluation(ctx);
+        ctx.Assert(`Type(${restSub}) === 'List'`);
+        return ctx._(`[${siteObj}, ${firstSub}].concat(${restSub})`);
     },
 ]);
 
@@ -1832,31 +1833,29 @@ Runtime_Semantics('compileSubstitutionEvaluation', [
 
     'TemplateSpans: TemplateTail',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return [];
+        return ctx._(`[]`);
     },
 
     'TemplateSpans: TemplateMiddleList TemplateTail',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.TemplateMiddleList.SubstitutionEvaluation();
+        return this.TemplateMiddleList.compileSubstitutionEvaluation(ctx);
     },
 
     'TemplateMiddleList: TemplateMiddle Expression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var sub = this.Expression.compileEvaluation(ctx);
-        var sub = GetValue(sub); // EcmaScript8
-        return [sub];
+        var sub = ctx.GetValue(sub);
+        return ctx._(`[${sub}]`);
     },
 
     'TemplateMiddleList: TemplateMiddleList TemplateMiddle Expression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var preceding = this.TemplateMiddleList.SubstitutionEvaluation();
+        var preceding = this.TemplateMiddleList.compileSubstitutionEvaluation(ctx);
         var next = this.Expression.compileEvaluation(ctx);
-        var next = GetValue(next); // EcmaScript8
-        preceding.push(next);
+        var next = ctx.GetValue(next);
+        ctx.$(`
+        ${preceding}.push(${next});
+        `);
         return preceding;
     },
 ]);
@@ -1866,8 +1865,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'TemplateLiteral: NoSubstitutionTemplate',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return this.NoSubstitutionTemplate.TV();
+        return this.NoSubstitutionTemplate.TV().quote();
     },
 
     'TemplateLiteral: TemplateHead Expression TemplateSpans',
@@ -1882,8 +1880,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'TemplateSpans: TemplateTail',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var tail = this.TemplateTail.TV();
+        var tail = this.TemplateTail.TV().quote();
         return tail;
     },
 
@@ -1905,13 +1902,12 @@ Runtime_Semantics('compileEvaluation', [
 
     'TemplateMiddleList: TemplateMiddleList TemplateMiddle Expression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var rest = this.TemplateMiddleList.compileEvaluation(ctx);
-        var middle = this.TemplateMiddle.TV();
+        var middle = this.TemplateMiddle.TV().quote();
         var sub = this.Expression.compileEvaluation(ctx);
-        var sub = GetValue(sub); // clarify the specification
-        var last = ToString(sub);
-        return rest + middle + last;
+        var sub = ctx.GetValue(sub);
+        var last = ctx.ToString(sub);
+        return ctx._(`${rest} + ${middle} + ${last}`);
     },
 ]);
 
@@ -1959,28 +1955,26 @@ Runtime_Semantics('compileEvaluation', [
 
     'CallExpression: CallExpression [ Expression ]',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var baseReference = this.CallExpression.compileEvaluation(ctx);
-        var baseValue = GetValue(baseReference);
+        var baseValue = ctx.GetValue(baseReference);
         var propertyNameReference = this.Expression.compileEvaluation(ctx);
-        var propertyNameValue = GetValue(propertyNameReference);
-        var bv = RequireObjectCoercible(baseValue);
-        var propertyKey = ToPropertyKey(propertyNameValue);
+        var propertyNameValue = ctx.GetValue(propertyNameReference);
+        var bv = ctx.RequireObjectCoercible(baseValue);
+        var propertyKey = ctx.ToPropertyKey(propertyNameValue);
         if (this.strict) var strict = true;
         else var strict = false;
-        return Reference(bv, propertyKey, strict);
+        return ctx.Reference(bv, propertyKey, strict);
     },
 
     'CallExpression: CallExpression . IdentifierName',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var baseReference = this.CallExpression.compileEvaluation(ctx);
-        var baseValue = GetValue(baseReference);
-        var bv = RequireObjectCoercible(baseValue);
-        var propertyNameString = this.IdentifierName.StringValue();
+        var baseValue = ctx.GetValue(baseReference);
+        var bv = ctx.RequireObjectCoercible(baseValue);
+        var propertyNameString = this.IdentifierName.StringValue().quote();
         if (this.strict) var strict = true;
         else var strict = false;
-        return Reference(bv, propertyNameString, strict);
+        return ctx.Reference(bv, propertyNameString, strict);
     },
 ]);
 
@@ -2021,47 +2015,68 @@ Runtime_Semantics('compileEvaluation', [
     function(ctx) {
         var ref = this.MemberExpression.compileEvaluation(ctx);
         var func = ctx.GetValue(ref);
-        var thisValue = ctx.allocVar();
-        /* TODO
-                if (Type(${ref}) === 'Reference' && IsPropertyReference(${ref}) === false && GetReferencedName(${ref}) === "eval") {
-                    if (SameValue(${func}, currentRealm.Intrinsics['%eval%']) === true) {
-                        var argList = this.Arguments.compileArgumentListEvaluation(ctx); //TODO
-                        if (argList.length === 0) return undefined;
-                        var evalText = argList[0];
-                        if (${this.strict}) var strictCaller = true;
-                        else var strictCaller = false;
-                        var evalRealm = currentRealm;
-                        return PerformEval(evalText, evalRealm, strictCaller, true); //TODO
-                    }
-                }
-        */
+        var [r, thisValue] = ctx.allocVars();
         ctx.$(`
-        if (Type(${ref}) === 'Reference') {
-            if (IsPropertyReference(${ref}) === true) {
-                var ${thisValue} = GetThisValue(${ref});
-            } else {
-                var refEnv = GetBase(${ref});
-                var ${thisValue} = refEnv.WithBaseObject();
+        if (Type(${ref}) === 'Reference' && IsPropertyReference(${ref}) === false && GetReferencedName(${ref}) === "eval" && SameValue(${func}, currentRealm.Intrinsics['%eval%']) === true) {
+            `);
+        var argList = this.Arguments.compileArgumentListEvaluation(ctx);
+        ctx.$(`
+            if (${argList}.length === 0) var ${r} = undefined;
+            else {
+                var evalText = ${argList}[0];
+                if (${this.strict}) var strictCaller = true;
+                else var strictCaller = false;
+                var evalRealm = currentRealm;
+                var ${r} = PerformEval(evalText, evalRealm, strictCaller, true);
             }
         } else {
-            var ${thisValue} = undefined;
+            if (Type(${ref}) === 'Reference') {
+                if (IsPropertyReference(${ref}) === true) {
+                    var ${thisValue} = GetThisValue(${ref});
+                } else {
+                    var refEnv = GetBase(${ref});
+                    var ${thisValue} = refEnv.WithBaseObject();
+                }
+            } else {
+                var ${thisValue} = undefined;
+            }
+            `);
+        var r2 = compileEvaluateDirectCall(ctx, func, thisValue, this.Arguments);
+        ctx.$(`
+            var ${r} = ${r2};
         }
         `);
-        return compileEvaluateDirectCall(ctx, func, thisValue, this.Arguments); // not tail call for generator function
+        return r;
     },
 
     'CallExpression: CallExpression Arguments',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var ref = this.CallExpression.compileEvaluation(ctx);
-        var thisCall = this;
-        var tailCall = IsInTailPosition(thisCall);
-        return EvaluateCall(ref, this.Arguments, tailCall);
+        return compileEvaluateCall(ctx, ref, this.Arguments);
     },
 ]);
 
+// 12.3.4.2
+function compileEvaluateCall(ctx, ref, _arguments) { // no tail call for generator function
+    var func = ctx.GetValue(ref);
+    var thisValue = ctx.allocVar();
+    ctx.$(`
+    if (Type(${ref}) === 'Reference') {
+        if (IsPropertyReference(${ref}) === true) {
+            var ${thisValue} = GetThisValue(${ref});
+        } else {
+            var refEnv = GetBase(${ref});
+            var ${thisValue} = refEnv.WithBaseObject();
+        }
+    } else {
+        var ${thisValue} = undefined;
+    }
+    `);
+    return compileEvaluateDirectCall(ctx, func, thisValue, _arguments);
+}
+
 // 12.3.4.3
-function compileEvaluateDirectCall(ctx, func, thisValue, _arguments) {
+function compileEvaluateDirectCall(ctx, func, thisValue, _arguments) { // no tail call for generator function
     var argList = _arguments.compileArgumentListEvaluation(ctx);
     ctx.$(`
     if (Type(${func}) !== 'Object') throw $TypeError();
@@ -2077,13 +2092,12 @@ Runtime_Semantics('compileEvaluation', [
 
     'SuperProperty: super [ Expression ]',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var propertyNameReference = this.Expression.compileEvaluation(ctx);
-        var propertyNameValue = GetValue(propertyNameReference);
-        var propertyKey = ToPropertyKey(propertyNameValue);
+        var propertyNameValue = ctx.GetValue(propertyNameReference);
+        var propertyKey = ctx.ToPropertyKey(propertyNameValue);
         if (this.strict) var strict = true;
         else var strict = false;
-        return MakeSuperPropertyReference(propertyKey, strict);
+        return ctx._(`MakeSuperPropertyReference(${propertyKey}, ${strict})`);
     },
 
     'SuperProperty: super . IdentifierName',
@@ -2096,14 +2110,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'SuperCall: super Arguments',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        var newTarget = GetNewTarget();
-        if (newTarget === undefined) throw $ReferenceError();
-        var func = GetSuperConstructor();
-        var argList = this.Arguments.compileArgumentListEvaluation(ctx);
-        var result = Construct(func, argList, newTarget);
-        var thisER = GetThisEnvironment();
-        return thisER.BindThisValue(result);
+        ctx.$(`throw $ReferenceError();`); // unreachable in generator
     },
 ]);
 
@@ -2124,40 +2131,46 @@ Runtime_Semantics('compileArgumentListEvaluation', [
 
     'ArgumentList: ... AssignmentExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var spreadRef = this.AssignmentExpression.compileEvaluation(ctx);
-        var spreadObj = ctx.GetValue(spreadRef);
-        var iterator = ctx.GetIterator(spreadObj);
+        ctx.$(`
+        var spreadObj = GetValue(${spreadRef});
+        var iterator = GetIterator(spreadObj);
         var list = [];
         while (true) {
             var next = IteratorStep(iterator);
-            if (next === false) return list;
+            if (next === false) break;
             var nextArg = IteratorValue(next);
             list.push(nextArg);
         }
+        `);
+        return ctx._(`list`);
     },
 
     'ArgumentList: ArgumentList , AssignmentExpression',
     function(ctx) {
         var precedingArgs = this.ArgumentList.compileArgumentListEvaluation(ctx);
         var ref = this.AssignmentExpression.compileEvaluation(ctx);
-        var arg = ctx.GetValue(ref);
-        ctx.$(`${precedingArgs}.push(${arg});`);
+        ctx.$(`
+        var arg = GetValue(${ref});
+        ${precedingArgs}.push(arg);
+        `);
         return precedingArgs;
     },
 
     'ArgumentList: ArgumentList , ... AssignmentExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var precedingArgs = this.ArgumentList.compileArgumentListEvaluation(ctx);
         var spreadRef = this.AssignmentExpression.compileEvaluation(ctx);
-        var iterator = GetIterator(GetValue(spreadRef));
+        ctx.$(`
+        var iterator = GetIterator(GetValue(${spreadRef}));
         while (true) {
             var next = IteratorStep(iterator);
-            if (next === false) return precedingArgs;
+            if (next === false) break;
             var nextArg = IteratorValue(next);
-            precedingArgs.push(nextArg);
+            ${precedingArgs}.push(nextArg);
         }
+        `);
+        return precedingArgs;
     },
 
 ]);
@@ -2167,20 +2180,14 @@ Runtime_Semantics('compileEvaluation', [
 
     'MemberExpression: MemberExpression TemplateLiteral',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var tagRef = this.MemberExpression.compileEvaluation(ctx);
-        var thisCall = this;
-        var tailCall = IsInTailPosition(thisCall);
-        return EvaluateCall(tagRef, this.TemplateLiteral, tailCall);
+        return compileEvaluateCall(ctx, tagRef, this.TemplateLiteral);
     },
 
     'CallExpression: CallExpression TemplateLiteral',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var tagRef = this.CallExpression.compileEvaluation(ctx);
-        var thisCall = this;
-        var tailCall = IsInTailPosition(thisCall);
-        return EvaluateCall(tagRef, this.TemplateLiteral, tailCall);
+        return compileEvaluateCall(ctx, tagRef, this.TemplateLiteral);
     },
 ]);
 
@@ -2189,8 +2196,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'NewTarget: new . target',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
-        return GetNewTarget();
+        return ctx._(`GetNewTarget()`);
     },
 ]);
 
@@ -2200,14 +2206,12 @@ Runtime_Semantics('compileEvaluation', [
     'UpdateExpression: LeftHandSideExpression ++',
     function(ctx) {
         var lhs = this.LeftHandSideExpression.compileEvaluation(ctx);
-        var r = ctx.allocVar();
         ctx.$(`
         var oldValue = ToNumber(GetValue(${lhs}));
         var newValue = oldValue + 1;
         PutValue(${lhs}, newValue);
-        var ${r} = oldValue;
         `);
-        return r;
+        return ctx._(`oldValue`);
     },
 ]);
 
@@ -2216,12 +2220,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'UpdateExpression: LeftHandSideExpression --',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lhs = this.LeftHandSideExpression.compileEvaluation(ctx);
-        var oldValue = ToNumber(GetValue(lhs));
+        ctx.$(`
+        var oldValue = ToNumber(GetValue(${lhs}));
         var newValue = oldValue - 1;
-        PutValue(lhs, newValue);
-        return oldValue;
+        PutValue(${lhs}, newValue);
+        `);
+        return ctx._(`oldValue`);
     },
 ]);
 
@@ -2230,12 +2235,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'UpdateExpression: ++ UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        var oldValue = ToNumber(GetValue(expr));
+        ctx.$(`
+        var oldValue = ToNumber(GetValue(${expr}));
         var newValue = oldValue + 1;
-        PutValue(expr, newValue);
-        return newValue;
+        PutValue(${expr}, newValue);
+        `);
+        return ctx._(`newValue`);
     },
 ]);
 
@@ -2244,12 +2250,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'UpdateExpression: -- UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        var oldValue = ToNumber(GetValue(expr));
+        ctx.$(`
+        var oldValue = ToNumber(GetValue(${expr}));
         var newValue = oldValue - 1;
-        PutValue(expr, newValue);
-        return newValue;
+        PutValue(${expr}, newValue);
+        `);
+        return ctx._(`newValue`);
     },
 ]);
 
@@ -2258,23 +2265,25 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: delete UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var ref = this.UnaryExpression.compileEvaluation(ctx);
-        if (Type(ref) !== 'Reference') return true;
-        if (IsUnresolvableReference(ref) === true) {
-            Assert(IsStrictReference(ref) === false);
-            return true;
+        var deleteStatus = ctx.allocVar();
+        ctx.$(`
+        if (Type(${ref}) !== 'Reference') ${deleteStatus} = true;
+        else if (IsUnresolvableReference(${ref}) === true) {
+            Assert(IsStrictReference(${ref}) === false);
+            ${deleteStatus} = true;
         }
-        if (IsPropertyReference(ref) === true) {
-            if (IsSuperReference(ref) === true) throw $ReferenceError();
-            var baseObj = ToObject(GetBase(ref));
-            var deleteStatus = baseObj.Delete(GetReferencedName(ref));
-            if (deleteStatus === false && IsStrictReference(ref) === true) throw $TypeError();
-            return deleteStatus;
+        else if (IsPropertyReference(${ref}) === true) {
+            if (IsSuperReference(${ref}) === true) throw $ReferenceError();
+            var baseObj = ToObject(GetBase(${ref}));
+            var ${deleteStatus} = baseObj.Delete(GetReferencedName(${ref}));
+            if (${deleteStatus} === false && IsStrictReference(${ref}) === true) throw $TypeError();
         } else {
-            var bindings = GetBase(ref);
-            return bindings.DeleteBinding(GetReferencedName(ref));
+            var bindings = GetBase(${ref});
+            var ${deleteStatus} = bindings.DeleteBinding(GetReferencedName(${ref}));
         }
+        `);
+        return deleteStatus;
     },
 ]);
 
@@ -2283,9 +2292,8 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: void UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        GetValue(expr);
+        ctx.GetValue(expr);
         return undefined;
     },
 ]);
@@ -2295,32 +2303,35 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: typeof UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var val = this.UnaryExpression.compileEvaluation(ctx);
-        if (Type(val) === 'Reference') {
-            if (IsUnresolvableReference(val) === true) return "undefined";
-        }
-        var val = GetValue(val);
-        switch (Type(val)) {
-            case 'Undefined':
-                return "undefined";
-            case 'Null':
-                return "object";
-            case 'Boolean':
-                return "boolean";
-            case 'Number':
-                return "number";
-            case 'String':
-                return "string";
-            case 'Symbol':
-                return "symbol";
-            case 'Object':
-                if (val.Call) return "function";
-                return "object";
-        }
-        return Assert(false);
+        return ctx._(`compiled_typeof(${val})`);
     }
 ]);
+
+function compiled_typeof(val) {
+    if (Type(val) === 'Reference') {
+        if (IsUnresolvableReference(val) === true) return "undefined";
+    }
+    var val = GetValue(val);
+    switch (Type(val)) {
+        case 'Undefined':
+            return "undefined";
+        case 'Null':
+            return "object";
+        case 'Boolean':
+            return "boolean";
+        case 'Number':
+            return "number";
+        case 'String':
+            return "string";
+        case 'Symbol':
+            return "symbol";
+        case 'Object':
+            if (val.Call) return "function";
+            return "object";
+    }
+    return Assert(false);
+}
 
 // 12.5.6.1
 Runtime_Semantics('compileEvaluation', [
@@ -2337,11 +2348,9 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: - UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        var oldValue = ToNumber(GetValue(expr));
-        if (Number.isNaN(oldValue)) return NaN;
-        return -oldValue;
+        var oldValue = ctx.ToNumber(ctx.GetValue(expr));
+        return ctx._(`-${oldValue}`);
     },
 ]);
 
@@ -2350,10 +2359,9 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: ~ UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        var oldValue = ToInt32(GetValue(expr));
-        return ~oldValue;
+        var oldValue = ctx.ToInt32(ctx.GetValue(expr));
+        return ctx._(`~${oldValue}`);
     },
 
 ]);
@@ -2363,11 +2371,9 @@ Runtime_Semantics('compileEvaluation', [
 
     'UnaryExpression: ! UnaryExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var expr = this.UnaryExpression.compileEvaluation(ctx);
-        var oldValue = ToBoolean(GetValue(expr));
-        if (oldValue === true) return false;
-        return true;
+        var oldValue = ctx.ToBoolean(ctx.GetValue(expr));
+        return ctx._(`!${oldValue}`);
     },
 
 ]);
@@ -2377,14 +2383,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'ExponentiationExpression: UpdateExpression ** ExponentiationExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var left = this.UpdateExpression.compileEvaluation(ctx);
-        var leftValue = GetValue(left);
+        var leftValue = ctx.GetValue(left);
         var right = this.ExponentiationExpression.compileEvaluation(ctx);
-        var rightValue = GetValue(right);
-        var base = ToNumber(leftValue);
-        var exponent = ToNumber(rightValue);
-        return Math.pow(base, exponent);
+        var rightValue = ctx.GetValue(right);
+        var base = ctx.ToNumber(leftValue);
+        var exponent = ctx.ToNumber(rightValue);
+        return ctx._(`Math.pow(${base}, ${exponent})`);
     },
 ]);
 
@@ -2393,21 +2398,20 @@ Runtime_Semantics('compileEvaluation', [
 
     'MultiplicativeExpression: MultiplicativeExpression MultiplicativeOperator ExponentiationExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var left = this.MultiplicativeExpression.compileEvaluation(ctx);
-        var leftValue = GetValue(left);
+        var leftValue = ctx.GetValue(left);
         var right = this.ExponentiationExpression.compileEvaluation(ctx);
-        var rightValue = GetValue(right);
-        var lnum = ToNumber(leftValue);
-        var rnum = ToNumber(rightValue);
+        var rightValue = ctx.GetValue(right);
+        var lnum = ctx.ToNumber(leftValue);
+        var rnum = ctx.ToNumber(rightValue);
         if (this.MultiplicativeOperator.is('MultiplicativeOperator: *')) {
-            return lnum * rnum;
+            return ctx._(`${lnum} * ${rnum}`);
         }
         if (this.MultiplicativeOperator.is('MultiplicativeOperator: /')) {
-            return lnum / rnum;
+            return ctx._(`${lnum} / ${rnum}`);
         }
         if (this.MultiplicativeOperator.is('MultiplicativeOperator: %')) {
-            return lnum % rnum;
+            return ctx._(`${lnum} % ${rnum}`);
         }
         return Assert(false);
     },
@@ -2445,14 +2449,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'AdditiveExpression: AdditiveExpression - MultiplicativeExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.AdditiveExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.MultiplicativeExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToNumber(lval);
-        var rnum = ToNumber(rval);
-        return lnum - rnum;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToNumber(lval);
+        var rnum = ctx.ToNumber(rval);
+        return ctx._(`${lnum} - ${rnum}`);
     },
 ]);
 
@@ -2461,15 +2464,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'ShiftExpression: ShiftExpression << AdditiveExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.ShiftExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.AdditiveExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToInt32(lval);
-        var rnum = ToUint32(rval);
-        var shiftCount = rnum & 0x1F;
-        return lnum << shiftCount;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToInt32(lval);
+        var rnum = ctx.ToUint32(rval);
+        return ctx._(`${lnum} << (${rnum} & 0x1F)`);
     },
 ]);
 
@@ -2478,15 +2479,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'ShiftExpression: ShiftExpression >> AdditiveExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.ShiftExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.AdditiveExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToInt32(lval);
-        var rnum = ToUint32(rval);
-        var shiftCount = rnum & 0x1F;
-        return lnum >> shiftCount;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToInt32(lval);
+        var rnum = ctx.ToUint32(rval);
+        return ctx._(`${lnum} >> (${rnum} & 0x1F)`);
     },
 ]);
 
@@ -2495,15 +2494,13 @@ Runtime_Semantics('compileEvaluation', [
 
     'ShiftExpression: ShiftExpression >>> AdditiveExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.ShiftExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.AdditiveExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToUint32(lval);
-        var rnum = ToUint32(rval);
-        var shiftCount = rnum & 0x1F;
-        return lnum >>> shiftCount;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToUint32(lval);
+        var rnum = ctx.ToUint32(rval);
+        return ctx._(`${lnum} >>> (${rnum} & 0x1F)`);
     },
 ]);
 
@@ -2516,58 +2513,61 @@ Runtime_Semantics('compileEvaluation', [
         var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
         var rval = ctx.GetValue(rref);
-        var r = ctx.allocVar();
         ctx.$(`
-        var ${r} = AbstractRelationalComparison(${lval}, ${rval});
-        if (${r} === undefined) ${r} = false;
+        var r = AbstractRelationalComparison(${lval}, ${rval});
+        if (r === undefined) r = false;
         `);
-        return r;
+        return ctx._(`r`);
     },
 
     'RelationalExpression: RelationalExpression > ShiftExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.RelationalExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(rval, lval, false);
-        if (r === undefined) return false;
-        else return r;
+        var rval = ctx.GetValue(rref);
+        ctx.$(`
+        var r = AbstractRelationalComparison(${rval}, ${lval}, false);
+        if (r === undefined) r = false;
+        `);
+        return ctx._(`r`);
     },
 
     'RelationalExpression: RelationalExpression <= ShiftExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.RelationalExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(rval, lval, false);
-        if (r === true || r === undefined) return false;
-        else return true;
+        var rval = ctx.GetValue(rref);
+        ctx.$(`
+        var r = AbstractRelationalComparison(${rval}, ${lval}, false);
+        if (r === true || r === undefined) r = false;
+        else r = true;
+        `);
+        return ctx._(`r`);
     },
 
     'RelationalExpression: RelationalExpression >= ShiftExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.RelationalExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = AbstractRelationalComparison(lval, rval);
-        if (r === true || r === undefined) return false;
-        else return true;
+        var rval = ctx.GetValue(rref);
+        ctx.$(`
+        var r = AbstractRelationalComparison(${lval}, ${rval});
+        if (r === true || r === undefined) r = false;
+        else r = true;
+        `);
+        return ctx._(`r`);
     },
 
     'RelationalExpression: RelationalExpression instanceof ShiftExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.RelationalExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        return InstanceofOperator(lval, rval);
+        var rval = ctx.GetValue(rref);
+        return ctx._(`InstanceofOperator(${lval}, ${rval})`);
     },
 
     'RelationalExpression: RelationalExpression in ShiftExpression',
@@ -2576,12 +2576,10 @@ Runtime_Semantics('compileEvaluation', [
         var lval = ctx.GetValue(lref);
         var rref = this.ShiftExpression.compileEvaluation(ctx);
         var rval = ctx.GetValue(rref);
-        var r = ctx.allocVar();
         ctx.$(`
         if (Type(${rval}) !== 'Object') throw $TypeError();
-        var ${r} = HasProperty(${rval}, ToPropertyKey(${lval}));
         `);
-        return r;
+        return ctx._(`HasProperty(${rval}, ToPropertyKey(${lval}))`);
     },
 ]);
 
@@ -2590,46 +2588,48 @@ Runtime_Semantics('compileEvaluation', [
 
     'EqualityExpression: EqualityExpression == RelationalExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.EqualityExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.RelationalExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        return AbstractEqualityComparison(rval, lval);
+        var rval = ctx.GetValue(rref);
+        return ctx._(`AbstractEqualityComparison(${rval}, ${lval})`);
     },
 
     'EqualityExpression: EqualityExpression != RelationalExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.EqualityExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.RelationalExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = AbstractEqualityComparison(rval, lval);
-        if (r === true) return false;
-        else return true;
+        var rval = ctx.GetValue(rref);
+        ctx.$(`
+        var r = AbstractEqualityComparison(${rval}, ${lval});
+        if (r === true) r = false;
+        else r = true;
+        `);
+        return ctx._(`r`);
     },
 
     'EqualityExpression: EqualityExpression === RelationalExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.EqualityExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.RelationalExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        return StrictEqualityComparison(rval, lval);
+        var rval = ctx.GetValue(rref);
+        return ctx._(`StrictEqualityComparison(${rval}, ${lval})`);
     },
 
     'EqualityExpression: EqualityExpression !== RelationalExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.EqualityExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.RelationalExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var r = StrictEqualityComparison(rval, lval);
-        if (r === true) return false;
-        else return true;
+        var rval = ctx.GetValue(rref);
+        ctx.$(`
+        var r = StrictEqualityComparison(${rval}, ${lval});
+        if (r === true) r = false;
+        else r = true;
+        `);
+        return ctx._(`r`);
     },
 ]);
 
@@ -2638,38 +2638,35 @@ Runtime_Semantics('compileEvaluation', [
 
     'BitwiseANDExpression: BitwiseANDExpression & EqualityExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.BitwiseANDExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.EqualityExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToInt32(lval);
-        var rnum = ToInt32(rval);
-        return lnum & rnum;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToInt32(lval);
+        var rnum = ctx.ToInt32(rval);
+        return ctx._(`${lnum} & ${rnum}`);
     },
 
     'BitwiseXORExpression: BitwiseXORExpression ^ BitwiseANDExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.BitwiseXORExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.BitwiseANDExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToInt32(lval);
-        var rnum = ToInt32(rval);
-        return lnum ^ rnum;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToInt32(lval);
+        var rnum = ctx.ToInt32(rval);
+        return ctx._(`${lnum} ^ ${rnum}`);
     },
 
     'BitwiseORExpression: BitwiseORExpression | BitwiseXORExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.BitwiseORExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
+        var lval = ctx.GetValue(lref);
         var rref = this.BitwiseXORExpression.compileEvaluation(ctx);
-        var rval = GetValue(rref);
-        var lnum = ToInt32(lval);
-        var rnum = ToInt32(rval);
-        return lnum | rnum;
+        var rval = ctx.GetValue(rref);
+        var lnum = ctx.ToInt32(lval);
+        var rnum = ctx.ToInt32(rval);
+        return ctx._(`${lnum} | ${rnum}`);
     },
 ]);
 
@@ -2678,24 +2675,38 @@ Runtime_Semantics('compileEvaluation', [
 
     'LogicalANDExpression: LogicalANDExpression && BitwiseORExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.LogicalANDExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
-        var lbool = ToBoolean(lval);
-        if (lbool === false) return lval;
+        var lval = ctx.GetValue(lref);
+        var lbool = ctx.ToBoolean(lval);
+        var r = ctx.allocVar();
+        ctx.$(`
+        if (${lbool} === false) var ${r} = ${lval};
+        else{
+        `);
         var rref = this.BitwiseORExpression.compileEvaluation(ctx);
-        return GetValue(rref);
+        ctx.$(`
+            var ${r} = GetValue(${rref});
+        }
+        `);
+        return r;
     },
 
     'LogicalORExpression: LogicalORExpression || LogicalANDExpression',
     function(ctx) {
-        throw Error('not yet implemented'); // TODO
         var lref = this.LogicalORExpression.compileEvaluation(ctx);
-        var lval = GetValue(lref);
-        var lbool = ToBoolean(lval);
-        if (lbool === true) return lval;
+        var lval = ctx.GetValue(lref);
+        var lbool = ctx.ToBoolean(lval);
+        var r = ctx.allocVar();
+        ctx.$(`
+        if (${lbool} === true) var ${r} = ${lval};
+        else{
+        `);
         var rref = this.LogicalANDExpression.compileEvaluation(ctx);
-        return GetValue(rref);
+        ctx.$(`
+            var ${r} = GetValue(${rref});
+        }
+        `);
+        return r;
     },
 ]);
 
@@ -2846,7 +2857,6 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
 
     'ObjectAssignmentPattern: { }',
     function(ctx, value) {
-        throw Error('not yet implemented'); // TODO
         ctx.$(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
     },
 
@@ -2860,7 +2870,6 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
     'ArrayAssignmentPattern: [ ]',
     'ArrayAssignmentPattern: [ Elision ]',
     function(ctx, value) {
-        throw Error('not yet implemented'); // TODO
         ctx.$(`${ctx.literal(this)}.DestructuringAssignmentEvaluation(${value});`);
     },
 
@@ -2935,7 +2944,6 @@ Runtime_Semantics('compileDestructuringAssignmentEvaluation', [
 
     'AssignmentPropertyList: AssignmentPropertyList , AssignmentProperty',
     function(ctx, value) {
-        throw Error('not yet implemented'); // TODO
         this.AssignmentPropertyList.compileDestructuringAssignmentEvaluation(ctx, value);
         this.AssignmentProperty.compileDestructuringAssignmentEvaluation(ctx, value);
     },
@@ -2977,7 +2985,6 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
 
     'AssignmentElementList: AssignmentElementList , AssignmentElisionElement',
     function(ctx, iteratorRecord) {
-        throw Error('not yet implemented'); // TODO
         this.AssignmentElementList.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
         this.AssignmentElisionElement.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
     },
@@ -2989,7 +2996,6 @@ Runtime_Semantics('compileIteratorDestructuringAssignmentEvaluation', [
 
     'AssignmentElisionElement: Elision AssignmentElement',
     function(ctx, iteratorRecord) {
-        throw Error('not yet implemented'); // TODO
         this.Elision.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
         this.AssignmentElement.compileIteratorDestructuringAssignmentEvaluation(ctx, iteratorRecord);
     },
