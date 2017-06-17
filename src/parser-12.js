@@ -170,6 +170,7 @@ function parseCoverParenthesizedExpressionAndArrowParameterList(Yield) {
         var nt = Production['CoverParenthesizedExpressionAndArrowParameterList: ( Expression )'](expr);
         // moved from 12.2.1.1
         nt.ParenthesizedExpression = Production['ParenthesizedExpression: ( Expression )'](expr);
+        nt.ParenthesizedExpression.nested = nt;
         return nt;
     }
     consumeToken(',');
@@ -1067,6 +1068,7 @@ function parseAssignmentExpression(In, Yield) {
             var end = parsingPosition;
             parsingPosition = pos;
             nt.ArrowFormalParameters = parseArrowFormalParameters(Yield)
+            nt.ArrowFormalParameters.nested = nt;
             Assert(end === parsingPosition);
             var nt = Production['ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
@@ -1083,6 +1085,7 @@ function parseAssignmentExpression(In, Yield) {
                     var end = parsingPosition;
                     parsingPosition = pos;
                     lhs.AssignmentPattern = parseAssignmentPattern(Yield)
+                    lhs.AssignmentPattern.nested = lhs;
                     Assert(end === parsingPosition);
                 }
                 consumeToken('=');
@@ -1232,6 +1235,7 @@ function parseDestructuringAssignmentTarget(Yield) {
         var end = parsingPosition;
         parsingPosition = pos;
         nt.AssignmentPattern = parseAssignmentPattern(Yield)
+        nt.AssignmentPattern.nested = nt;
         Assert(end === parsingPosition);
     }
     return Production['DestructuringAssignmentTarget: LeftHandSideExpression'](nt);

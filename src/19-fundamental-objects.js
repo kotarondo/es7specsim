@@ -700,7 +700,7 @@ const NativeError_constructors = {
 };
 
 function call_NativeError(name, message) {
-    return currentRealm.Intrinsics['%' + name + '%'].Call(null, [message]);
+    return Call(currentRealm.Intrinsics['%' + name + '%'], null, [message]);
 }
 
 const $EvalError = call_NativeError.bind(null, 'EvalError');

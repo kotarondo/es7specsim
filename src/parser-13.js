@@ -632,6 +632,7 @@ function parseIterationStatement(Yield, Return) {
             var end = parsingPosition;
             parsingPosition = pos;
             nt.AssignmentPattern = parseAssignmentPattern(Yield)
+            nt.AssignmentPattern.nested = nt;
             Assert(end === parsingPosition);
         }
         consumeToken('in');
@@ -651,6 +652,7 @@ function parseIterationStatement(Yield, Return) {
             var end = parsingPosition;
             parsingPosition = pos;
             nt.AssignmentPattern = parseAssignmentPattern(Yield)
+            nt.AssignmentPattern.nested = nt;
             Assert(end === parsingPosition);
         }
         consumeToken('of');

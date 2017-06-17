@@ -398,9 +398,6 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
     } catch (e) {
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
-        if (e instanceof PendingTailCall) {
-            return Call(e.func, e.thisValue, e.argList);
-        }
         if (!(e instanceof Completion)) throw e;
         var result = e;
     }
@@ -746,9 +743,6 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
         NewTarget = savedNewTarget;
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
-        if (e instanceof PendingTailCall) {
-            return Call(e.func, e.thisValue, e.argList);
-        }
         throw e;
     }
 });

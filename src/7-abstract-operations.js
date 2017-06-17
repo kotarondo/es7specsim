@@ -521,9 +521,18 @@ function HasOwnProperty(O, P) {
 
 // 7.3.12
 function Call(F, V, argumentsList) {
-    if (argumentsList === undefined) var argumentsList = [];
-    if (IsCallable(F) === false) throw $TypeError();
-    return F.Call(V, argumentsList);
+    while (true) {
+        if (argumentsList === undefined) var argumentsList = [];
+        if (IsCallable(F) === false) throw $TypeError();
+        try {
+            return F.Call(V, argumentsList);
+        } catch (e) {
+            if (!(e instanceof PendingTailCall)) throw e;
+            F = e.func;
+            V = e.thisValue;
+            argumentsList = e.argList;
+        }
+    }
 }
 
 // 7.3.13
