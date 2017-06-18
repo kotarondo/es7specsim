@@ -112,7 +112,7 @@ function test_do(src, spec) {
 }
 
 function test_file(pathname) {
-    if (pathname.endsWith("_FIXTURES.js")) return;
+    if (pathname.endsWith("_FIXTURE.js")) return;
     for (var testname of heavy_tests) {
         if (pathname.endsWith(testname)) return;
     }
@@ -124,6 +124,7 @@ function test_file(pathname) {
     var spec = file.attrs;
     if (!spec.features) spec.features = [];
 
+    if (spec.esid === "pending") return; // unsupported
     if (spec.features.contains("object-spread")) return; // unsupported
     if (spec.features.contains("object-rest")) return; // unsupported
     if (spec.features.contains("caller")) return; // unsupported

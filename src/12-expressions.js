@@ -1416,7 +1416,12 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
             if (!STRICT_CONFORMANCE) {
-                if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                var expr = this.LeftHandSideExpression;
+                if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
+                    expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
+                    if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                }
             }
             throw EarlyReferenceError();
         }
@@ -1426,7 +1431,12 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.UnaryExpression.IsValidSimpleAssignmentTarget() === false) {
             if (!STRICT_CONFORMANCE) {
-                if (this.UnaryExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                var expr = this.UnaryExpression;
+                if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
+                    expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
+                    if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                }
             }
             throw EarlyReferenceError();
         }
@@ -2349,7 +2359,12 @@ Static_Semantics('Early Errors', [
         } else {
             if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
                 if (!STRICT_CONFORMANCE) {
-                    if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                    var expr = this.LeftHandSideExpression;
+                    if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                    while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
+                        expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
+                        if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                    }
                 }
                 throw EarlyReferenceError();
             }
@@ -2360,7 +2375,12 @@ Static_Semantics('Early Errors', [
     function() {
         if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
             if (!STRICT_CONFORMANCE) {
-                if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                var expr = this.LeftHandSideExpression;
+                if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                while (expr.is('PrimaryExpression: CoverParenthesizedExpressionAndArrowParameterList')) {
+                    expr = expr.resolve('CoverParenthesizedExpressionAndArrowParameterList').Expression;
+                    if (expr.strict && expr.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                }
             }
             throw EarlyReferenceError();
         }

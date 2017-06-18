@@ -42,18 +42,9 @@ class GeneratorCompilerContext {
     createGenerator() {
         // var g = new GeneratorFunction('literals', this.codes.join('\n'));
         var text = `(function*(literals){
-            try{
-                ${this.codes.join('\n')}
-            } catch(e) {
-                console.log(e); // for debug
-            }
+            ${this.codes.join('\n')}
         })`;
-        try {
-            var g = eval(text);
-        } catch (e) {
-            console.log(text); // for debug
-            console.log(e); // for debug
-        }
+        var g = eval(text);
         return g(this.literals);
     }
 

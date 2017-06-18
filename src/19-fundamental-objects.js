@@ -446,7 +446,7 @@ function Function_prototype_toString() {
         return Function_prototype_toString.call(func.BoundTargetFunction);
     }
     if (Type(func) === 'Object' && func instanceof BuiltinFunctionObject) {
-        return func.steps.toString();
+        return 'function () { [native code] }';
     }
     if (Type(func) === 'Object' && 'ECMAScriptCode' in func) {
         if (func.is_class_constructor) {

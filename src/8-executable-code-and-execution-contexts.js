@@ -123,6 +123,7 @@ class DeclarativeEnvironmentRecord extends EnvironmentRecord {
         var envRec = this;
         Assert(envRec.attributes[N] !== undefined);
         if ((envRec.attributes[N] & ER_deletable) === 0) return false;
+        delete envRec.attributes[N];
         delete envRec.values[N];
         return true;
     }

@@ -122,8 +122,8 @@ function GeneratorStart(generator, generatorBody) {
     var genContext = running_execution_context;
     genContext.Generator = generator;
     var ctx = new GeneratorCompilerContext();
-    var result = compileConcreteCompletion(generatorBody.compileEvaluateBody(ctx));
-    ctx.$(`return ${ctx.literal(finish)}(${result});`);
+    var res = compileConcreteCompletion(generatorBody.compileEvaluateBody(ctx));
+    ctx.$(`return ${ctx.literal(finish)}(${res});`);
     genContext.code_evaluation_state = ctx.createGenerator();
 
     function finish(result) {
