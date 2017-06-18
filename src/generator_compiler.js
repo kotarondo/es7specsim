@@ -413,11 +413,13 @@ Runtime_Semantics('compileClassDefinitionEvaluation', [
                 setParsingText('constructor( ){ }');
                 constructor = parseMethodDefinition();
             }
+            constructor.nested = this;
         }
         ctx.$(`
         running_execution_context.LexicalEnvironment = ${classScope};
         var constructorInfo = ${ctx.literal(constructor)}.DefineMethod(${proto}, constructorParent);
         var ${F} = constructorInfo.Closure;
+        ${F}.is_class_constructor = true; // ADDED for Function.prototype.toString()
         `);
         if (this.ClassHeritage) ctx.$(`${F}.ConstructorKind = "derived";`);
         ctx.$(`

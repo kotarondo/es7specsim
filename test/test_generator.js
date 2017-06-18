@@ -42,6 +42,7 @@ var obj = {
         yield super.constructor;
         yield super[yield 1];
         yield new.target;
+        yield class A {};
     }
 };
 
@@ -50,6 +51,7 @@ assert.sameValue(iter.next().value, Object);
 assert.sameValue(iter.next().value, 1);
 assert.sameValue(iter.next('constructor').value, Object);
 assert.sameValue(iter.next().value, undefined);
+assert.sameValue(iter.next().value.toString(), 'class A {}');
 
 // -------------------------------
 var iter = function*() {

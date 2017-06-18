@@ -336,9 +336,13 @@ function CreateDynamicFunction(constructor, newTarget, kind, args) {
         setParsingText(bodyText);
         if (goal === 'FunctionBody') {
             var body = parseFunctionBody();
+            var nt = Production['FunctionExpression: function BindingIdentifier[opt] ( FormalParameters ) { FunctionBody }'](null, parameters, body); // for Function.prototype.toString()
+            nt.text = 'function ( ' + P + ' ) { ' + bodyText + ' }';
         } else {
             Assert(goal === 'GeneratorBody');
             var body = parseGeneratorBody();
+            var nt = Production['GeneratorExpression: function * BindingIdentifier[opt] ( FormalParameters ) { GeneratorBody }'](null, parameters, body); // for Function.prototype.toString()
+            nt.text = 'function * ( ' + P + ' ) { ' + bodyText + ' }';
         }
         if (peekToken() !== '') throw EarlySyntaxError();
         if (body.ContainsUseStrict()) var strict = true;
@@ -439,10 +443,18 @@ function Function_prototype_call(thisArg, ...args) {
 function Function_prototype_toString() {
     var func = this;
     if (func instanceof BoundFunctionExoticObject) {
-        return "function anonymous(){ ... }"; //TODO
+        return Function_prototype_toString.call(func.BoundTargetFunction);
     }
-    if (Type(func) === 'Object' && (func instanceof BuiltinFunctionObject || 'ECMAScriptCode' in func)) {
-        return "function anonymous(){ ... }"; //TODO
+    if (Type(func) === 'Object' && func instanceof BuiltinFunctionObject) {
+        return func.steps.toString();
+    }
+    if (Type(func) === 'Object' && 'ECMAScriptCode' in func) {
+        if (func.is_class_constructor) {
+            var c = func.ECMAScriptCode.most_close_container('ClassDeclaration', 'ClassExpression');
+        } else {
+            var c = func.ECMAScriptCode.most_close_container('FunctionDeclaration', 'FunctionExpression', 'GeneratorDeclaration', 'GeneratorExpression', 'ClassDeclaration', 'ClassExpression', 'ArrowFunction', 'MethodDefinition', 'GeneratorMethod');
+        }
+        return c.text;
     }
     throw $TypeError();
 }

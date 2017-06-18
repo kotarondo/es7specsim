@@ -788,7 +788,7 @@ Runtime_Semantics('ArgumentListEvaluation', [
         var templateLiteral = this;
         var siteObj = GetTemplateObject(templateLiteral);
         var firstSub = this.Expression.Evaluation();
-        var firstSub = GetValue(firstSub); // EcmaScript8
+        var firstSub = GetValue(firstSub); // SPEC BUG: already corrected in EcmaScript8
         var restSub = this.TemplateSpans.SubstitutionEvaluation();
         Assert(Type(restSub) === 'List');
         return [siteObj, firstSub].concat(restSub);
@@ -841,7 +841,7 @@ Runtime_Semantics('SubstitutionEvaluation', [
     'TemplateMiddleList: TemplateMiddle Expression',
     function() {
         var sub = this.Expression.Evaluation();
-        var sub = GetValue(sub); // EcmaScript8
+        var sub = GetValue(sub); // SPEC BUG: already corrected in EcmaScript8
         return [sub];
     },
 
@@ -849,7 +849,7 @@ Runtime_Semantics('SubstitutionEvaluation', [
     function() {
         var preceding = this.TemplateMiddleList.SubstitutionEvaluation();
         var next = this.Expression.Evaluation();
-        var next = GetValue(next); // EcmaScript8
+        var next = GetValue(next); // SPEC BUG: already corrected in EcmaScript8
         preceding.push(next);
         return preceding;
     },
@@ -867,7 +867,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var head = this.TemplateHead.TV();
         var sub = this.Expression.Evaluation();
-        var sub = GetValue(sub); // clarify the specification
+        var sub = GetValue(sub); // SPEC BUG
         var middle = ToString(sub);
         var tail = this.TemplateSpans.Evaluation();
         return head + middle + tail;
@@ -890,7 +890,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var head = this.TemplateMiddle.TV();
         var sub = this.Expression.Evaluation();
-        var sub = GetValue(sub); // clarify the specification
+        var sub = GetValue(sub); // SPEC BUG
         var middle = ToString(sub);
         return head + middle;
     },
@@ -900,7 +900,7 @@ Runtime_Semantics('Evaluation', [
         var rest = this.TemplateMiddleList.Evaluation();
         var middle = this.TemplateMiddle.TV();
         var sub = this.Expression.Evaluation();
-        var sub = GetValue(sub); // clarify the specification
+        var sub = GetValue(sub); // SPEC BUG
         var last = ToString(sub);
         return rest + middle + last;
     },
@@ -1414,12 +1414,22 @@ Static_Semantics('Early Errors', [
     'UpdateExpression: LeftHandSideExpression ++',
     'UpdateExpression: LeftHandSideExpression --',
     function() {
-        if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+        if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
+            if (!STRICT_CONFORMANCE) {
+                if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+            }
+            throw EarlyReferenceError();
+        }
     },
     'UpdateExpression: ++ UnaryExpression',
     'UpdateExpression: -- UnaryExpression',
     function() {
-        if (this.UnaryExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+        if (this.UnaryExpression.IsValidSimpleAssignmentTarget() === false) {
+            if (!STRICT_CONFORMANCE) {
+                if (this.UnaryExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+            }
+            throw EarlyReferenceError();
+        }
     },
 ]);
 
@@ -2337,13 +2347,23 @@ Static_Semantics('Early Errors', [
         if (this.LeftHandSideExpression.is('ObjectLiteral') || this.LeftHandSideExpression.is('ArrayLiteral')) {
             // moved into the parser.
         } else {
-            if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+            if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
+                if (!STRICT_CONFORMANCE) {
+                    if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+                }
+                throw EarlyReferenceError();
+            }
         }
     },
 
     'AssignmentExpression: LeftHandSideExpression AssignmentOperator AssignmentExpression',
     function() {
-        if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) throw EarlyReferenceError();
+        if (this.LeftHandSideExpression.IsValidSimpleAssignmentTarget() === false) {
+            if (!STRICT_CONFORMANCE) {
+                if (this.LeftHandSideExpression.is('IdentifierReference')) throw EarlySyntaxError(); // compatible with ES5
+            }
+            throw EarlyReferenceError();
+        }
     },
 ]);
 

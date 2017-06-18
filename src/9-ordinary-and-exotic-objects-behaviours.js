@@ -379,6 +379,8 @@ function PendingTailCall(func, thisValue, argList) {
     this.func = func;
     this.thisValue = thisValue;
     this.argList = argList;
+    this.context = running_execution_context;
+    this.processed = 0;
 }
 
 // 9.2.1
@@ -398,6 +400,11 @@ define_method(ECMAScriptFunctionObject, 'Call', function(thisArgument, arguments
     } catch (e) {
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
+        if (e instanceof PendingTailCall) {
+            Assert(e.context === calleeContext && e.processed === 0);
+            e.context = running_execution_context;
+            e.processed++;
+        }
         if (!(e instanceof Completion)) throw e;
         var result = e;
     }
@@ -473,6 +480,7 @@ function ECMAScriptFunctionObject_Construct(argumentsList, newTarget) {
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) { // clarify the specification
+            Assert(e.context === calleeContext && e.processed === 0);
             var value = Call(e.func, e.thisValue, e.argList);
             if (Type(value) === 'Object') return value;
             if (kind === "base") return thisArgument;
@@ -743,6 +751,11 @@ define_method(BuiltinFunctionObject, 'Call', function(thisArgument, argumentsLis
         NewTarget = savedNewTarget;
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
+        if (e instanceof PendingTailCall) {
+            Assert(e.context === calleeContext && e.processed === 0);
+            e.context = running_execution_context;
+            e.processed++;
+        }
         throw e;
     }
 });
@@ -771,6 +784,7 @@ function BuiltinFunctionObject_Construct(argumentsList, newTarget) {
         remove_from_execution_context_stack(calleeContext);
         Assert(callerContext === running_execution_context);
         if (e instanceof PendingTailCall) {
+            Assert(e.context === calleeContext && e.processed === 0);
             return Call(e.func, e.thisValue, e.argList);
         }
         throw e;

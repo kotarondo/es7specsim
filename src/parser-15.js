@@ -263,7 +263,10 @@ function parseExportDeclaration() {
                     var nt = parseHoistableDeclaration(!'Yield', 'Default');
                     return Production['ExportDeclaration: export default HoistableDeclaration'](nt);
                 case 'class':
+                    skipSeparators();
+                    var pos = parsingPosition;
                     var nt = parseClassDeclaration(!'Yield', 'Default');
+                    nt.text = sourceText.substring(pos, parsingPosition);
                     return Production['ExportDeclaration: export default ClassDeclaration'](nt);
             }
             var nt = parseAssignmentExpression('In');

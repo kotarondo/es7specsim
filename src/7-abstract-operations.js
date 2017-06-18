@@ -521,6 +521,7 @@ function HasOwnProperty(O, P) {
 
 // 7.3.12
 function Call(F, V, argumentsList) {
+    var calleeContext = running_execution_context;
     while (true) {
         if (argumentsList === undefined) var argumentsList = [];
         if (IsCallable(F) === false) throw $TypeError();
@@ -528,6 +529,7 @@ function Call(F, V, argumentsList) {
             return F.Call(V, argumentsList);
         } catch (e) {
             if (!(e instanceof PendingTailCall)) throw e;
+            Assert(e.context === calleeContext && e.processed === 1);
             F = e.func;
             V = e.thisValue;
             argumentsList = e.argList;

@@ -128,6 +128,8 @@ function test_file(pathname) {
     if (spec.features.contains("object-rest")) return; // unsupported
     if (spec.features.contains("caller")) return; // unsupported
     if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
+    if (spec.features.contains("async-functions")) return; // unsupported
+    if (spec.features.contains("async-iteration")) return; // unsupported
 
 
     if (pathname.indexOf("/star-rhs-iter-") > 0) return; // TODO

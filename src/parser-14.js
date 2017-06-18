@@ -212,7 +212,10 @@ function parseMethodDefinition(Yield) {
             consumeToken('}');
             return Production['MethodDefinition: set PropertyName ( PropertySetParameterList ) { FunctionBody }'](name, param, body);
         case '*':
+            skipSeparators();
+            var pos = parsingPosition;
             var nt = parseGeneratorMethod(Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['MethodDefinition: GeneratorMethod'](nt);
     }
     var name = parsePropertyName(Yield);
@@ -404,9 +407,15 @@ function parseClassElement(Yield) {
     }
     if (peekToken() === 'static') {
         consumeToken('static');
+        skipSeparators();
+        var pos = parsingPosition;
         var nt = parseMethodDefinition(Yield);
+        nt.text = sourceText.substring(pos, parsingPosition);
         return Production['ClassElement: static MethodDefinition'](nt);
     }
+    skipSeparators();
+    var pos = parsingPosition;
     var nt = parseMethodDefinition(Yield);
+    nt.text = sourceText.substring(pos, parsingPosition);
     return Production['ClassElement: MethodDefinition'](nt);
 }

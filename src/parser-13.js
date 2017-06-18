@@ -116,7 +116,10 @@ function parseDeclaration(Yield) {
             var nt = parseHoistableDeclaration(Yield);
             return Production['Declaration: HoistableDeclaration'](nt);
         case 'class':
+            skipSeparators();
+            var pos = parsingPosition;
             var nt = parseClassDeclaration(Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['Declaration: ClassDeclaration'](nt);
         case 'let':
         case 'const':
@@ -127,11 +130,15 @@ function parseDeclaration(Yield) {
 }
 
 function parseHoistableDeclaration(Yield, Default) {
+    skipSeparators();
+    var pos = parsingPosition;
     if (peekToken(1) === '*') {
         var nt = parseGeneratorDeclaration(Yield, Default);
+        nt.text = sourceText.substring(pos, parsingPosition);
         return Production['HoistableDeclaration: GeneratorDeclaration'](nt);
     }
     var nt = parseFunctionDeclaration(Yield, Default);
+    nt.text = sourceText.substring(pos, parsingPosition);
     return Production['HoistableDeclaration: FunctionDeclaration'](nt);
 }
 
@@ -832,7 +839,10 @@ function parseLabelledItem(Yield, Return) {
         var nt = parseStatement(Yield, Return);
         return Production['LabelledItem: Statement'](nt);
     }
+    skipSeparators();
+    var pos = parsingPosition;
     var nt = parseFunctionDeclaration(Yield, !'Default');
+    nt.text = sourceText.substring(pos, parsingPosition);
     return Production['LabelledItem: FunctionDeclaration'](nt);
 }
 

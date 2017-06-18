@@ -839,7 +839,7 @@ Runtime_Semantics('Evaluation', [
     function() {
         var sl = this.ModuleItemList.Evaluation();
         var s = concreteCompletion(this.ModuleItem.Evaluation());
-        return resolveCompletion(UpdateEmpty(s, sl)); // clarify the specification
+        return resolveCompletion(UpdateEmpty(s, sl)); // SPEC BUG
     },
 
     'ModuleItem: ImportDeclaration',

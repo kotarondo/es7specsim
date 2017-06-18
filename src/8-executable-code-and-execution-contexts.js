@@ -907,9 +907,12 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%DatePrototype%', wellKnownSymbols['@@toPrimitive'], Date_prototype_toPrimitive, 1, { name: '[Symbol.toPrimitive]', attributes: { Writable: false, Enumerable: false, Configurable: true } }); // 20.3.4.45
 
     intrinsics['%String%'] = intrinsic_constructor(realmRec, 'String', String$, 1); // 21.1.1
-    // intrinsics['%StringPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.1.3
-    // intrinsics['%StringPrototype%'].StringData = ""; // 21.1.3
-    intrinsics['%StringPrototype%'] = StringCreate("", intrinsics['%ObjectPrototype%']); // EcmaScript8
+    if (STRICT_CONFORMANCE) {
+        intrinsics['%StringPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.1.3
+        intrinsics['%StringPrototype%'].StringData = ""; // 21.1.3
+    } else {
+        intrinsics['%StringPrototype%'] = StringCreate("", intrinsics['%ObjectPrototype%']); // EcmaScript8
+    }
     intrinsics['%StringIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 21.1.5.2
     intrinsic_function(realmRec, '%String%', 'fromCharCode', String_fromCharCode, 1); // 21.1.2.1
     intrinsic_function(realmRec, '%String%', 'fromCodePoint', String_fromCodePoint, 1); // 21.1.2.2
@@ -1282,7 +1285,7 @@ function remove_from_execution_context_stack(ctx) {
 }
 
 // 8.3.1
-function GetActiveScriptOrModule() { // EcmaScript8
+function GetActiveScriptOrModule() { // SPEC BUG: already corrected in EcmaScript8
     if (execution_context_stack.length === 0) return null;
     for (var i = execution_context_stack.length - 1; i >= 0; i--) {
         var ec = execution_context_stack[i];

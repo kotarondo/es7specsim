@@ -123,14 +123,22 @@ function parsePrimaryExpression(Yield) {
             var nt = parseObjectLiteral(Yield);
             return Production['PrimaryExpression: ObjectLiteral'](nt);
         case 'function':
+            skipSeparators();
+            var pos = parsingPosition;
             if (peekToken(1) === '*') {
                 var nt = parseGeneratorExpression();
+                nt.text = sourceText.substring(pos, parsingPosition);
                 return Production['PrimaryExpression: GeneratorExpression'](nt);
             }
             var nt = parseFunctionExpression();
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['PrimaryExpression: FunctionExpression'](nt);
         case 'class':
+            skipSeparators();
+            var pos = parsingPosition;
+            debugger;
             var nt = parseClassExpression(Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['PrimaryExpression: ClassExpression'](nt);
         case '/':
         case '/=':
@@ -328,10 +336,13 @@ function parseObjectLiteral(Yield) {
 }
 
 function parsePropertyDefinition(Yield) {
+    skipSeparators();
+    var pos = parsingPosition;
     if (peekToken() === '[' || peekToken() === '"' || peekToken() === '0') {
         var name = parsePropertyName(Yield);
         if (peekToken() === '(') {
             var nt = parseMethodDefinition_after_PropertyName(name, Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['PropertyDefinition: MethodDefinition'](nt);
         }
         consumeToken(':');
@@ -355,6 +366,7 @@ function parsePropertyDefinition(Yield) {
         }
     }
     var nt = parseMethodDefinition(Yield);
+    nt.text = sourceText.substring(pos, parsingPosition);
     return Production['PropertyDefinition: MethodDefinition'](nt);
 }
 
@@ -1047,6 +1059,7 @@ function parseAssignmentExpression(In, Yield) {
         var nt = parseYieldExpression(In);
         return Production['AssignmentExpression: YieldExpression'](nt);
     }
+    skipSeparators();
     var pos = parsingPosition;
     var nt = parseConditionalExpression(In, Yield);
     if (!peekTokenIsLineSeparated() && peekToken() === '=>') {
@@ -1060,6 +1073,7 @@ function parseAssignmentExpression(In, Yield) {
             }
             var nt = Production['ArrowParameters: BindingIdentifier'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['AssignmentExpression: ArrowFunction'](nt);
         }
         if (nt.is('CoverParenthesizedExpressionAndArrowParameterList')) {
@@ -1072,6 +1086,7 @@ function parseAssignmentExpression(In, Yield) {
             Assert(end === parsingPosition);
             var nt = Production['ArrowParameters: CoverParenthesizedExpressionAndArrowParameterList'](nt);
             var nt = parseArrowFunction_after_ArrowParameters(nt, In, Yield);
+            nt.text = sourceText.substring(pos, parsingPosition);
             return Production['AssignmentExpression: ArrowFunction'](nt);
         }
     }

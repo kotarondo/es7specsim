@@ -1456,8 +1456,7 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
         } else {
             var currentContext = running_execution_context;
             running_execution_context.LexicalEnvironment = classScope;
-            // clarify the specification; needs GetValue
-            var superclass = concreteCompletion(GetValue(this.ClassHeritage.Evaluation()));
+            var superclass = concreteCompletion(GetValue(this.ClassHeritage.Evaluation())); // SPEC BUG
             Assert(currentContext === running_execution_context);
             running_execution_context.LexicalEnvironment = lex;
             ReturnIfAbrupt(superclass);
@@ -1482,10 +1481,12 @@ Runtime_Semantics('ClassDefinitionEvaluation', [
                 setParsingText('constructor( ){ }');
                 constructor = parseMethodDefinition();
             }
+            constructor.nested = this;
         }
         running_execution_context.LexicalEnvironment = classScope;
         var constructorInfo = constructor.DefineMethod(proto, constructorParent);
         var F = constructorInfo.Closure;
+        F.is_class_constructor = true; // ADDED for Function.prototype.toString()
         if (this.ClassHeritage) F.ConstructorKind = "derived";
         MakeConstructor(F, false, proto);
         MakeClassConstructor(F);

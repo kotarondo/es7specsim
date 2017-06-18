@@ -32,6 +32,8 @@
 */
 'use strict';
 
+var STRICT_CONFORMANCE = false;
+
 function Assert(cond) {
     if (cond) return;
     debugger;
