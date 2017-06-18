@@ -784,6 +784,7 @@ define_method(SourceTextModuleRecord, 'ModuleEvaluation', function() {
 // 15.2.1.17
 var HostResolveImportedModule = function(referencingModule, specifier) {
     // implementation-defined
+    throw $TypeError();
 };
 
 // 15.2.1.18

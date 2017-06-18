@@ -37,4 +37,5 @@
 // 16.1
 var HostReportErrors = function(errorList) {
     // implementation-defined
+    console.log(errorList);
 };

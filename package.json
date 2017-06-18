@@ -21,10 +21,10 @@
     "devDependencies": {
         "test262-parser": ">=2.0.0"
     },
+    "main": "loader.js",
     "files": [
         "src",
-        "loader.js",
-        "index.js"
+        "loader.js"
     ],
     "scripts": {
         "test": "./test/run-tests"
