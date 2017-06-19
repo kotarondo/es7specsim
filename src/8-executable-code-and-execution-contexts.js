@@ -912,7 +912,7 @@ function CreateIntrinsics(realmRec) {
         intrinsics['%StringPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 21.1.3
         intrinsics['%StringPrototype%'].StringData = ""; // 21.1.3
     } else {
-        intrinsics['%StringPrototype%'] = StringCreate("", intrinsics['%ObjectPrototype%']); // EcmaScript8
+        intrinsics['%StringPrototype%'] = StringCreate("", intrinsics['%ObjectPrototype%']); // compatible with ES5,ES8
     }
     intrinsics['%StringIteratorPrototype%'] = ObjectCreate(intrinsics['%IteratorPrototype%']); // 21.1.5.2
     intrinsic_function(realmRec, '%String%', 'fromCharCode', String_fromCharCode, 1); // 21.1.2.1

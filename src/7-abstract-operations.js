@@ -273,6 +273,19 @@ function CanonicalNumericIndexString(argument) {
     return n;
 }
 
+// 7.1.17
+function ToIndex(value) { // imported from ES8
+    if (value === undefined) {
+        var index = 0;
+    } else {
+        var integerIndex = ToInteger(value);
+        if (integerIndex < 0) throw $RangeError();
+        var index = ToLength(integerIndex);
+        if (SameValueZero(integerIndex, index) === false) throw $RangeError();
+    }
+    return index;
+}
+
 // 7.2 Testing  and  and  Comparison Operations
 
 // 7.2.1

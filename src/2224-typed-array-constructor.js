@@ -57,10 +57,14 @@ function $__TypedArray__$1() {
 function $__TypedArray__$2(length) {
     Assert(Type(length) !== 'Object');
     if (NewTarget === undefined) throw $TypeError();
-    if (length === undefined) throw $TypeError();
-    var numberLength = ToNumber(length);
-    var elementLength = ToLength(numberLength);
-    if (SameValueZero(numberLength, elementLength) === false) throw $RangeError();
+    if (STRICT_CONFORMANCE) {
+        if (length === undefined) throw $TypeError();
+        var numberLength = ToNumber(length);
+        var elementLength = ToLength(numberLength);
+        if (SameValueZero(numberLength, elementLength) === false) throw $RangeError();
+    } else {
+        var elementLength = ToIndex(length); // compatible with ES8
+    }
     var constructorName = '__TypedArray__';
     return AllocateTypedArray(constructorName, NewTarget, "%__TypedArray__Prototype%", elementLength);
 }
@@ -134,9 +138,13 @@ function $__TypedArray__$5(buffer, byteOffset, length) {
     var O = AllocateTypedArray(constructorName, NewTarget, "%__TypedArray__Prototype%");
     var constructorName = O.TypedArrayName;
     var elementSize = Table50[constructorName].ElementSize;
-    var offset = ToInteger(byteOffset);
-    if (offset < 0) throw $RangeError();
-    if (offset === -0) var offset = +0;
+    if (STRICT_CONFORMANCE) {
+        var offset = ToInteger(byteOffset);
+        if (offset < 0) throw $RangeError();
+        if (offset === -0) var offset = +0;
+    } else {
+        var offset = ToIndex(byteOffset); // compatible with ES8
+    }
     if (modulo(offset, elementSize) !== 0) throw $RangeError();
     if (IsDetachedBuffer(buffer) === true) throw $TypeError();
     var bufferByteLength = buffer.ArrayBufferByteLength;
@@ -145,7 +153,11 @@ function $__TypedArray__$5(buffer, byteOffset, length) {
         var newByteLength = bufferByteLength - offset;
         if (newByteLength < 0) throw $RangeError();
     } else {
-        var newLength = ToLength(length);
+        if (STRICT_CONFORMANCE) {
+            var newLength = ToLength(length);
+        } else {
+            var newLength = ToIndex(length); // compatible with ES8
+        }
         var newByteLength = newLength * elementSize;
         if (offset + newByteLength > bufferByteLength) throw $RangeError();
     }

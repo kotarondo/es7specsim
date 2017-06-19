@@ -155,9 +155,13 @@ function SetValueInBuffer(arrayBuffer, byteIndex, type, value, isLittleEndian) {
 // 24.1.2.1
 function ArrayBuffer$(length) {
     if (NewTarget === undefined) throw $TypeError();
-    var numberLength = ToNumber(length);
-    var byteLength = ToLength(numberLength);
-    if (SameValueZero(numberLength, byteLength) === false) throw $RangeError();
+    if (STRICT_CONFORMANCE) {
+        var numberLength = ToNumber(length);
+        var byteLength = ToLength(numberLength);
+        if (SameValueZero(numberLength, byteLength) === false) throw $RangeError();
+    } else {
+        var byteLength = ToIndex(length); // comatible with ES8
+    }
     return AllocateArrayBuffer(NewTarget, byteLength);
 }
 
@@ -231,9 +235,13 @@ function ArrayBuffer_prototype_slice(start, end) {
 function GetViewValue(view, requestIndex, isLittleEndian, type) {
     if (Type(view) !== 'Object') throw $TypeError();
     if (!('DataView' in view)) throw $TypeError();
-    var numberIndex = ToNumber(requestIndex);
-    var getIndex = ToInteger(numberIndex);
-    if (numberIndex !== getIndex || getIndex < 0) throw $RangeError();
+    if (STRICT_CONFORMANCE) {
+        var numberIndex = ToNumber(requestIndex);
+        var getIndex = ToInteger(numberIndex);
+        if (numberIndex !== getIndex || getIndex < 0) throw $RangeError();
+    } else {
+        var getIndex = ToIndex(requestIndex); // comatible with ES8
+    }
     var isLittleEndian = ToBoolean(isLittleEndian);
     var buffer = view.ViewedArrayBuffer;
     if (IsDetachedBuffer(buffer) === true) throw $TypeError();
@@ -249,9 +257,13 @@ function GetViewValue(view, requestIndex, isLittleEndian, type) {
 function SetViewValue(view, requestIndex, isLittleEndian, type, value) {
     if (Type(view) !== 'Object') throw $TypeError();
     if (!('DataView' in view)) throw $TypeError();
-    var numberIndex = ToNumber(requestIndex);
-    var getIndex = ToInteger(numberIndex);
-    if (numberIndex !== getIndex || getIndex < 0) throw $RangeError();
+    if (STRICT_CONFORMANCE) {
+        var numberIndex = ToNumber(requestIndex);
+        var getIndex = ToInteger(numberIndex);
+        if (numberIndex !== getIndex || getIndex < 0) throw $RangeError();
+    } else {
+        var getIndex = ToIndex(requestIndex); // comatible with ES8
+    }
     var numberValue = ToNumber(value);
     var isLittleEndian = ToBoolean(isLittleEndian);
     var buffer = view.ViewedArrayBuffer;
@@ -271,16 +283,24 @@ function DataView$(buffer, byteOffset, byteLength) {
     if (NewTarget === undefined) throw $TypeError();
     if (Type(buffer) !== 'Object') throw $TypeError();
     if (!('ArrayBufferData' in buffer)) throw $TypeError();
-    var numberOffset = ToNumber(byteOffset);
-    var offset = ToInteger(numberOffset);
-    if (numberOffset !== offset || offset < 0) throw $RangeError();
+    if (STRICT_CONFORMANCE) {
+        var numberOffset = ToNumber(byteOffset);
+        var offset = ToInteger(numberOffset);
+        if (numberOffset !== offset || offset < 0) throw $RangeError();
+    } else {
+        var offset = ToIndex(byteOffset); // comatible with ES8
+    }
     if (IsDetachedBuffer(buffer) === true) throw $TypeError();
     var bufferByteLength = buffer.ArrayBufferByteLength;
     if (offset > bufferByteLength) throw $RangeError();
     if (byteLength === undefined) {
         var viewByteLength = bufferByteLength - offset;
     } else {
-        var viewByteLength = ToLength(byteLength);
+        if (STRICT_CONFORMANCE) {
+            var viewByteLength = ToLength(byteLength);
+        } else {
+            var viewByteLength = ToIndex(byteLength); // comatible with ES8
+        }
         if (offset + viewByteLength > bufferByteLength) throw $RangeError();
     }
     var O = OrdinaryCreateFromConstructor(NewTarget, "%DataViewPrototype%", ['DataView', 'ViewedArrayBuffer', 'ByteLength', 'ByteOffset']);
