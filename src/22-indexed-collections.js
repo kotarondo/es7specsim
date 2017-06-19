@@ -1240,6 +1240,9 @@ function TypedArray_prototype_fill(value, start, end) {
     var O = this;
     ValidateTypedArray(O);
     var len = O.ArrayLength;
+    if (!STRICT_CONFORMANCE) {
+        value = ToNumber(value); // compatible with ES8
+    }
     var relativeStart = ToInteger(start);
     if (relativeStart < 0) var k = Math.max((len + relativeStart), 0);
     else var k = Math.min(relativeStart, len);
