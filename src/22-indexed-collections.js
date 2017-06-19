@@ -1581,9 +1581,9 @@ function TypedArray_prototype_reverse() {
 // 22.2.3.23
 function TypedArray_prototype_set(overloaded, offset) {
     if (Type(overloaded) === 'Object' && 'TypedArrayName' in overloaded) {
-        return TypedArray_prototype_set$2(overloaded, offset);
+        return TypedArray_prototype_set$2.apply(this, arguments);
     } else {
-        return TypedArray_prototype_set$1(overloaded, offset);
+        return TypedArray_prototype_set$1.apply(this, arguments);
     }
 }
 
