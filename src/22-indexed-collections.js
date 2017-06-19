@@ -1230,8 +1230,8 @@ function TypedArray_prototype_every(callbackfn, thisArg) {
             if (testResult === false) return false;
             k++;
         }
-        return true;
     }
+    return true;
 }
 
 
