@@ -1117,6 +1117,7 @@ function parseAssignmentExpression(In, Yield) {
             case '&=':
             case '|=':
             case '^=':
+            case '**=':
                 consumeToken(c);
                 var ope = Production['AssignmentOperator: ' + c]();
                 var nt = parseAssignmentExpression(In, Yield);
