@@ -96,7 +96,11 @@ function test_do(src, spec) {
         var inc_src = fs.readFileSync(path.join(test262_dir, "harness", inc), "utf8");
         entries.push({ sourceText: inc_src });
     }
-    entries.push({ sourceText: src, isModule: !!spec.flags.module });
+    if (!spec.flags.module) {
+        entries.push({ sourceText: src, isModule: false });
+    } else {
+        entries.push({ sourceText: `import "./${spec.basename}" `, isModule: true });
+    }
     InitializeHostDefinedRealm(entries, customize_global_object);
     if (!spec.negative && !errors) return true;
     if (spec.negative && errors && Type(errors[0]) === 'Object') {
@@ -131,6 +135,7 @@ function test_file(pathname) {
     var file = { contents: src };
     parser.parseFile(file);
     var spec = file.attrs;
+    spec.basename = path.basename(pathname);
     if (!spec.features) spec.features = [];
 
     if (spec.esid === "pending") return; // unsupported

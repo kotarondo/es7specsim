@@ -1439,6 +1439,11 @@ define_method(ModuleNamespaceExoticObject, 'Set', function(P, V, Receiver) {
 define_method(ModuleNamespaceExoticObject, 'Delete', function(P) {
     var O = this;
     Assert(IsPropertyKey(P) === true);
+    if (!STRICT_CONFORMANCE) {
+        if (Type(P) === 'Symbol') {
+            return OrdinaryDelete(O, P);
+        }
+    }
     var exports = O.Exports;
     if (exports.contains(P)) return false;
     return true;
@@ -1461,7 +1466,11 @@ function ModuleNamespaceCreate(module, exports) {
     var M = new ModuleNamespaceExoticObject;
     M.Module = module;
     M.Exports = exports;
-    M.properties[wellKnownSymbols['@@toStringTag']] = { Value: "Module", Writable: false, Enumerable: false, Configurable: true }; // 26.3.1
+    if (STRICT_CONFORMANCE) {
+        M.properties[wellKnownSymbols['@@toStringTag']] = { Value: "Module", Writable: false, Enumerable: false, Configurable: true }; // 26.3.1
+    } else {
+        M.properties[wellKnownSymbols['@@toStringTag']] = { Value: "Module", Writable: false, Enumerable: false, Configurable: false }; // compatible with ES8
+    }
     var func = intrinsic_function(currentRealm, null, null, Module_Namespace_iterator, 0, { name: '[Symbol.iterator]' }); // 26.3.2
     M[wellKnownSymbols['@@iterator']] = { Value: func, Writable: true, Enumerable: false, Configurable: true }; // 26.3.2
     module.Namespace = M;
