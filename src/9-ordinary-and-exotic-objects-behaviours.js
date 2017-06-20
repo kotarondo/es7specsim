@@ -1452,7 +1452,7 @@ define_method(ModuleNamespaceExoticObject, 'Delete', function(P) {
 // 9.4.6.11
 define_method(ModuleNamespaceExoticObject, 'OwnPropertyKeys', function() {
     var O = this;
-    var exports = O.Exports.slice();
+    var exports = O.Exports.slice().sort();
     var symbolKeys = OrdinaryOwnPropertyKeys(O);
     exports.append_elements_of(symbolKeys);
     return exports;
