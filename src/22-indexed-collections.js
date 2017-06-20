@@ -1274,8 +1274,8 @@ function TypedArray_prototype_filter(callbackfn, thisArg) {
         var selected = ToBoolean(Call(callbackfn, T, [kValue, k, O]));
         if (selected === true) {
             kept.push(kValue);
+            captured++;
         }
-        captured++;
         k++;
     }
     var A = TypedArraySpeciesCreate(O, [captured]);

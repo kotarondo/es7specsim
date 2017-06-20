@@ -117,6 +117,15 @@ function test_file(pathname) {
         if (pathname.endsWith(testname)) return;
     }
 
+    if (pathname.indexOf("-trailing-comma") > 0) return; // unsupported
+    if (pathname.indexOf("/SharedArrayBuffer/") > 0) return; // unsupported
+    if (pathname.indexOf("/Atomics/") > 0) return; // unsupported
+    if (pathname.indexOf("/Object/entries/") > 0) return; // unsupported
+    if (pathname.indexOf("/Object/getOwnPropertyDescriptors/") > 0) return; // unsupported
+    if (pathname.indexOf("/Object/values/") > 0) return; // unsupported
+    if (pathname.indexOf("/String/prototype/padEnd/") > 0) return; // unsupported
+    if (pathname.indexOf("/String/prototype/padStart/") > 0) return; // unsupported
+
     current_dirname = path.dirname(pathname);
     var src = fs.readFileSync(pathname, "utf8");
     var file = { contents: src };
@@ -132,22 +141,19 @@ function test_file(pathname) {
     if (spec.features.contains("async-functions")) return; // unsupported
     if (spec.features.contains("async-iteration")) return; // unsupported
 
-
-    if (pathname.indexOf("/star-rhs-iter-") > 0) return; // TODO
-
-
+    console.log(pathname);
     if (spec.negative) {
         if (spec.negative.phase === "early" && !spec.flags.raw) {
             src = "throw 'no early error occurred';\n" + src;
         }
     }
-    console.log(pathname);
     var begin = Date.now();
     var f = true;
     try {
         if (spec.flags.async) {
             //TODO
-            return;
+            console.log("---async test---");
+            f &= false;
         }
         if (!spec.flags.onlyStrict || spec.flags.module) {
             f &= test_do(src, spec);
