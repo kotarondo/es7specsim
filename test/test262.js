@@ -7,9 +7,11 @@ var parser = require("test262-parser");
 
 Error.stackTraceLimit = 5;
 
+var printed = [];
+
 function print(a) {
     Assert(typeof a === "string");
-    console.log(a);
+    printed.push(a);
 }
 
 function console_log() {
@@ -60,6 +62,7 @@ function customize_global_object(realm, global) {
 var test262_dir = path.join(__dirname, "../../test262");
 var assert_src = fs.readFileSync(path.join(test262_dir, "harness/assert.js"), "utf8");
 var sta_src = fs.readFileSync(path.join(test262_dir, "harness/sta.js"), "utf8");
+var dpH_src = fs.readFileSync(path.join(test262_dir, "harness/doneprintHandle.js"), "utf8");
 var current_dirname;
 var total = 0;
 var heavy = 0;
@@ -67,31 +70,33 @@ var failure = 0;
 var exception = [];
 var failed_tests = [];
 
-var module_cache = {};
-
-HostResolveImportedModule = function(referencingModule, specifier) {
-    if (module_cache[specifier]) return module_cache[specifier];
-    var sourceText = fs.readFileSync(path.join(current_dirname, specifier), "utf8");
-    var realm = referencingModule.Realm;
-    var m = ParseModule(sourceText, realm);
-    if (Array.isArray(m)) {
-        var error = m[0];
-        throw Completion({ Type: 'throw', Value: error, Target: empty });
-    }
-    module_cache[specifier] = m;
-    return module_cache[specifier];
-};
-
 function test_do(src, spec) {
     total++;
     var errors;
     HostReportErrors = function(errorList) {
         errors = errorList;
     };
+    var module_cache = {};
+    HostResolveImportedModule = function(referencingModule, specifier) {
+        if (module_cache[specifier]) return module_cache[specifier];
+        var sourceText = fs.readFileSync(path.join(current_dirname, specifier), "utf8");
+        var realm = referencingModule.Realm;
+        var m = ParseModule(sourceText, realm);
+        if (Array.isArray(m)) {
+            var error = m[0];
+            throw Completion({ Type: 'throw', Value: error, Target: empty });
+        }
+        module_cache[specifier] = m;
+        return module_cache[specifier];
+    };
     var entries = [
         { sourceText: assert_src },
         { sourceText: sta_src },
     ];
+    if (spec.flags.async) {
+        printed = [];
+        entries.push({ sourceText: dpH_src });
+    }
     for (var inc of spec.includes) {
         var inc_src = fs.readFileSync(path.join(test262_dir, "harness", inc), "utf8");
         entries.push({ sourceText: inc_src });
@@ -102,6 +107,10 @@ function test_do(src, spec) {
         entries.push({ sourceText: `import "./${spec.basename}" `, isModule: true });
     }
     InitializeHostDefinedRealm(entries, customize_global_object);
+    if (spec.flags.async) {
+        var completed = printed.some(p => p === 'Test262:AsyncTestComplete');
+        if (!completed) errors = printed;
+    }
     if (!spec.negative && !errors) return true;
     if (spec.negative && errors && Type(errors[0]) === 'Object') {
         var c = Get(errors[0], "constructor");
@@ -121,14 +130,17 @@ function test_file(pathname) {
         if (pathname.endsWith(testname)) return;
     }
 
-    if (pathname.indexOf("-trailing-comma") > 0) return; // unsupported
-    if (pathname.indexOf("/SharedArrayBuffer/") > 0) return; // unsupported
-    if (pathname.indexOf("/Atomics/") > 0) return; // unsupported
-    if (pathname.indexOf("/Object/entries/") > 0) return; // unsupported
-    if (pathname.indexOf("/Object/getOwnPropertyDescriptors/") > 0) return; // unsupported
-    if (pathname.indexOf("/Object/values/") > 0) return; // unsupported
-    if (pathname.indexOf("/String/prototype/padEnd/") > 0) return; // unsupported
-    if (pathname.indexOf("/String/prototype/padStart/") > 0) return; // unsupported
+    // unspportd new features
+    if (pathname.indexOf("/SharedArrayBuffer/") > 0) return;
+    if (pathname.indexOf("/Atomics/") > 0) return;
+    if (pathname.indexOf("/Object/entries/") > 0) return;
+    if (pathname.indexOf("/Object/getOwnPropertyDescriptors/") > 0) return;
+    if (pathname.indexOf("/Object/values/") > 0) return;
+    if (pathname.indexOf("/String/prototype/padEnd/") > 0) return;
+    if (pathname.indexOf("/String/prototype/padStart/") > 0) return;
+    if (pathname.match(/[-\/]trailing-comma[-.]/)) return;
+    if (pathname.match(/[-\/]await-module[-.]/)) return;
+    if (pathname.match(/\/async-/)) return;
 
     current_dirname = path.dirname(pathname);
     var src = fs.readFileSync(pathname, "utf8");
@@ -155,11 +167,6 @@ function test_file(pathname) {
     var begin = Date.now();
     var f = true;
     try {
-        if (spec.flags.async) {
-            //TODO
-            console.log("---async test---");
-            f &= false;
-        }
         if (!spec.flags.onlyStrict || spec.flags.module) {
             f &= test_do(src, spec);
         }
@@ -260,3 +267,5 @@ if (heavy) console.log("heavy", heavy);
 if (failure) console.log("failure", failure);
 if (exception.length) console.log("exception", exception.length);
 console.log("total", total);
+
+if (failure || exception.length) process.exit(1)

@@ -1,0 +1,40 @@
+#!/bin/bash
+# Copyright (c) 2017, Kotaro Endo.
+# All rights reserved.
+# License: "BSD-3-Clause"
+
+cd test
+
+FAILED=0
+SUCCESS=0
+
+NAMEBASES=$*
+
+if [ -z "$NAMEBASES" ]; then
+	NAMEBASES="test- test_"
+fi
+
+for dir in $NAMEBASES
+do
+for file in ./${dir}*.js
+do
+echo testing $file
+if [[ $file == ./test_* ]]; then
+    node test262 $file
+else
+    node $file
+fi
+if [ $? -ne 0 ]; then
+	let "FAILED += 1"
+else
+	let "SUCCESS += 1"
+fi
+done
+done
+
+echo
+echo "FAILED: $FAILED"
+echo "SUCCESS: $SUCCESS"
+echo
+
+exit $FAILED
