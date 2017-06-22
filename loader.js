@@ -91,7 +91,7 @@ function expand_ReturnIfAbrupt(raw) {
 
 function expand_IfAbruptRejectPromise(raw) {
     return raw.replace(/IfAbruptRejectPromise\(([^,]*), ([^)]*)\);/g,
-        '{if($1.is_an_abrupt_completion()){Call($2.Reject,undefined,$1.Value);return $2.Promise;}$1=$1.Value;}');
+        '{if($1.is_an_abrupt_completion()){Call($2.Reject,undefined,[$1.Value]);return $2.Promise;}$1=$1.Value;}');
 }
 
 for (var filename of filenames) {

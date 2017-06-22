@@ -370,10 +370,10 @@ function PromiseReactionJob(reaction, argument) {
         var handlerResult = concreteCompletion(Call(handler, undefined, [argument]));
     }
     if (handlerResult.is_an_abrupt_completion()) {
-        var status = Call(promiseCapability.Reject, undefined, [handlerResult.Value]);
+        var status = concreteCompletion(Call(promiseCapability.Reject, undefined, [handlerResult.Value]));
         return NextJob(status);
     }
-    var status = Call(promiseCapability.Resolve, undefined, [handlerResult.Value]);
+    var status = concreteCompletion(Call(promiseCapability.Resolve, undefined, [handlerResult.Value]));
     return NextJob(status);
 }
 
