@@ -138,6 +138,11 @@ function test_file(pathname) {
     if (pathname.indexOf("/Object/values/") > 0) return;
     if (pathname.indexOf("/String/prototype/padEnd/") > 0) return;
     if (pathname.indexOf("/String/prototype/padStart/") > 0) return;
+    if (pathname.indexOf("/RegExp/prototype/dotAll/") > 0) return;
+    if (pathname.indexOf("/RegExp/property-escapes/") > 0) return;
+    if (pathname.indexOf("/RegExp/named-groups/") > 0) return;
+    if (pathname.indexOf("/RegExp/lookBehind/") > 0) return;
+    if (pathname.indexOf("/RegExp/dotall/") > 0) return;
     if (pathname.match(/[-\/]trailing-comma[-.]/)) return;
     if (pathname.match(/[-\/]await-module[-.]/)) return;
     if (pathname.match(/\/async-/)) return;
@@ -150,13 +155,14 @@ function test_file(pathname) {
     spec.basename = path.basename(pathname);
     if (!spec.features) spec.features = [];
 
-    if (spec.esid === "pending") return; // unsupported
-    if (spec.features.contains("object-spread")) return; // unsupported
-    if (spec.features.contains("object-rest")) return; // unsupported
-    if (spec.features.contains("caller")) return; // unsupported
-    if (spec.features.contains("SharedArrayBuffer")) return; // unsupported
-    if (spec.features.contains("async-functions")) return; // unsupported
-    if (spec.features.contains("async-iteration")) return; // unsupported
+    // unspportd new features
+    if (spec.esid === "pending") return;
+    if (spec.features.contains("object-spread")) return;
+    if (spec.features.contains("object-rest")) return;
+    if (spec.features.contains("caller")) return;
+    if (spec.features.contains("SharedArrayBuffer")) return;
+    if (spec.features.contains("async-functions")) return;
+    if (spec.features.contains("async-iteration")) return;
 
     console.log(pathname);
     if (spec.negative) {
