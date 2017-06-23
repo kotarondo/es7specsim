@@ -1300,9 +1300,9 @@ define_method(IntegerIndexedExoticObject, 'OwnPropertyKeys', function() {
     }
     // Here we rely on underlying virtual machine.
     var otherKeys = Reflect.ownKeys(O.properties).filter(function(P) {
-        return !keys.includes(P);
+        return !is_an_integer_index(P);
     });
-    return keys;
+    return keys.concat(otherKeys);
 });
 
 // 9.4.5.7

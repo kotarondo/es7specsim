@@ -102,6 +102,13 @@ const wellKnownSymbols = {
 
 // 6.1.6 The Number Type
 // 6.1.7 The Object Type
+
+function is_an_integer_index(P) {
+    if (Type(P) !== 'String') return false;
+    var i = CanonicalNumericIndexString(P);
+    return (P === '0' || (0 < i && i <= 0x1fffffffffffff));
+}
+
 // 6.1.7.1 Property Attributes
 // 6.1.7.2 Object Internal Methods and Internal Slots
 // 6.1.7.3 Invariants of the Essential Internal Methods
