@@ -716,7 +716,12 @@ function Date_parse(string) {
 // 20.3.3.4
 function Date_UTC(year, month, date, hours, minutes, seconds, ms) {
     var y = ToNumber(year);
-    var m = ToNumber(month);
+    if (STRICT_CONFORMANCE) {
+        var m = ToNumber(month);
+    } else {
+        if (arguments.length >= 2) var m = ToNumber(month);
+        else var m = 0;
+    }
     if (arguments.length >= 3) var dt = ToNumber(date);
     else var dt = 1;
     if (arguments.length >= 4) var h = ToNumber(hours);
