@@ -66,6 +66,33 @@ function PerformEval(x, evalRealm, strictCaller, direct) {
         if (e instanceof EarlyReferenceError) throw $ReferenceError();
         throw e;
     }
+    if (!STRICT_CONFORMANCE) {
+        var thisEnvRec = GetThisEnvironment();
+        if (thisEnvRec instanceof FunctionEnvironmentRecord) {
+            var F = thisEnvRec.FunctionObject;
+            var inFunction = true;
+            var inMethod = thisEnvRec.HasSuperBinding();
+            if (F.ConstructorKind === "derived") var inDerivedConstructor = true;
+            else var inDerivedConstructor = false;
+        } else {
+            var inFunction = false;
+            var inMethod = false;
+            var inDerivedConstructor = false;
+        }
+        if (inFunction === false) {
+            // additional early error rules from 18.2.1.1.1
+            if (script.Contains('NewTarget')) throw $SyntaxError();
+        }
+        if (inMethod === false) {
+            // additional early error rules from 18.2.1.1.2
+            if (script.Contains('SuperProperty')) throw $SyntaxError();
+
+        }
+        if (inDerivedConstructor === false) {
+            // additional early error rules from 18.2.1.1.3
+            if (script.Contains('SuperCall')) throw $SyntaxError();
+        }
+    }
     if (script.Contains('ScriptBody') === false) return undefined;
     var body = script.ScriptBody;
     if (strictCaller === true) var strictEval = true;
