@@ -720,7 +720,7 @@ function GetIterator(obj, method) {
 
 // 7.4.2
 function IteratorNext(iterator, value) {
-    if (value === undefined) {
+    if (arguments.length <= 1) {
         var result = Invoke(iterator, "next", []);
     } else {
         var result = Invoke(iterator, "next", [value]);
