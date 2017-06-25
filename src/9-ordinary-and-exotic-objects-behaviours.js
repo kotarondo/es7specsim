@@ -1369,6 +1369,10 @@ define_method(ModuleNamespaceExoticObject, 'GetPrototypeOf', function() {
 define_method(ModuleNamespaceExoticObject, 'SetPrototypeOf', function(V) {
     var O = this;
     Assert(Type(V) === 'Object' || Type(V) === 'Null');
+    if (!STRICT_CONFORMANCE) {
+        var current = O.GetPrototypeOf();
+        if (SameValue(V, current) === true) return true;
+    }
     return false;
 });
 
