@@ -122,10 +122,6 @@ function define_method(c, n, v) {
 
 define_method(String, 'contains', String.prototype.includes);
 
-define_method(String, 'quote', function() {
-    return JSON.stringify(this); // TODO line terminator chars?
-});
-
 define_method(String, 'is_an_element_of', function(a) {
     return a.contains(this.valueOf());
 });
@@ -165,4 +161,41 @@ define_method(Array, 'append_elements_of', function(a) {
 
 define_method(Array, 'contains_more_than_one_occurrence_of', function(a) {
     return (this.indexOf(a) !== this.lastIndexOf(a));
+});
+
+define_method(String, 'quote', function() {
+    var product = [];
+    product.push('"');
+    for (var C of this) {
+        switch (C) {
+            case '"':
+                product.push('\\"');
+                continue;
+            case '\\':
+                product.push('\\\\');
+                continue;
+            case '\b':
+                product.push('\\b');
+                continue;
+            case '\f':
+                product.push('\\f');
+                continue;
+            case '\n':
+                product.push('\\n');
+                continue;
+            case '\r':
+                product.push('\\r');
+                continue;
+            case '\t':
+                product.push('\\t');
+                continue;
+        }
+        if (code_unit_value(C) <= 0x001f || code_unit_value(C) >= 0x007f) {
+            product.push('\\u' + make_hex4digit(C, '0123456789abcdef'));
+            continue;
+        }
+        product.push(C);
+    }
+    product.push('"');
+    return product.join('');
 });

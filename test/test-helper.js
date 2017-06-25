@@ -23,3 +23,10 @@ assert([0, '0'].contains_any_duplicate_entries() === false);
 
 assert([0, 'test'].also_occurs_in(['test', 1]) === true);
 assert([0, '1'].also_occurs_in(['0', 1]) === false);
+
+assert('test'.quote() === '"test"');
+assert('test\ntest'.quote() === '"test\\ntest"');
+
+for (var name of ['test\u2028', '\u2029test', '""', "''", ]) {
+    assert(name === eval(name.quote()));
+}
