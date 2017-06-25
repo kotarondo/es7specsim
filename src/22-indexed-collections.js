@@ -996,6 +996,9 @@ function ArrayIteratorPrototype_next() {
     var index = O.ArrayIteratorNextIndex;
     var itemKind = O.ArrayIterationKind;
     if ('TypedArrayName' in a) {
+        if (!STRICT_CONFORMANCE) {
+            if (IsDetachedBuffer(a.ViewedArrayBuffer) === true) throw $TypeError();
+        }
         var len = a.ArrayLength;
     } else {
         var len = ToLength(Get(a, "length"));
