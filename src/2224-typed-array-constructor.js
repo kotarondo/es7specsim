@@ -146,6 +146,11 @@ function $__TypedArray__$5(buffer, byteOffset, length) {
         var offset = ToIndex(byteOffset); // compatible with ES8
     }
     if (modulo(offset, elementSize) !== 0) throw $RangeError();
+    if (!STRICT_CONFORMANCE) {
+        if (length !== undefined) {
+            var newLength = ToIndex(length); // compatible with ES8
+        }
+    }
     if (IsDetachedBuffer(buffer) === true) throw $TypeError();
     var bufferByteLength = buffer.ArrayBufferByteLength;
     if (length === undefined) {
@@ -155,8 +160,6 @@ function $__TypedArray__$5(buffer, byteOffset, length) {
     } else {
         if (STRICT_CONFORMANCE) {
             var newLength = ToLength(length);
-        } else {
-            var newLength = ToIndex(length); // compatible with ES8
         }
         var newByteLength = newLength * elementSize;
         if (offset + newByteLength > bufferByteLength) throw $RangeError();
