@@ -733,8 +733,16 @@ function RegExpBuiltinExec(R, S) {
     Assert(Type(S) === 'String');
     var length = S.length;
     var lastIndex = ToLength(Get(R, "lastIndex"));
-    var global = ToBoolean(Get(R, "global"));
-    var sticky = ToBoolean(Get(R, "sticky"));
+    if (STRICT_CONFORMANCE) {
+        var global = ToBoolean(Get(R, "global"));
+        var sticky = ToBoolean(Get(R, "sticky"));
+    } else {
+        var flags = R.OriginalFlags;
+        if (flags.contains("g")) var global = true;
+        else var global = false;
+        if (flags.contains("y")) var sticky = true;
+        else var sticky = false;
+    }
     if (global === false && sticky === false) var lastIndex = 0;
     var matcher = R.RegExpMatcher;
     var flags = R.OriginalFlags;
@@ -743,7 +751,13 @@ function RegExpBuiltinExec(R, S) {
     var matchSucceeded = false;
     while (matchSucceeded === false) {
         if (lastIndex > length) {
-            _Set(R, "lastIndex", 0, true);
+            if (STRICT_CONFORMANCE) {
+                _Set(R, "lastIndex", 0, true);
+            } else {
+                if (global === true || sticky === true) {
+                    _Set(R, "lastIndex", 0, true);
+                }
+            }
             return null;
         }
         var r = matcher(S, lastIndex);
@@ -814,7 +828,14 @@ function get_RegExp_prototype_flags() {
 function get_RegExp_prototype_global() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalFlags' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return undefined;
+            else throw $TypeError();
+        }
+    }
     var flags = R.OriginalFlags;
     if (flags.contains("g")) return true;
     return false;
@@ -824,7 +845,14 @@ function get_RegExp_prototype_global() {
 function get_RegExp_prototype_ignoreCase() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalFlags' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return undefined;
+            else throw $TypeError();
+        }
+    }
     var flags = R.OriginalFlags;
     if (flags.contains("i")) return true;
     return false;
@@ -867,7 +895,14 @@ function RegExp_prototype_match(string) {
 function get_RegExp_prototype_multiline() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalFlags' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return undefined;
+            else throw $TypeError();
+        }
+    }
     var flags = R.OriginalFlags;
     if (flags.contains("m")) return true;
     return false;
@@ -947,9 +982,22 @@ function RegExp_prototype_search(string) {
     if (Type(rx) !== 'Object') throw $TypeError();
     var S = ToString(string);
     var previousLastIndex = Get(rx, "lastIndex");
-    _Set(rx, "lastIndex", 0, true);
+    if (STRICT_CONFORMANCE) {
+        _Set(rx, "lastIndex", 0, true);
+    } else {
+        if (SameValue(previousLastIndex, 0) === false) {
+            _Set(rx, "lastIndex", 0, true);
+        }
+    }
     var result = RegExpExec(rx, S);
-    _Set(rx, "lastIndex", previousLastIndex, true);
+    if (STRICT_CONFORMANCE) {
+        _Set(rx, "lastIndex", previousLastIndex, true);
+    } else {
+        var currentLastIndex = Get(rx, "lastIndex");
+        if (SameValue(currentLastIndex, previousLastIndex) === false) {
+            _Set(rx, "lastIndex", previousLastIndex, true);
+        }
+    }
     if (result === null) return -1;
     return Get(result, "index");
 }
@@ -958,8 +1006,16 @@ function RegExp_prototype_search(string) {
 function get_RegExp_prototype_source() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalSource' in R)) throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalSource' in R)) throw $TypeError();
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalSource' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return "(?:)";
+            else throw $TypeError();
+        }
+        Assert('OriginalFlags' in R);
+    }
     var src = R.OriginalSource;
     var flags = R.OriginalFlags;
     return EscapeRegExpPattern(src, flags);
@@ -1028,7 +1084,14 @@ function RegExp_prototype_split(string, limit) {
 function get_RegExp_prototype_sticky() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalFlags' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return undefined;
+            else throw $TypeError();
+        }
+    }
     var flags = R.OriginalFlags;
     if (flags.contains("y")) return true;
     return false;
@@ -1058,7 +1121,14 @@ function RegExp_prototype_toString() {
 function get_RegExp_prototype_unicode() {
     var R = this;
     if (Type(R) !== 'Object') throw $TypeError();
-    if (!('OriginalFlags' in R)) throw $TypeError();
+    if (STRICT_CONFORMANCE) {
+        if (!('OriginalFlags' in R)) throw $TypeError();
+    } else {
+        if (!('OriginalFlags' in R)) {
+            if (SameValue(R, currentRealm.Intrinsics['%RegExpPrototype%']) === true) return undefined;
+            else throw $TypeError();
+        }
+    }
     var flags = R.OriginalFlags;
     if (flags.contains("u")) return true;
     return false;
