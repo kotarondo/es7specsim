@@ -682,8 +682,10 @@ define_method(SourceTextModuleRecord, 'ResolveExport', function(exportName, reso
     if (SameValue(exportName, "default") === true) {
         throw $SyntaxError();
     }
-    if (exportStarSet.contains(module)) return null;
-    exportStarSet.push(module);
+    if (STRICT_CONFORMANCE) {
+        if (exportStarSet.contains(module)) return null;
+        exportStarSet.push(module);
+    }
     var starResolution = null;
     for (var e of module.StarExportEntries) {
         var importedModule = HostResolveImportedModule(module, e.ModuleRequest);
