@@ -56,4 +56,12 @@ As default, es7specsim implements some extensions and modifications in order to 
 It *disables* following supports.
 - Early Error of 'eval' and 'arguments' left-hand-side compatibility with ES5.
 - String.prototype is an string exotic object instead of an ordinary object.
-- more extensions TODO
+- ES8 compatibility for Module Name Space Exotic Object.
+- ES8 compatibility for cyclic "export *" resolution.
+- ES8 compatibility for direct eval additional early syntax errors.
+- ES8 compatibility for Date.UTC called without month argument.
+- ES8 compatibility for RegExp.
+- ES8 compatibility for TypedArray.prototype.fill called with non-number value.
+- ES8 compatibility for %ArrayIteratorPrototype%.next called with detached buffer.
+- ES8 compatible ToIndex() is used for index conversion.
+

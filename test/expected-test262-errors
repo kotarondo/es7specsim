@@ -1,0 +1,36 @@
+FAILED TESTS:
+/Users/persha/node_works/test262/test/language/arguments-object/arguments-caller.js
+/Users/persha/node_works/test262/test/language/expressions/tagged-template/invalid-escape-sequences.js
+/Users/persha/node_works/test262/test/built-ins/Array/prototype/sort/bug_596_1.js
+/Users/persha/node_works/test262/test/built-ins/ArrayBuffer/prototype/byteLength/this-is-sharedarraybuffer.js
+/Users/persha/node_works/test262/test/built-ins/ArrayBuffer/prototype/slice/this-is-sharedarraybuffer.js
+/Users/persha/node_works/test262/test/built-ins/DataView/prototype/buffer/this-has-no-dataview-internal.js
+/Users/persha/node_works/test262/test/built-ins/DataView/prototype/byteLength/this-has-no-dataview-internal.js
+/Users/persha/node_works/test262/test/built-ins/DataView/prototype/byteOffset/this-has-no-dataview-internal.js
+/Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/Function.js
+/Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/GeneratorFunction.js
+/Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/bound-function.js
+/Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/intrinsics.js
+/Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A2_U180E.js
+/Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A3_T1_U180E.js
+/Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A3_T2_U180E.js
+/Users/persha/node_works/test262/test/built-ins/RegExp/S15.10.2.12_A1_T1.js
+/Users/persha/node_works/test262/test/built-ins/RegExp/S15.10.2.12_A2_T1.js
+/Users/persha/node_works/test262/test/built-ins/RegExp/prototype/flags/order.js
+/Users/persha/node_works/test262/test/built-ins/RegExp/prototype/flags/s.js
+/Users/persha/node_works/test262/test/built-ins/String/prototype/trim/u180e.js
+/Users/persha/node_works/test262/test/built-ins/TypedArray/prototype/buffer/this-has-no-typedarrayname-internal.js
+/Users/persha/node_works/test262/test/built-ins/TypedArray/prototype/byteLength/this-has-no-typedarrayname-internal.js
+/Users/persha/node_works/test262/test/built-ins/TypedArray/prototype/byteOffset/this-has-no-typedarrayname-internal.js
+/Users/persha/node_works/test262/test/built-ins/TypedArray/prototype/sort/comparefn-calls.js
+/Users/persha/node_works/test262/test/built-ins/TypedArray/prototype/sort/detached-buffer-comparefn.js
+/Users/persha/node_works/test262/test/built-ins/TypedArrays/internals/Get/indexed-value-sab.js
+/Users/persha/node_works/test262/test/built-ins/global/global-object.js
+/Users/persha/node_works/test262/test/built-ins/global/property-descriptor.js
+/Users/persha/node_works/test262/test/built-ins/parseFloat/S15.1.2.3_A2_T10_U180E.js
+/Users/persha/node_works/test262/test/built-ins/parseInt/S15.1.2.2_A2_T10_U180E.js
+EXCEPTION THROWN TESTS:
+/Users/persha/node_works/test262/test/language/types/string/S8.4_A6.1.js
+/Users/persha/node_works/test262/test/language/types/string/S8.4_A6.2.js
+failure 59
+exception 2
