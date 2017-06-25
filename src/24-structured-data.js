@@ -86,12 +86,15 @@ function GetValueFromBuffer(arrayBuffer, byteIndex, type, isLittleEndian) {
     Assert(IsDetachedBuffer(arrayBuffer) === false);
     Assert(byteIndex >= 0);
     var block = arrayBuffer.ArrayBufferData;
+    if (isLittleEndian === undefined) {
+        isLittleEndian = true; // implementation-dependent
+    }
     switch (type) {
         case 'Int8':
-            return block.getInt8(byteIndex, isLittleEndian);
+            return block.getInt8(byteIndex);
         case 'Uint8':
         case 'Uint8C':
-            return block.getUint8(byteIndex, isLittleEndian);
+            return block.getUint8(byteIndex);
         case 'Int16':
             return block.getInt16(byteIndex, isLittleEndian);
         case 'Uint16':
@@ -115,6 +118,9 @@ function SetValueInBuffer(arrayBuffer, byteIndex, type, value, isLittleEndian) {
     Assert(Type(value) === 'Number');
     var block = arrayBuffer.ArrayBufferData;
     Assert(block !== undefined);
+    if (isLittleEndian === undefined) {
+        isLittleEndian = true; // implementation-dependent
+    }
     if (type === "Float32") {
         if (Number.isNaN(value)) value = NaN;
         block.setFloat32(byteIndex, value, isLittleEndian);
@@ -127,11 +133,11 @@ function SetValueInBuffer(arrayBuffer, byteIndex, type, value, isLittleEndian) {
         var intValue = convOp(value);
         switch (type) {
             case 'Int8':
-                block.setInt8(byteIndex, intValue, isLittleEndian);
+                block.setInt8(byteIndex, intValue);
                 break;
             case 'Uint8':
             case 'Uint8C':
-                block.setUint8(byteIndex, intValue, isLittleEndian);
+                block.setUint8(byteIndex, intValue);
                 break;
             case 'Int16':
                 block.setInt16(byteIndex, intValue, isLittleEndian);
