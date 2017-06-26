@@ -33,6 +33,7 @@
 'use strict';
 
 var STRICT_CONFORMANCE = false;
+var FUNCTION_COMPILE_TEST = false;
 
 function Assert(cond) {
     if (cond) return;

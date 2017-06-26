@@ -453,6 +453,11 @@ function OrdinaryCallBindThis(F, calleeContext, thisArgument) {
 // 9.2.1.3
 function OrdinaryCallEvaluateBody(F, argumentsList) {
     FunctionDeclarationInstantiation(F, argumentsList);
+    if (FUNCTION_COMPILE_TEST) {
+        if (F.compiled) {
+            return F.compiled();
+        }
+    }
     return F.ECMAScriptCode.EvaluateBody(F);
 }
 
@@ -526,6 +531,13 @@ function FunctionInitialize(F, kind, ParameterList, Body, Scope) {
     F.Environment = Scope;
     F.FormalParameters = ParameterList;
     F.ECMAScriptCode = Body;
+    if (FUNCTION_COMPILE_TEST) {
+        if (Body.goal === 'FunctionBody') {
+            var ctx = new GeneratorCompilerContext();
+            var res = Body.compileEvaluateBody(ctx);
+            F.compiled = ctx.createFunction();
+        }
+    }
     F.ScriptOrModule = GetActiveScriptOrModule();
     if (kind === 'Arrow') F.ThisMode = 'lexical';
     else if (Strict === true) F.ThisMode = 'strict';

@@ -48,6 +48,15 @@ class GeneratorCompilerContext {
         return g(this.literals);
     }
 
+    createFunction() { // for test purpose
+        var f = new Function('literals', `
+            return function(){
+                ${this.codes.join('\n')}
+            };
+        `);
+        return f(this.literals);
+    }
+
     literal(value) {
         this.literals.push(value);
         return 'literals[' + (this.literals.length - 1) + ']';
@@ -172,7 +181,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'ArrowFunction: ArrowParameters => ConciseBody',
     function(ctx) {
-        return this._(`${ctx.literal(this)}.Evaluation()`);
+        return ctx._(`${ctx.literal(this)}.Evaluation()`);
     },
 ]);
 
@@ -606,7 +615,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'LexicalBinding: BindingPattern Initializer',
     function(ctx) {
-        var rhs = this.Initializer.compilerEvaluation(ctx);
+        var rhs = this.Initializer.compileEvaluation(ctx);
         var value = ctx.GetValue(rhs);
         var env = ctx._(`running_execution_context.LexicalEnvironment`);
         this.BindingPattern.compileBindingInitialization(ctx, value, env);
@@ -2103,7 +2112,7 @@ Runtime_Semantics('compileEvaluation', [
 
     'SuperCall: super Arguments',
     function(ctx) {
-        ctx.$(`throw $ReferenceError();`); // unreachable in generator
+        return ctx._(`${ctx.literal(this)}.Evaluation()`);
     },
 ]);
 
