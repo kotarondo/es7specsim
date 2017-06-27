@@ -1,6 +1,6 @@
 {
     "name": "es7specsim",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "JavaScript Specification Simulator (ECMAScript 2016)",
     "author": "Kotaro Endo <kotarondo@gmail.com>",
     "license": "BSD-3-Clause",
