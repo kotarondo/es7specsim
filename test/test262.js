@@ -5,7 +5,7 @@ var path = require("path");
 var util = require("util");
 var parser = require("test262-parser");
 
-FUNCTION_COMPILE_TEST = true;
+// FUNCTION_COMPILE_TEST = true;
 Error.stackTraceLimit = 5;
 
 var printed = [];
