@@ -745,7 +745,7 @@ function CreateIntrinsics(realmRec) {
     intrinsic_function(realmRec, '%BooleanPrototype%', 'toString', Boolean_prototype_toString, 0); // 19.3.3.3
     intrinsic_function(realmRec, '%BooleanPrototype%', 'valueOf', Boolean_prototype_valueOf, 0); // 19.3.3.4
 
-    intrinsics['%Symbol%'] = intrinsic_constructor(realmRec, 'Symbol', Symbol$, 1); // 19.4.1.1
+    intrinsics['%Symbol%'] = intrinsic_constructor(realmRec, 'Symbol', Symbol$, 0); // 19.4.1.1
     intrinsics['%SymbolPrototype%'] = ObjectCreate(intrinsics['%ObjectPrototype%']); // 19.4.3
     intrinsic_function(realmRec, '%Symbol%', 'for', Symbol_for, 1); // 19.4.2.1
     intrinsic_property(realmRec, '%Symbol%', 'hasInstance', wellKnownSymbols['@@hasInstance'], { attributes: { Writable: false, Enumerable: false, Configurable: false } }); // 19.4.2.2
