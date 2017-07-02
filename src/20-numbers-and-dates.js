@@ -1126,6 +1126,7 @@ function Date_prototype_toLocaleTimeString(reserved1, reserved2) {
 // 20.3.4.41
 function Date_prototype_toString() {
     var O = this;
+    if (Type(O) !== 'Object') throw $TypeError();
     if (!('DateValue' in O)) {
         var tv = NaN;
     } else {
