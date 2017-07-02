@@ -1,12 +1,16 @@
 FAILED TESTS:
 /Users/persha/node_works/test262/test/language/arguments-object/arguments-caller.js
 /Users/persha/node_works/test262/test/language/expressions/tagged-template/invalid-escape-sequences.js
+/Users/persha/node_works/test262/test/language/statements/let/syntax/let-newline-yield-in-generator-function.js
 /Users/persha/node_works/test262/test/built-ins/Array/prototype/sort/bug_596_1.js
 /Users/persha/node_works/test262/test/built-ins/ArrayBuffer/prototype/byteLength/this-is-sharedarraybuffer.js
 /Users/persha/node_works/test262/test/built-ins/ArrayBuffer/prototype/slice/this-is-sharedarraybuffer.js
 /Users/persha/node_works/test262/test/built-ins/DataView/prototype/buffer/this-has-no-dataview-internal.js
 /Users/persha/node_works/test262/test/built-ins/DataView/prototype/byteLength/this-has-no-dataview-internal.js
 /Users/persha/node_works/test262/test/built-ins/DataView/prototype/byteOffset/this-has-no-dataview-internal.js
+/Users/persha/node_works/test262/test/built-ins/Date/prototype/toDateString/format.js
+/Users/persha/node_works/test262/test/built-ins/Date/prototype/toString/format.js
+/Users/persha/node_works/test262/test/built-ins/Date/prototype/toUTCString/format.js
 /Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/Function.js
 /Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/GeneratorFunction.js
 /Users/persha/node_works/test262/test/built-ins/Function/prototype/toString/bound-function.js
@@ -14,6 +18,9 @@ FAILED TESTS:
 /Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A2_U180E.js
 /Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A3_T1_U180E.js
 /Users/persha/node_works/test262/test/built-ins/Number/S9.3.1_A3_T2_U180E.js
+/Users/persha/node_works/test262/test/built-ins/Number/prototype/toExponential/range.js
+/Users/persha/node_works/test262/test/built-ins/Number/prototype/toFixed/range.js
+/Users/persha/node_works/test262/test/built-ins/Number/prototype/toPrecision/range.js
 /Users/persha/node_works/test262/test/built-ins/RegExp/S15.10.2.12_A1_T1.js
 /Users/persha/node_works/test262/test/built-ins/RegExp/S15.10.2.12_A2_T1.js
 /Users/persha/node_works/test262/test/built-ins/RegExp/prototype/flags/order.js
@@ -32,5 +39,3 @@ FAILED TESTS:
 EXCEPTION THROWN TESTS:
 /Users/persha/node_works/test262/test/language/types/string/S8.4_A6.1.js
 /Users/persha/node_works/test262/test/language/types/string/S8.4_A6.2.js
-failure 59
-exception 2

@@ -66,4 +66,5 @@ It *disables* following supports.
 - ES8 compatibility for Module Name Space Exotic Object.
 - ES8 compatibility for RegExp.
 - ES8 compatible ToIndex() is used in index conversions.
+- ES8 compatibility for Date.prototype.toString() called on non-Object.
 
