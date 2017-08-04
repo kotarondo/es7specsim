@@ -56,7 +56,7 @@ STRICT CONFORMANCE flag
 As default, es7specsim implements some extensions and modifications in order to pass the tests of the tc39/test262 project. If you want es7specsim to be strictly conforming to the specification normative only, you can set the STRICT_CONFORMANCE flag to true.
 
 It *disables* following supports.
-- String.prototype is an string exotic object instead of an ordinary object.
+- String.prototype is a string exotic object instead of an ordinary object.
 - ES5 compatibility for early errors of 'eval' and 'arguments' left-hand-side.
 - ES8 compatibility for additional early syntax errors of direct eval.
 - ES8 compatibility for TypedArray.prototype.fill() called with non-number value.
